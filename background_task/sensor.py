@@ -1,11 +1,14 @@
-import os
+import subprocess
 import time
 
-os.system('modprobe w1-gpio')
-os.system('modprobe w1-therm')
+subprocess.Popen(["modprobe","w1-gpio"])
+subprocess.Popen(["modprobe", "w1-therm"])
 
-temp_sensor_1 = '/sys/bus/w1/devices/28-00042b6465ff/w1_slave'
-temp_sensor_2 = '/sys/bus/w1/devices/28-00042b6579ff/w1_slave'
+
+#get the sensor location automatically
+sensor_location = subprocess.check_output(["ls","/sys/bus/w1/devices/"])
+sensor_location = sensor_location[0:15]
+sensor_location = "/sys/bus/w1/devices/"+sensor_location+"/w1_slave"
 
 def temp_raw(sensor_location):
     f = open(sensor_location, 'r')
@@ -26,8 +29,7 @@ def read_temp(sensor_location):
 	return temp_c
 
 while True:
-        print(read_temp(temp_sensor_1))
-        print(read_temp(temp_sensor_2))
-        time.sleep(1)
+        print(read_temp(sensor_location))
+        time.sleep(0.2)
 
 
