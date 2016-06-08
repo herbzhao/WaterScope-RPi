@@ -39,7 +39,7 @@ echo ""                                         >>  /etc/network/interfaces
 echo "iface eth0 inet dhcp"                           >> /etc/network/interfaces
 echo ""                                         >>  /etc/network/interfaces
 echo "allow-hotplug wlan0"                       >> /etc/network/interfaces
-echo "iface wlan0 inet manual"                     >> /etc/network/interfaces
+echo "iface wlan0 inet dhcp"                     >> /etc/network/interfaces
 echo "wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf"      >> /etc/network/interfaces
 
 
@@ -57,14 +57,14 @@ echo "ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev"     >  /etc/wpa_s
 echo "update_config=1"         >>  /etc/wpa_supplicant/wpa_supplicant.conf
 echo ""         >>  /etc/wpa_supplicant/wpa_supplicant.conf
 echo "network={"         >>  /etc/wpa_supplicant/wpa_supplicant.conf
-echo "ssid="eduroam""         >>  /etc/wpa_supplicant/wpa_supplicant.conf
+echo "ssid="'"eduroam"'"">>  /etc/wpa_supplicant/wpa_supplicant.conf
 echo "scan_ssid=1"         >>  /etc/wpa_supplicant/wpa_supplicant.conf
 echo "key_mgmt=WPA-EAP"         >>  /etc/wpa_supplicant/wpa_supplicant.conf
-echo "pairwise=CMMP TKIP"         >>  /etc/wpa_supplicant/wpa_supplicant.conf
+echo "pairwise=CCMP TKIP"         >>  /etc/wpa_supplicant/wpa_supplicant.conf
 echo "group=CCMP TKIP"         >>  /etc/wpa_supplicant/wpa_supplicant.conf
 echo "eap=PEAP"         >>  /etc/wpa_supplicant/wpa_supplicant.conf
-echo "identity="${AP_SSID}""         >>  /etc/wpa_supplicant/wpa_supplicant.conf
-echo "password="${AP_WPA_PASSPHRASE}""         >>  /etc/wpa_supplicant/wpa_supplicant.conf
+echo "identity="'""${AP_SSID}"'""         >>  /etc/wpa_supplicant/wpa_supplicant.conf
+echo "password="'"${AP_WPA_PASSPHRASE}"'""         >>  /etc/wpa_supplicant/wpa_supplicant.conf
 echo "}"         >>  /etc/wpa_supplicant/wpa_supplicant.conf
 
 
