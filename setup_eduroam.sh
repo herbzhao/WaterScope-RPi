@@ -63,10 +63,14 @@ echo "key_mgmt=WPA-EAP"         >>  /etc/wpa_supplicant/wpa_supplicant.conf
 echo "pairwise=CCMP TKIP"         >>  /etc/wpa_supplicant/wpa_supplicant.conf
 echo "group=CCMP TKIP"         >>  /etc/wpa_supplicant/wpa_supplicant.conf
 echo "eap=PEAP"         >>  /etc/wpa_supplicant/wpa_supplicant.conf
-echo "identity="'""${AP_SSID}"'""         >>  /etc/wpa_supplicant/wpa_supplicant.conf
+echo "identity="'"${AP_SSID}"'""         >>  /etc/wpa_supplicant/wpa_supplicant.conf
 echo "password="'"${AP_WPA_PASSPHRASE}"'""         >>  /etc/wpa_supplicant/wpa_supplicant.conf
 echo "}"         >>  /etc/wpa_supplicant/wpa_supplicant.conf
 
+
+ifdown wlan0
+ifup wlan0
+iwconfig
 
 echo "you may need to reboot for the settings to work"        
 
