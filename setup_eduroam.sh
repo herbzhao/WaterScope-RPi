@@ -57,14 +57,14 @@ echo "ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev"     >  /etc/wpa_s
 echo "update_config=1"         >>  /etc/wpa_supplicant/wpa_supplicant.conf
 echo ""         >>  /etc/wpa_supplicant/wpa_supplicant.conf
 echo "network={"         >>  /etc/wpa_supplicant/wpa_supplicant.conf
-echo "ssid="'"eduroam"'"">>  /etc/wpa_supplicant/wpa_supplicant.conf
+echo "ssid="\""eduroam"\""">>  /etc/wpa_supplicant/wpa_supplicant.conf
 echo "scan_ssid=1"         >>  /etc/wpa_supplicant/wpa_supplicant.conf
 echo "key_mgmt=WPA-EAP"         >>  /etc/wpa_supplicant/wpa_supplicant.conf
 echo "pairwise=CCMP TKIP"         >>  /etc/wpa_supplicant/wpa_supplicant.conf
 echo "group=CCMP TKIP"         >>  /etc/wpa_supplicant/wpa_supplicant.conf
 echo "eap=PEAP"         >>  /etc/wpa_supplicant/wpa_supplicant.conf
-echo "identity="'"${AP_SSID}"'""         >>  /etc/wpa_supplicant/wpa_supplicant.conf
-echo "password="'"${AP_WPA_PASSPHRASE}"'""         >>  /etc/wpa_supplicant/wpa_supplicant.conf
+echo "identity="\""${AP_SSID}"\"""         >>  /etc/wpa_supplicant/wpa_supplicant.conf
+echo "password="\""${AP_WPA_PASSPHRASE}"\"""         >>  /etc/wpa_supplicant/wpa_supplicant.conf
 echo "}"         >>  /etc/wpa_supplicant/wpa_supplicant.conf
 
 
