@@ -1,41 +1,32 @@
-#!/bin/bash
-#changes in version 1.1
-#	- setup verifies WPA password length
-#	- RTL8192CU added as the one needing special hostapd
-#	- /etc/network/interfaces in now appended, not overvritten
-#changes in version 1.2
-#google public DNSes used
-#apt-get update added
+#! /bin/sh
 
-#variables init
+#bash initialise
 run_time=`date +%Y%m%d%H%M`
-post_link="http://http://raspberry-at-home.com/hotspot-wifi-access-point/"
+mkdir /home/pi/logfiles
+log_file="/home/pi/logfiles/ap_setup_log.${run_time}"
+cat /dev/null > ${log_file}   #create a empty log_file. truncate a file.
 
-log_file="ap_setup_log.${run_time}"
+echo "Welcome,  we will start installing access point for raspberryPi"
 
-cat /dev/null > ${log_file}
-
-#  AP settings ##############################################  CHANGE THIS (if needed)#
-
-AP_CHANNEL=1
-
-# /AP settings ############################################## /CHANGE THIS #
 
 #file info & disclaimer
 echo ""
 echo " ====================================================================== "          | tee -a ${log_file}
-echo "title           :ap_setup_final.sh"                                                | tee -a ${log_file}
+echo "title           :install_AP.sh"                                                | tee -a ${log_file}
 echo "description     :Automatic access point setup for raspberry pi."                   | tee -a ${log_file}
-echo "author          :Jacek Tokar (jacek@raspberry-at-home.com)"		                 | tee -a ${log_file}
-echo "author          :Tomasz Szczerba (tomek@raspberry-at-home.com)"	                 | tee -a ${log_file}
-echo "author site     :raspberry-at-home.com"                                            | tee -a ${log_file}
-echo "full guide      :${post_link}"                                                     | tee -a ${log_file}
-echo "date            :20130601"                                                         | tee -a ${log_file}
+echo "author          :Tianheng Zhao(tianheng.zhao@waterscope.org)"		                 | tee -a ${log_file}
+echo "original author          :Jacek Tokar (jacek@raspberry-at-home.com)"		                 | tee -a ${log_file}
+echo "original author          :Tomasz Szczerba (tomek@raspberry-at-home.com)"	                 | tee -a ${log_file}
+echo "original author site     :raspberry-at-home.com"                                            | tee -a ${log_file}
+echo "github site      :  "                                                     | tee -a ${log_file}
+echo "date            :20160610"                                                         | tee -a ${log_file}
 echo "version         :1.0"                                                              | tee -a ${log_file}
-echo "usage           :sudo ./ap_setup.sh"                                               | tee -a ${log_file}
+echo "usage           :sudo  bash ap_setup.sh"                                               | tee -a ${log_file}
+echo "This is designed to work with newest RaspberryPi3, not optimised for any other wifi dongle"	 | tee -a ${log_file}	
 echo "You can improve the script. Once you do it, share it with us. Keep credentials!"	 | tee -a ${log_file}	
 echo " ====================================================================== "          | tee -a ${log_file}
 echo " DISCLAIMER:   "                                                                   | tee -a ${log_file}
+echo "     Tianheng, waterscope.org, "  | tee -a ${log_file}
 echo "     Jacek, raspberry-at-home.com or anyone else on this blog is not responsible"  | tee -a ${log_file}
 echo "     for bricked devices, dead SD cards, thermonuclear war, or any other things "  | tee -a ${log_file}
 echo "     script may break. You are using this at your own responsibility...."          | tee -a ${log_file}
@@ -51,113 +42,34 @@ else
         exit 1
 fi
 
+#update repo 
 echo "Updating repositories..."
 apt-get update
+echo ""					  | tee -a ${log_file} 
 
-read -p "Please provide your new SSID to be broadcasted by RPi (i.e. My_Raspi_AP): " AP_SSID
-read -s -p "Please provide password for your new wireless network (8-63 characters): " AP_WPA_PASSPHRASE
-echo ""
-if [ `echo $AP_WPA_PASSPHRASE | wc -c` -lt 8 ] || [ `echo $AP_WPA_PASSPHRASE | wc -c` -gt 63 ]; then
-	echo "Sorry, but the password is either to long or too short. Setup will now exit. Start again."
-	exit 9
-fi  
-echo ""
-#if [ -f /etc/sysctl.conf.bak ]; then
-#        echo "File /etc/sysctl.conf.bak was found. Most likely you have run the setup already. Your prevous configuration was backed up "
-#        echo "in several .bak files. Running setup again would overwrite the backup files. If you want to run setup again, remove /etc/sysctl.conf.bak."
-#        exit 1;
-#fi
-
-
-if [ `lsusb | grep "RTL8188CUS\|RTL8192CU" | wc -l` -ne 0 ]; then
-        echo "Your WiFi is based on the chipset that requires special version of hostapd."              | tee -a ${log_file}
-        echo "Setup will download it for you."                                                          | tee -a ${log_file}
-        CHIPSET="yes"
-else
-        echo "Some of the WiFi chipset require special version of hostapd."                             | tee -a ${log_file}
-        echo "Please answer yes if you want to have different version of hostapd downloaded."           | tee -a ${log_file}
-        echo "(it is not recommended unless you had experienced issues with running regular hostapd)" | tee -a ${log_file}
-        read ANSWER
-        if [ ${ANSWER,,} = "yes" ]; then
-                CHIPSET="yes"
-        else
-                CHIPSET="no"
-        fi
-fi
-
-echo "Checking network interfaces..."                                                                   | tee -a ${log_file}
-NONIC=`netstat -i | grep ^wlan | cut -d ' ' -f 1 | wc -l`
-
-if [ ${NONIC} -lt 1 ]; then
-        echo "There are no wireless network interfaces... Exiting"                                               | tee -a ${log_file}
-        exit 1
-elif [ ${NONIC} -gt 1 ]; then
-        echo "You have more than one wlan interface. Please select the interface to become AP: "         | tee -a ${log_file}
-        select INTERFACE in `netstat -i | grep ^wlan | cut -d ' ' -f 1`
-        do
-                NIC=${INTERFACE}
-		break
-        done
-        exit 1
-else
-        NIC=`netstat -i | grep ^wlan | cut -d ' ' -f 1`
-fi
-
-#echo "Please select network interface you use to connect to the internet:"
-#DNS="192.168.42.1"
-#select INETNIC in `netstat -i | grep -v lo\|${NIC}\|Iface\|Kernel`
-#do
-read -p "Please provide network interface that will be used as WAN connection (i.e. eth0): " WAN 
-DNS=`netstat -rn | grep ${WAN} | grep UG | tr -s " " "X" | cut -d "X" -f 2`
-echo "DNS will be set to " ${DNS}               								| tee -a ${log_file}
-echo "You can change DNS addresses for the new network in /etc/dhcp/dhcpd.conf"   | tee -a ${log_file}
- #       break;
-#done
-echo ""
-read -p "Please provide your new AP network (i.e. 192.168.10.X). Remember to put X at the end!!!  " NETWORK 
-
-if [ `echo ${NETWORK} | grep X$ | wc -l` -eq 0 ]; then
-	echo "Invalid AP network provided... No X was found at the end of you input. Setup will now exit."
-	exit 4
-fi	
-AP_ADDRESS=`echo ${NETWORK} | tr \"X\" \"1\"`
-AP_UPPER_ADDR=`echo ${NETWORK} | tr \"X\" \"9\"`
-AP_LOWER_ADDR=`echo ${NETWORK} | tr \"X\" \"2\"`
-SUBNET=`echo ${NETWORK} | tr \"X\" \"0\"`
-
-
-echo ""
-echo ""
-echo "+========================================================================"
-echo "Your network settings will be:"                                                                   | tee -a ${log_file}
-echo "AP NIC address: ${AP_ADDRESS}  "                                                                  | tee -a ${log_file}
-echo "Subnet:  ${SUBNET} "																				| tee -a ${log_file}
-echo "Addresses assigned by DHCP will be from  ${AP_LOWER_ADDR} to ${AP_UPPER_ADDR}"                    | tee -a ${log_file}
-echo "Netmask: 255.255.255.0"                                                                           | tee -a ${log_file}
-#echo "DNS: ${DNS}        "                                                                              | tee -a ${log_file}
-echo "WAN: ${WAN}"																						| tee -a ${log_file}
-
-read -n 1 -p "Continue? (y/n):" GO
-echo ""
-        if [ ${GO,,} = "y" ]; then
-                sleep 1
-        else
-				exit 2
-        fi
-
-
-echo "Setting up  $NIC"                                                                                 | tee -a ${log_file}
-
-
-
-
-echo "Downloading and installing packages: hostapd isc-dhcp-server iptables."                           | tee -a ${log_file}
-echo ""
-apt-get -y install hostapd isc-dhcp-server iptables                                                     | tee -a ${log_file} 
+#install the packages
+echo "Downloading and installing packages: hostapd,  isc-dhcp-server,  iptables."
+sudo apt-get install hostapd isc-dhcp-server iptables
 service hostapd stop | tee -a ${log_file} > /dev/null
 service isc-dhcp-server stop  | tee -a ${log_file}  > /dev/null
-echo ""                                                                                                 | tee -a ${log_file} 
+echo ""					  | tee -a ${log_file} 
 
+
+
+# User input SSID and password for access point
+read -e -p "WIFI SSID (i.e. WaterScopi): "  -i "WaterScopi" AP_SSID
+AP_WPA_PASSPHRASE = 0
+
+while [ `echo $AP_WPA_PASSPHRASE | wc -c` -lt 8 ] || [ `echo $AP_WPA_PASSPHRASE | wc -c` -gt 63 ]; 
+do    
+echo "Input the password with correct length (8-63)"
+	read -e -p "Password for your WIFI (i.e. waterscope): " -i "waterscope" AP_WPA_PASSPHRASE
+	echo ""
+done  
+
+
+
+#backup existing config files
 echo "Backups:"                                                                                         | tee -a ${log_file}
 
 if [ -f /etc/dhcp/dhcpd.conf ]; then
@@ -185,37 +97,66 @@ if [ -f /etc/network/interfaces ]; then
         echo "/etc/network/interfaces to /etc/network/interfaces.bak.${run_time}"                       | tee -a ${log_file}
 fi
 
+
+
+#report to users
+echo ""
+echo ""
+echo "+========================================================================"
+echo "Your network settings will be:"                                                                   | tee -a ${log_file}
+echo "AP NIC address: 10.0.0.1  "                                                                  | tee -a ${log_file}
+echo "Subnet:  255.255.255.0 "																				| tee -a ${log_file}
+echo "Addresses assigned by DHCP will be from  10.0.0.2 to 10.0.0.255"                    | tee -a ${log_file}
+echo "Netmask: 255.255.255.0"                                                                           | tee -a ${log_file}
+
+
  
 echo "Setting up AP..."                                                                                 | tee -a ${log_file} 
 
-
+#isc-dhcp-sserver
 echo "Configure: /etc/default/isc-dhcp-server"                                                          | tee -a ${log_file} 
-echo "DHCPD_CONF=\"/etc/dhcp/dhcpd.conf\""                         >  /etc/default/isc-dhcp-server
-echo "INTERFACES=\"$NIC\""                                         >> /etc/default/isc-dhcp-server
 
-echo "Configure: /etc/default/hostapd"                                                          | tee -a ${log_file} 
-echo "DAEMON_CONF=\"/etc/hostapd/hostapd.conf\""                   > /etc/default/hostapd
+echo "INTERFACES=\"wlan0\""                                         >> /etc/default/isc-dhcp-server
+#echo "DHCPD_CONF=\"/etc/dhcp/dhcpd.conf\""                         >  /etc/default/isc-dhcp-server
 
+#/etc/dhcp/dhcpd.conf
 echo "Configure: /etc/dhcp/dhcpd.conf"                                                          | tee -a ${log_file} 
+
 echo "ddns-update-style none;"                                     >  /etc/dhcp/dhcpd.conf
-echo "default-lease-time 86400;"                                     >> /etc/dhcp/dhcpd.conf
-echo "max-lease-time 86400;"                                        >> /etc/dhcp/dhcpd.conf
-echo "subnet ${SUBNET} netmask 255.255.255.0 {"                    >> /etc/dhcp/dhcpd.conf
-echo "  range ${AP_LOWER_ADDR} ${AP_UPPER_ADDR}  ;"                >> /etc/dhcp/dhcpd.conf
+echo "default-lease-time 600;"                                     >> /etc/dhcp/dhcpd.conf
+echo "max-lease-time 7200;"                                        >> /etc/dhcp/dhcpd.conf
+echo "authoritative;"                                        >> /etc/dhcp/dhcpd.conf
+echo "log-facility local7;"                                        >> /etc/dhcp/dhcpd.conf
+echo "subnet 10.0.0.0 netmask 255.255.255.0 {"                    >> /etc/dhcp/dhcpd.conf
+echo "  range 10.0.0.5 10.0.0.55  ;"                >> /etc/dhcp/dhcpd.conf
+echo "  option broadcast-address 10.0.0.255;"                >> /etc/dhcp/dhcpd.conf
+echo "  option routers 10.0.0.1 ;"                >> /etc/dhcp/dhcpd.conf
+echo "  default-lease-time 600;"                >> /etc/dhcp/dhcpd.conf
+echo "   max-lease-time 7200;"                >> /etc/dhcp/dhcpd.conf
+echo "  option domain-name \"local\";"                              >> /etc/dhcp/dhcpd.conf
 echo "  option domain-name-servers 8.8.8.8, 8.8.4.4  ;"                       >> /etc/dhcp/dhcpd.conf
-echo "  option domain-name \"home\";"                              >> /etc/dhcp/dhcpd.conf
-echo "  option routers " ${AP_ADDRESS} " ;"                        >> /etc/dhcp/dhcpd.conf
 echo "}"                                                           >> /etc/dhcp/dhcpd.conf
 
-echo "Configure: /etc/hostapd/hostapd.conf"                                                     | tee -a ${log_file} 
+
+
+
+#setup /etc/default/hostapd
+echo "Configure: /etc/default/hostapd"                                                          | tee -a ${log_file} 
+
+echo "DAEMON_CONF=\"/etc/hostapd/hostapd.conf\""                   > /etc/default/hostapd
+
+
+# set up hostapd.conf
+echo "Configure: /etc/hostapd/hostapd.conf"   | tee -a ${log_file} 
+		#create the hostapd.conf file
 if [ ! -f /etc/hostapd/hostapd.conf ]; then
 	touch /etc/hostapd/hostapd.conf
 fi
 	
-echo "interface=$NIC"                                    >  /etc/hostapd/hostapd.conf
+echo "interface=wlan0"                                    >  /etc/hostapd/hostapd.conf
 echo "ssid=${AP_SSID}"                                   >> /etc/hostapd/hostapd.conf
-echo "channel=${AP_CHANNEL}"                             >> /etc/hostapd/hostapd.conf
-echo "# WPA and WPA2 configuration"                      >> /etc/hostapd/hostapd.conf
+echo "channel=6"                             				>> /etc/hostapd/hostapd.conf
+echo "hw_mode=g"                             				>> /etc/hostapd/hostapd.conf
 echo "macaddr_acl=0"                                     >> /etc/hostapd/hostapd.conf
 echo "auth_algs=1"                                       >> /etc/hostapd/hostapd.conf
 echo "ignore_broadcast_ssid=0"                           >> /etc/hostapd/hostapd.conf
@@ -224,66 +165,51 @@ echo "wpa_passphrase=${AP_WPA_PASSPHRASE}"               >> /etc/hostapd/hostapd
 echo "wpa_key_mgmt=WPA-PSK"                              >> /etc/hostapd/hostapd.conf
 echo "wpa_pairwise=TKIP"                                 >> /etc/hostapd/hostapd.conf
 echo "rsn_pairwise=CCMP"                                 >> /etc/hostapd/hostapd.conf
-echo "# Hardware configuration"                          >> /etc/hostapd/hostapd.conf
-if [ ${CHIPSET} = "yes" ]; then
 
-	echo "driver=rtl871xdrv"                         >> /etc/hostapd/hostapd.conf
-	echo "ieee80211n=1"                              >> /etc/hostapd/hostapd.conf
-    echo "device_name=RTL8192CU"                     >> /etc/hostapd/hostapd.conf
-    echo "manufacturer=Realtek"                      >> /etc/hostapd/hostapd.conf
-else
-	echo "driver=nl80211"                            >> /etc/hostapd/hostapd.conf
-fi
 
-echo "hw_mode=g"                                         >> /etc/hostapd/hostapd.conf
 
+#setup /etc/network/interfaces
+echo "Configure: /etc/network/interfaces"  | tee -a ${log_file}
+ 
+echo "# interfaces(5) file used by ifup(8) and ifdown(8)"     >  /etc/network/interfaces	
+echo "# Please note that this file is written to be used with dhcpcd"         >>  /etc/network/interfaces
+echo "# For static IP, consult /etc/dhcpcd.conf and 'man dhcpcd.conf'"        >>  /etc/network/interfaces
+echo "# Include files from /etc/network/interfaces.d:"                        >>  /etc/network/interfaces
+echo "source-directory /etc/network/interfaces.d"            >>  /etc/network/interfaces
+echo "auto lo"                                         >>  /etc/network/interfaces
+echo "iface lo inet loopback"                          >> /etc/network/interfaces
+echo ""                                         >>  /etc/network/interfaces
+echo "iface eth0 inet dhcp"                           >> /etc/network/interfaces
+echo ""                                         >>  /etc/network/interfaces
+echo "allow-hotplug wlan0"                       >> /etc/network/interfaces
+echo "iface wlan0 inet static"                     >> /etc/network/interfaces
+echo "address 10.0.0.1"      >> /etc/network/interfaces
+echo "netmask 255.255.255.0"      >> /etc/network/interfaces
+echo "up iptables-restore < /etc/iptables.ipv4.nat"      >> /etc/network/interfaces
+
+
+#prepare the iptables
+
+#/etc/sysctl/sysctrl.conf
 echo "Configure: /etc/sysctl.conf"                                                              | tee -a ${log_file} 
 echo "net.ipv4.ip_forward=1"                             >> /etc/sysctl.conf 
 
 echo "Configure: iptables"                                                                      | tee -a ${log_file} 
-iptables -t nat -A POSTROUTING -o ${WAN} -j MASQUERADE
-iptables -A FORWARD -i ${WAN} -o ${NIC} -m state --state RELATED,ESTABLISHED -j ACCEPT
-iptables -A FORWARD -i ${NIC} -o ${WAN} -j ACCEPT
+iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+iptables -A FORWARD -i eth0 -o wlan0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -A FORWARD -i wlan0 -o eth0 -j ACCEPT  
 sh -c "iptables-save > /etc/iptables.ipv4.nat"
 
-echo "Configure: /etc/network/interfaces"                                                       | tee -a ${log_file} 
-echo "auto ${NIC}"                                         >>  /etc/network/interfaces
-echo "allow-hotplug ${NIC}"                                >> /etc/network/interfaces
-echo "iface ${NIC} inet static"                           >> /etc/network/interfaces
-echo "        address ${AP_ADDRESS}"                       >> /etc/network/interfaces
-echo "        netmask 255.255.255.0"                     >> /etc/network/interfaces
-echo "up iptables-restore < /etc/iptables.ipv4.nat"      >> /etc/network/interfaces
 
 
+#set hostapd and dhcp server to run on boot up
+echo "Configure: startup"                                                              | tee -a ${log_file}
+update-rc.d hostapd enable
+update-rc.d isc-dhcp-server enable 
 
 
-
-if [ ${CHIPSET,,} = "yes" ]; then 
-	echo "Download and install: special hostapd version"                                           | tee -a ${log_file}
-	wget "http://raspberry-at-home.com/files/hostapd.gz"                                           | tee -a ${log_file}
-     gzip -d hostapd.gz
-     chmod 755 hostapd
-     cp hostapd /usr/sbin/
-fi
-
-ifdown ${NIC}                                                                                    | tee -a ${log_file}
-ifup ${NIC}                                                                                      | tee -a ${log_file}
-service hostapd start                                                                          | tee -a ${log_file}
-service isc-dhcp-server start                                                                  | tee -a ${log_file}
-
-echo ""                                                                                        | tee -a ${log_file}
-read -n 1 -p "Would you like to start AP on boot? (y/n): " startup_answer                       
-echo ""
-if [ ${startup_answer,,} = "y" ]; then
-        echo "Configure: startup"                                                              | tee -a ${log_file}
-        update-rc.d hostapd enable                                                             | tee -a ${log_file}
-        update-rc.d isc-dhcp-server enable                                                     | tee -a ${log_file}
-else
-        echo "In case you change your mind, please run below commands if you want AP to start on boot:"                       | tee -a ${log_file}
-        echo "update-rc.d hostapd enable"                                                      | tee -a ${log_file}
-        echo "update-rc.d isc-dhcp-server enable"                                              | tee -a ${log_file}
-fi
-
+#iptables
+echo "Configure: iptables"                                                                      | tee -a  ${log_file}
 
 
 echo ""                                                                                        | tee -a ${log_file}
@@ -291,6 +217,5 @@ echo "Do not worry if you see something like: [FAIL] Starting ISC DHCP server ab
 echo ""                                                                                        | tee -a ${log_file}
 echo "REMEMBER TO RESTART YOUR RASPBERRY PI!!!"                                                | tee -a ${log_file}
 echo ""                                                                                        | tee -a ${log_file}
-echo "Enjoy and visit raspberry-at-home.com"                                                   | tee -a ${log_file}
 
 exit 0
