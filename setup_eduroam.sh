@@ -68,10 +68,6 @@ echo "password="\""${AP_WPA_PASSPHRASE}"\"""         >>  /etc/wpa_supplicant/wpa
 echo "}"         >>  /etc/wpa_supplicant/wpa_supplicant.conf
 
 
-ifdown wlan0
-ifup wlan0
-iwconfig
-
 echo "you may need to reboot for the settings to work"        
 
 
