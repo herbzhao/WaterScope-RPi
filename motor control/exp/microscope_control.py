@@ -198,11 +198,16 @@ def stage_library(command,direction):
         else:
             step = step/2
 
-
+#defines some camera parameters 
 camera = picamera.PiCamera(resolution=(3280,2464))
-def camera_library(argv):
-    global fov
+camera.awb_mode = 'off'
+camera.awb_gains = (1,1.2)
+#camera.exposure_mode = 'off'
+#camera.iso = 0
+
+def camera_library(argv, *value):
     "Use this function from kivy interface to change picamera etc."
+    global fov
     if argv == 'start_preview':
         camera.start_preview()
     elif argv == 'stop_preview':
@@ -213,12 +218,8 @@ def camera_library(argv):
     elif argv == 'contrast_down':
         if camera.contrast >= -90:
             camera.contrast -= 10
-    elif argv == 'brightness_up':
-        if camera.brightness <= 90:
-            camera.brightness += 10
-    elif argv == 'brightness_down':
-        if camera.brightness >= -90:
-            camera.brightness -= 10
+    elif argv == 'brightness':
+        camera.brightness = value
     elif argv == 'shutter_up':
         if camera.shutter_speed <= 1000000:
             camera.shutter_speed += 1000

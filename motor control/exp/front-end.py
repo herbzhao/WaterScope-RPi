@@ -36,21 +36,21 @@ import microscope_control as mc
 
 def create_step_slider():
     """Manipulate step of motor movement"""
-    slider_value = 100 #default value
-    mc.step = slider_value
+    step_value = 100 #default value
+    mc.step = step_value
     step_slider_label = Label(
-        text='\n Motor \n steps: \n'+'{}'.format(slider_value), 
+        text='\n Motor \n steps: \n'+'{}'.format(step_value), 
         color = [0.2,0.2,1,1], halign = 'center', valign = 'middle',
         size_hint_y = 0.1)
     step_slider = Slider(
-        min=0, max=1000, value= slider_value, 
+        min=0, max=1000, value= step_value, 
         orientation = 'vertical', size_hint_y = 0.35)
 
     def motor_step_control(instance, value):
         """change step and update label when using step_slider"""
-        slider_value = int(value)
-        step_slider_label.text = '\n Motor \n steps: \n'+'{}'.format(slider_value)
-        mc.step = slider_value
+        step_value = int(value)
+        step_slider_label.text = '\n Motor \n steps: \n'+'{}'.format(step_value)
+        mc.step = step_value
 
     step_slider.bind(value = motor_step_control)
     return step_slider_label, step_slider
@@ -69,9 +69,9 @@ def create_focus_buttons():
         background_color = [0, 1, 0, 1], size_hint_y = 0.15)
 
     def focus_control(instance):
-        if instance.text == '+':
+        if instance == focus_button_up:
             mc.stage_library('move_z','+')
-        elif instance.text == '-':
+        elif instance == focus_button_down:
             mc.stage_library('move_z','-')
 
     focus_button_up.bind(on_press = focus_control)  #start_preview functions
@@ -96,9 +96,9 @@ def create_preview_buttons():
     stop_preview_button = Button(text = 'stop preview')
     def preview_control(instance):
         mc.fov = 1.00 #initialise the zoom level
-        if instance.text == 'preview':
+        if instance == start_preview_button:
             mc.camera_library('start_preview')
-        elif instance.text == 'stop preview':
+        elif instance == stop_preview_button:
             mc.camera_library('stop_preview')
 
     start_preview_button.bind(on_press = preview_control)  #start_preview functions
@@ -158,9 +158,9 @@ def create_page_buttons():
     
     def go_to_page(instance):
         """switch to page/screen based on button.text"""
-        if instance.text == "settings":
+        if instance == settings_button:
             sm.current = 'settings page'
-        if instance.text == "back":
+        if instance == back_to_main_button:
             sm.current = 'main page'
 
     settings_button.bind(on_press = go_to_page)
@@ -173,12 +173,12 @@ def create_settings_controllers():
     #crate a horizontal boxlayout to include label, slider and input box
     brightness_controller = BoxLayout(orientation = 'horizontal', size_hint_y = 0.1)
     brightness_label = Label(text = 'Brightness', size_hint_x = 0.2)
-    brightness_slider = Slider(min=0, max=64, value= 1,  size_hint_x = 0.5)
+    brightness_slider = Slider(min = 0, max = 100, value = 50, size_hint_x = 0.5)
     brightness_input = TextInput(text = '50', multiline = False,  size_hint_x = 0.3)
     # add widgets to the boxlayout (controller)
     for i in [brightness_label, brightness_slider, brightness_input]:
         brightness_controller.add_widget(i)
-        
+
     #contrast control
     contrast_controller = BoxLayout(orientation = 'horizontal', size_hint_y = 0.1)
     contrast_label = Label(text = 'Contrast', size_hint_x = 0.2)
@@ -187,36 +187,31 @@ def create_settings_controllers():
     for i in [contrast_label, contrast_slider, contrast_input]:
         contrast_controller.add_widget(i)
 
-    def settings_slider_control(instance,value):
+
+    def settings_control(instance,*value):
         """single feedback for sliders to control brightness, contrast, etc"""
+        # when slide, update the input box text in real-time
         if instance == brightness_slider:
-            brightness_input.text = str(instance.value)
-        elif instance == contrast_slider:
-            contrast_input.text = str(instance.value)
-
-    def settings_input_control(instance):
-        """single feedback for input box to control brightness, contrast, etc"""
-        # make sure the input does not go beyond range
-        if float(instance.text) > brightness_slider.max:
-            instance.text = str(brightness_slider.max)
-        elif float(instance.text) < brightness_slider.min:
-            instance.text = str(brightness_slider.min)
+            brightness_value = int(brightness_slider.value) #unified variable to define brightness
+            brightness_input.text = str(brightness_value)
+            
+        # when change input box, update the slider.value
         if instance == brightness_input:
-            brightness_slider.value = float(brightness_input.text)
+            # when value is out of range, set it to max/min
+            if float(instance.text) > brightness_slider.max:
+                instance.text = str(brightness_slider.max)
+            elif float(instance.text) < brightness_slider.min:
+                instance.text = str(brightness_slider.min)
+            brightness_value = int(instance.text)
+            brightness_slider.value = brightness_value    
 
-        if float(instance.text) > contrast_slider.max:
-            instance.text = str(contrast_slider.max)
-        elif float(instance.text) < contrast_slider.min:
-            instance.text = str(contrast_slider.min)
-        if instance == contrast_input:
-            contrast_slider.value = float(contrast_input.text)
+        mc.camera_library('brightness',brightness_value)
 
-
-    brightness_slider.bind(value = settings_slider_control)
-    brightness_input.bind(on_text_validate = settings_input_control)
-    contrast_slider.bind(value = settings_slider_control)
-    contrast_input.bind(on_text_validate = settings_input_control)
-
+    # bind sliders and input box to callback functions
+    for i in [brightness_slider, contrast_slider]:
+        i.bind(value = settings_control)
+    for i in [brightness_input, contrast_input]:
+        i.bind(on_text_validate = settings_control)
     return brightness_controller, contrast_controller
 
 
