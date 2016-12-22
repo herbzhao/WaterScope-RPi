@@ -26,6 +26,7 @@ from kivy.uix.slider import Slider
 # A layout is a special kind of widget that manages the size and/or position of its child widgets
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.floatlayout import FloatLayout
 #import kivy misc
 from kivy.uix.screenmanager import ScreenManager, Screen    #This manage different pages
 from kivy.core.window import Window    #This helps define window size, center..
@@ -47,9 +48,8 @@ def create_exit_button():
 
 
 def create_preview_buttons():
-    start_preview_button = Button(text = 'preview', markup=True)
-    stop_preview_button = Button(text = 'stop preview', markup=True)
-
+    start_preview_button = Button(text = 'preview')
+    stop_preview_button = Button(text = 'stop preview')
     def preview_control(instance):
         pass
     """	mc.fov = 1.00 #initialise the zoom level
@@ -67,15 +67,15 @@ def create_preview_buttons():
 
 
 def create_save_buttons():
-    save_button = Button(text = 'save image', markup=True)
-    timelapse_button = Button(text = 'time lapse', markup=True)
+    save_button = Button(text = 'save image')
+    timelapse_button = Button(text = 'time lapse')
     return save_button, timelapse_button
 
 
 def create_page_buttons():
     """Button to switch between pages"""
-    settings_button = Button(text = 'settings', markup=True)
-    back_to_main_button = Button(text = 'back', markup=True)
+    settings_button = Button(text = 'settings')
+    back_to_main_button = Button(text = 'back')
     
     def go_to_page(instance):
         """switch to page/screen based on button.text"""
@@ -93,17 +93,17 @@ def create_page_buttons():
 def create_step_slider():
     """Manipulate step of motor movement"""
     step_slider_label = Label(
-        text='Motor Steps: \n'+'{}'.format(100), markup=True, 
+        text='\n Motor \n steps: \n'+'{}'.format(100), 
         color = [0.2,0.2,1,1], halign = 'center', valign = 'middle',
-        size_hint_y = 0.05)
+        size_hint_y = 0.1)
     step_slider = Slider(
         min=0, max=1000, value= 100, 
-        orientation = 'vertical', size_hint_y = 0.4)
+        orientation = 'vertical', size_hint_y = 0.35)
 
     def motor_step_control(instance, value):
         """change step and update label when using step_slider"""
         slider_value = int(value)
-        step_slider_label.text = 'Motor Steps: \n'+'{}'.format(slider_value)
+        step_slider_label.text = '\n Motor \n steps: \n'+'{}'.format(slider_value)
         print (value)
 
     step_slider.bind(value = motor_step_control)
@@ -166,13 +166,13 @@ def create_settings_controllers():
 def create_focus_buttons():
     """+ and - buttons to control focus/Z axis"""
     focus_label = Label(
-        text='Focus', markup=True, color = [0, 1, 0, 1], 
+        text='Focus', color = [0, 1, 0, 1], 
         halign = 'center', valign = 'middle', size_hint_y = 0.05)
     focus_button_up = Button(
-        text = '+', markup=True, 
+        text = '+', 
         background_color = [0, 1, 0, 1], size_hint_y = 0.15)
     focus_button_down = Button(
-        text = '-', markup=True, 
+        text = '-', 
         background_color = [0, 1, 0, 1], size_hint_y = 0.15)
 
     def focus_control(instance):
@@ -203,7 +203,8 @@ def create_filepath_input():
 def create_map_controller():
     map_controller = Scatter(
         size_hint = (1,1), do_rotation=False, do_translation=True,
-        do_scale=True, scale = 1, center = Window.center)
+        do_scale=True, scale = 1)
+    map_controller.center = Window.center
     # automatically determine the size based on screen size
     default_scale = Window.height / map_controller.height*0.75
     # determine the size of active area
@@ -263,9 +264,8 @@ def add_main_page_widgets(page):
     # The preview window's aspect ratio is 4:3 and the touch screen is 5:3.
     # There are gaps with Window.width*0.1 on left and right side
     horizontal_layout_1 = BoxLayout(size_hint_x = 0.1, orientation = 'vertical')
-    horizontal_layout_2 = GridLayout(size_hint_x = 0.8)
+    horizontal_layout_2 = GridLayout(size_hint_x = 0.8, cols = 0)    #there is some minor bug to fix
     horizontal_layout_3 = BoxLayout(size_hint_x = 0.1,  orientation = 'vertical')
-
     # add 3 layers to base_layout
     base_layout.add_widget(horizontal_layout_1)
     base_layout.add_widget(horizontal_layout_2)
@@ -278,7 +278,6 @@ def add_main_page_widgets(page):
     horizontal_layout_1.add_widget(focus_button_up)
     horizontal_layout_1.add_widget(focus_button_down)
     horizontal_layout_1.add_widget(exit_button)
-
 
     # middle section  - horizontal_layout_2
     horizontal_layout_2.add_widget(map_controller)
