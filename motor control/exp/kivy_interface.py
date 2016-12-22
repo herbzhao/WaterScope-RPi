@@ -113,13 +113,11 @@ def create_exit_button():
 
 	# Create Exit button
 	exit_button = Button(text = 'exit', \
-	center = (Window.center[0]*0.1,Window.center[1]*0.5), \
-	size_hint = (None,None))
+	size_hint = (0.1,0.5))
 
 	exit_button.bind(on_press = exit_GUI)
 
-	exit_button_left_top = anchoring('left', 'top', exit_button)
-	return exit_button_left_top
+	return exit_button
 
 
 
@@ -130,10 +128,10 @@ def create_controller():
 	# few parameters for scaling
 
 	# this defines the active area of dragging/zooming
-	normal_scale = 1
+	normal_scale = 4.5
 	# amount of pinch for zoom in and out
 	zoom_in_scale = 5.5
-	zoom_out_scale = 4.5
+	zoom_out_scale = 3.5
 	# distance to drag in x and y direction for action
 	x_sensitive= Window.center[0]/3
 	y_sensitive = Window.center[1]/3
@@ -145,8 +143,8 @@ def create_controller():
 	scale_min= zoom_out_scale, scale_max=zoom_in_scale, center = Window.center)
 
 	# a reference object to show the active area
-	control_object = Image()
-	controller.add_widget(control_object)
+	#control_object = Image()
+	#controller.add_widget(control_object)
 
 	#create microscope control parts
 	microscope_control = microscope_controller()

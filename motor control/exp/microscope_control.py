@@ -199,7 +199,7 @@ def stage_library(command,direction):
             step = step/2
 
 
-camera = picamera.PiCamera(resolution = (3280, 2464))
+camera = picamera.PiCamera(resolution=(3280,2464))
 def camera_library(argv):
     global fov
     "Use this function from kivy interface to change picamera etc."
@@ -261,7 +261,7 @@ def camera_library(argv):
 #run microscope_control.py directly
 if __name__ == '__main__':
     pass
-    
+    '''
     argv = docopt.docopt(__doc__, options_first=True)
     
     stage = Stage()
@@ -363,6 +363,6 @@ if __name__ == '__main__':
 
         curses.wrapper(move_stage_with_keyboard)
 
-    
+    '''
 
 

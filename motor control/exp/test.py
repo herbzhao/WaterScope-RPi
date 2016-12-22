@@ -26,7 +26,7 @@ from kivy.uix.carousel import Carousel
 from kivy.uix.floatlayout import FloatLayout
 # Floatlayout can be resized, moved easily
 from kivy.uix.anchorlayout import AnchorLayout
-
+from kivy.uix.boxlayout import BoxLayout
 
 '''import misc'''
 #This helps define window size, center..
@@ -36,11 +36,24 @@ from kivy.uix.slider import Slider
 from kivy.uix.vkeyboard import VKeyboard
 
 
+'''import misc'''
+#This helps define window size, center..
+from kivy.core.window import Window
+
+
 class create_widgets(FloatLayout):
 	def __init__(self, **kwargs):
 		super(create_widgets, self).__init__(**kwargs)
 		# add widget to the GUI
 		
+		vertical_box_layout = BoxLayout(orientation = 'vertical')
+		vertical_box_layout.add_widget(Button())
+		vertical_box_layout.add_widget(Button())
+		vertical_box_layout.add_widget(Button())
+		self.add_widget(vertical_box_layout)
+		
+
+
 		def on_enter(instance):
 			global file_path
 			file_path = instance.text
@@ -69,7 +82,7 @@ class create_widgets(FloatLayout):
 		self.add_widget(drag)
 
 
-		
+
 		
 
 class WaterScope_GUI(App):
