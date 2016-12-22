@@ -26,12 +26,57 @@ from kivy.uix.slider import Slider
 # A layout is a special kind of widget that manages the size and/or position of its child widgets
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.floatlayout import FloatLayout
 #import kivy misc
 from kivy.uix.screenmanager import ScreenManager, Screen    #This manage different pages
 from kivy.core.window import Window    #This helps define window size, center..
 
 #import microscope control parts
+import microscope_control as mc
+
+
+def create_step_slider():
+    """Manipulate step of motor movement"""
+    slider_value = 100 #default value
+    mc.step = slider_value
+    step_slider_label = Label(
+        text='\n Motor \n steps: \n'+'{}'.format(slider_value), 
+        color = [0.2,0.2,1,1], halign = 'center', valign = 'middle',
+        size_hint_y = 0.1)
+    step_slider = Slider(
+        min=0, max=1000, value= slider_value, 
+        orientation = 'vertical', size_hint_y = 0.35)
+
+    def motor_step_control(instance, value):
+        """change step and update label when using step_slider"""
+        slider_value = int(value)
+        step_slider_label.text = '\n Motor \n steps: \n'+'{}'.format(slider_value)
+        mc.step = slider_value
+
+    step_slider.bind(value = motor_step_control)
+    return step_slider_label, step_slider
+
+
+def create_focus_buttons():
+    """+ and - buttons to control focus/Z axis"""
+    focus_label = Label(
+        text='Focus', color = [0, 1, 0, 1], 
+        halign = 'center', valign = 'middle', size_hint_y = 0.05)
+    focus_button_up = Button(
+        text = '+', 
+        background_color = [0, 1, 0, 1], size_hint_y = 0.15)
+    focus_button_down = Button(
+        text = '-', 
+        background_color = [0, 1, 0, 1], size_hint_y = 0.15)
+
+    def focus_control(instance):
+        if instance.text == '+':
+            mc.stage_library('move_z','+')
+        elif instance.text == '-':
+            mc.stage_library('move_z','-')
+
+    focus_button_up.bind(on_press = focus_control)  #start_preview functions
+    focus_button_down.bind(on_press = focus_control)
+    return focus_label, focus_button_up, focus_button_down
 
 
 def create_exit_button():
@@ -43,7 +88,6 @@ def create_exit_button():
         raise SystemExit(0)
 
     exit_button.bind(on_press = exit_GUI)
-
     return exit_button
 
 
@@ -51,20 +95,55 @@ def create_preview_buttons():
     start_preview_button = Button(text = 'preview')
     stop_preview_button = Button(text = 'stop preview')
     def preview_control(instance):
-        pass
-    """	mc.fov = 1.00 #initialise the zoom level
+        mc.fov = 1.00 #initialise the zoom level
         if instance.text == 'preview':
-            microscope_control.start_preview()
-        else:
-            microscope_control.stop_preview()
-
-    microscope_control = microscope_map_controller()"""
+            mc.camera_library('start_preview')
+        elif instance.text == 'stop preview':
+            mc.camera_library('stop_preview')
 
     start_preview_button.bind(on_press = preview_control)  #start_preview functions
     stop_preview_button.bind(on_press = preview_control)
-
     return start_preview_button, stop_preview_button
 
+
+def create_map_controller():
+    map_controller = Scatter(
+        size_hint = (1,1), do_rotation=False, do_translation=True,
+        do_scale=True, scale = 1)
+    map_controller.center = Window.center
+    # automatically determine the size based on screen size
+    default_scale = Window.height / map_controller.height*0.75
+    # determine the size of active area
+    map_controller.scale = default_scale
+    # determine the amount of zoom and drag needed before moving
+    map_controller.scale_max = default_scale*1.2
+    map_controller.scale_min = default_scale*0.8
+    x_sensitive = Window.width*0.1
+    y_sensitive = Window.height*0.2
+    # dummy object showing active area
+    #map_controller.add_widget(Image())
+
+    def map_control_feedback(instance, value):
+        """the callback functions for map_controller scatter object"""
+        if map_controller.center[0] - Window.center[0] > x_sensitive:
+            mc.stage_library('move_x', '-')
+        elif map_controller.center[0] - Window.center[0] < -1* x_sensitive:
+            mc.stage_library('move_x', '+')
+        elif map_controller.center[1] - Window.center[1] > y_sensitive:
+            mc.stage_library('move_y', '-')
+        elif map_controller.center[1] - Window.center[1] < -1*y_sensitive:
+            mc.stage_library('move_y', '+')
+        elif map_controller.scale < default_scale*0.9:
+            mc.camera_library('zoom_out')
+        elif map_controller.scale > default_scale*1.1:
+            mc.camera_library('zoom_in')
+        #after taking actions, reset scatter location and scale to default
+        map_controller.center = Window.center
+        map_controller.scale = default_scale
+        
+    map_controller.bind(on_touch_up = map_control_feedback)
+    return map_controller
+    
 
 def create_save_buttons():
     save_button = Button(text = 'save image')
@@ -88,28 +167,6 @@ def create_page_buttons():
     back_to_main_button.bind(on_press = go_to_page)
 
     return settings_button, back_to_main_button
-
-
-def create_step_slider():
-    """Manipulate step of motor movement"""
-    step_slider_label = Label(
-        text='\n Motor \n steps: \n'+'{}'.format(100), 
-        color = [0.2,0.2,1,1], halign = 'center', valign = 'middle',
-        size_hint_y = 0.1)
-    step_slider = Slider(
-        min=0, max=1000, value= 100, 
-        orientation = 'vertical', size_hint_y = 0.35)
-
-    def motor_step_control(instance, value):
-        """change step and update label when using step_slider"""
-        slider_value = int(value)
-        step_slider_label.text = '\n Motor \n steps: \n'+'{}'.format(slider_value)
-        print (value)
-
-    step_slider.bind(value = motor_step_control)
-
-    return step_slider_label, step_slider
-
 
 
 def create_settings_controllers():
@@ -163,30 +220,6 @@ def create_settings_controllers():
     return brightness_controller, contrast_controller
 
 
-def create_focus_buttons():
-    """+ and - buttons to control focus/Z axis"""
-    focus_label = Label(
-        text='Focus', color = [0, 1, 0, 1], 
-        halign = 'center', valign = 'middle', size_hint_y = 0.05)
-    focus_button_up = Button(
-        text = '+', 
-        background_color = [0, 1, 0, 1], size_hint_y = 0.15)
-    focus_button_down = Button(
-        text = '-', 
-        background_color = [0, 1, 0, 1], size_hint_y = 0.15)
-
-    def focus_control(instance):
-        if instance.text == '+':
-            print('focus + ')
-        elif instance.text == '-':
-            print('focus - ')
-
-    focus_button_up.bind(on_press = focus_control)  #start_preview functions
-    focus_button_down.bind(on_press = focus_control)
-
-    return focus_label, focus_button_up, focus_button_down
-
-
 def create_filepath_input():
     def on_enter(instance):
         global filepath
@@ -198,52 +231,6 @@ def create_filepath_input():
         text = '/home/pi/Desktop/photos/test.jpg')
     filepath_input.bind(on_text_validate = on_enter)
     return filepath_input
-
-
-def create_map_controller():
-    map_controller = Scatter(
-        size_hint = (1,1), do_rotation=False, do_translation=True,
-        do_scale=True, scale = 1)
-    map_controller.center = Window.center
-    # automatically determine the size based on screen size
-    default_scale = Window.height / map_controller.height*0.75
-    # determine the size of active area
-    map_controller.scale = default_scale
-    # determine the amount of zoom and drag needed before moving
-    map_controller.scale_max = default_scale*1.2
-    map_controller.scale_min = default_scale*0.8
-    x_sensitive = Window.width*0.3
-    y_sensitive = Window.height*0.3
-    # dummy object showing active area
-    map_controller.add_widget(Image())
-
-    def map_control_feedback(instance, value):
-        """the callback functions for map_controller scatter object"""
-        if map_controller.center[0] - Window.center[0] > x_sensitive:
-            #microscope_control.drag_right()
-            print('moving x+')
-        elif map_controller.center[0] - Window.center[0] < -1* x_sensitive:
-            #microscope_control.drag_left()
-            pass
-        elif map_controller.center[1] - Window.center[1] > y_sensitive:
-            #microscope_control.drag_top()
-            print('moving y+')
-        elif map_controller.center[1] - Window.center[1] < -1*y_sensitive:
-            #microscope_control.drag_bot()
-            pass
-        elif map_controller.scale < default_scale*0.9:
-            #microscope_control.pinch_out()
-            print('pinch')
-        elif map_controller.scale > default_scale*1.1:
-            #microscope_control.pinch_in()
-            pass
-        #after taking actions, reset scatter location and scale to default
-        map_controller.center = Window.center
-        map_controller.scale = default_scale
-        
-    map_controller.bind(on_touch_up = map_control_feedback)
-
-    return map_controller
 
 
 def add_main_page_widgets(page):

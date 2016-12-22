@@ -176,9 +176,9 @@ def stage_library(command,direction):
     #stage settings
     if command == 'move_x':
         if direction == '+':
-            stage.move_rel([step,0,0])
-        else:
             stage.move_rel([-step,0,0])
+        else:
+            stage.move_rel([step,0,0])
         
     if command == 'move_y':
         if direction == '+':
