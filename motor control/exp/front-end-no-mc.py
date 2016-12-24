@@ -11,6 +11,7 @@ Usage:
 
 @author: Tianheng Zhao
 """
+from datetime import datetime
 
 import kivy
 from kivy.app import App  # base Class of your App inherits from the App class
@@ -153,18 +154,21 @@ def create_settings_button():
             settings_popup_content.add_widget(contrast_controller)
         elif instance == brightness_button:
             settings_popup_content.add_widget(brightness_controller)
+        elif instance == filepath_button:
+            settings_popup_content.add_widget(filepath_controller)
     
     # add buttons to call out popups
+    settings_panel, contrast_button, brightness_button, filepath_button = create_settings_panel()
     brightness_controller, contrast_controller = create_settings_controllers()
     filepath_controller = create_filepath_controller()
-    settings_button.bind(on_release= settings_popup_content_switch)
-    contrast_button.bind(on_release= settings_popup_content_switch)
-    brightness_button.bind(on_release= settings_popup_content_switch)
+
+    for button in [settings_button, contrast_button, brightness_button, filepath_button]:
+        button.bind(on_release= settings_popup_content_switch)
 
     return settings_button
 
 def create_settings_panel():
-    # a panel to host different option buttons to call individual popup
+    """a panel to host different option buttons to call individual popup"""
     settings_panel = BoxLayout()
     contrast_button = Button(text='contrast')
     brightness_button = Button(text='brightness')
@@ -229,33 +233,40 @@ def create_settings_controllers():
     return brightness_controller, contrast_controller
 
 def create_filepath_controller():
-    global number_of_image # save function can alter this value
+    global number_of_image
+    # if there is no predefined number, give default (1) to the NOI
+    try: 
+        number_of_image
+    except NameError:
+        number_of_image = 1
+
+
     folder = '/home/pi/Desktop/photos/' 
-    number_of_image = 1 
     filename = '{:%Y%m%d}-image-{:03}.jpg'.format(datetime.today(), number_of_image)
     filepath = folder + filename
-
     filepath_controller = BoxLayout(orientation = 'horizontal', size_hint_y = 0.1)
-    folder_button = Button(text = 'Choose folder') # a button to popup filechooser
-    filepath_input = TextInput(size_hint_x = 0.8, multiline = True)
+    folder_chooser_button = Button(text = 'Choose folder', size_hint_x = 0.2) # a button to popup filechooser
+    filepath_input = TextInput(
+        multiline = True, 
+        size_hint_x = 1 - folder_chooser_button.size_hint_x)
     filepath_input.text = filepath
 
-    for i in [filepath_input, folder_button]:
+    for i in [filepath_input, folder_chooser_button]:
         filepath_controller.add_widget(i)
     
-    folder = FileChooser(size_hint = (1,1))
-    folder.add_widget(FileChooserIconLayout())
-
-    folder_popup = Popup(title = 'choose folder to save image', size_hint = (0.8, 0.8))
-    folder_popup.content = folder
-    folder_button.bind(on_release = folder_popup.open)
+    folder_chooser = FileChooser()
+    folder_chooser.add_widget(FileChooserIconLayout())
+    # a popup window to choose folder
+    folder_chooser_popup = Popup(title = 'choose folder to save image', size_hint = (0.8, 0.8))
+    folder_chooser_popup.content = folder_chooser
+    folder_chooser_button.bind(on_release = folder_chooser_popup.open)
     def choose_folder(instance, value):
         #print(instance)
         folder = str(value) + '\\'
         print(folder)
         filepath = folder + filename
         filepath_input.text = filepath
-    folder.bind(path = choose_folder)
+    folder_chooser.bind(path = choose_folder)
     return filepath_controller
 
 def create_focus_buttons():
