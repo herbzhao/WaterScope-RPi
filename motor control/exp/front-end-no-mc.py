@@ -122,42 +122,56 @@ def create_step_slider():
     return step_slider_label, step_slider
 
 
-def create_settings_dropdown():
-    settings_button = Button(text = 'settings', background_color = [0, 1, 1, 1])
-    setting_popup = Popup( title='Setting', size_hint=(0.8, 0.2))
-    setting_popup.pos_hint =  {'x':0.5-setting_popup.size_hint[0]/2,
-                               'y':0.2-setting_popup.size_hint[1]/2} # distance from popup.center
-    setting_popup_content = GridLayout(cols=1) # a blank layout to put other widgets in
-    setting_popup.content = setting_popup_content # link the popup.content to a widget
-    # controllers to add to content
-    brightness_controller, contrast_controller = create_settings_controllers()
+def create_settings_button():
+    # a button to call out settings panel
+    settings_button = Button(text = 'settings')
 
-    def setting_popup_content_switch(instance, *value):
-        """show popup with corresponding setting"""
-        setting_popup_content.clear_widgets()
-        if instance == contrast_button:
-            setting_popup_content.add_widget(contrast_controller)
+    # configure a popup window to display settings and parameters
+    settings_popup = Popup( title='Settings', size_hint=(0.8, 0.2))
+    settings_popup.pos_hint =  {'x':0.5-settings_popup.size_hint[0]/2,
+                               'y':0.1-settings_popup.size_hint[1]/2} # distance from popup.center
+    settings_popup_content = GridLayout(cols=1) # a blank layout to put other widgets in
+    settings_popup.content = settings_popup_content
+    
+    def fullscreen_preview(instance):
+        """when popup get dismissed, revert camera preview window to normal"""
+        print('popup dismissed')
+    def reduced_size_preview(instance):
+        """when popup get opened, reduce camera preview window size to prevent blocking"""
+        print('popup opened')
+        
+    settings_popup.bind(on_dismiss = fullscreen_preview)
+    settings_popup.bind(on_open = reduced_size_preview)
+
+    def settings_popup_content_switch(instance):
+        """alter popup content when clicking buttons"""
+        settings_popup_content.clear_widgets()
+        settings_popup.open()
+        if instance == settings_button:
+            settings_popup_content.add_widget(settings_panel)
+        elif instance == contrast_button:
+            settings_popup_content.add_widget(contrast_controller)
         elif instance == brightness_button:
-            setting_popup_content.add_widget(brightness_controller)
-        setting_popup.open()
-
-    contrast_button = Button(text='contrast', size_hint_y = None,  background_color = [0, 1, 1, 1])
-    brightness_button = Button(text='brightness', size_hint_y = None,  background_color = [0, 1, 1, 1])
-    contrast_button.bind(on_release= setting_popup_content_switch)
-    brightness_button.bind(on_release= setting_popup_content_switch)
-
-
-    settings_dropdown = DropDown()
-
-    for i in [contrast_button, brightness_button]:
-        settings_dropdown.add_widget(i)
-    def show_dropdown(instance):
-        settings_dropdown.open(settings_button) # use DropDown.open() to bind dropdown with button
-    settings_button.bind(on_release = show_dropdown)
+            settings_popup_content.add_widget(brightness_controller)
+    
+    # add buttons to call out popups
+    brightness_controller, contrast_controller = create_settings_controllers()
+    filepath_controller = create_filepath_controller()
+    settings_button.bind(on_release= settings_popup_content_switch)
+    contrast_button.bind(on_release= settings_popup_content_switch)
+    brightness_button.bind(on_release= settings_popup_content_switch)
 
     return settings_button
 
-
+def create_settings_panel():
+    # a panel to host different option buttons to call individual popup
+    settings_panel = BoxLayout()
+    contrast_button = Button(text='contrast')
+    brightness_button = Button(text='brightness')
+    filepath_button = Button(text='change filepath')
+    for i in [contrast_button, brightness_button, filepath_button]:
+        settings_panel.add_widget(i)
+    return (settings_panel, contrast_button, brightness_button, filepath_button)
 
 def create_settings_controllers():
     # crate a horizontal boxlayout to include label, slider and input box
@@ -170,7 +184,6 @@ def create_settings_controllers():
     # add widgets to the boxlayout (controller)
     for i in [brightness_label, brightness_input, brightness_slider]:
         brightness_controller.add_widget(i)
-
     # contrast control
     contrast_controller = BoxLayout(orientation = 'horizontal', size_hint_y = 0.1)
     contrast_label = Label(text = 'Contrast:', size_hint_x = 0.2)
@@ -181,49 +194,41 @@ def create_settings_controllers():
     for i in [contrast_label, contrast_input, contrast_slider]:
         contrast_controller.add_widget(i)
 
-
     def settings_control(instance,*value):
-        """single feedback for sliders to control brightness, contrast, etc"""
-        # when slide, update the input box text in real-time
-        if instance == brightness_slider or instance == brightness_input:
-            if instance == brightness_slider:
+        """update sliders with TextInput and vice versa. update camera settings"""
+        # update Slider and TextInput
+        for slider, textinput in [  # for i, j = [[1,2][3,4]]  >>>i = 1,3  j = 2,4
+            [brightness_slider, brightness_input],
+            [contrast_slider, contrast_input]]: 
+            if instance == slider:
                 # unified variable to define brightness
                 # returns a tuple due to optional arguments
-                brightness_value = int(value[0])
-                brightness_input.text = str(brightness_value)
-            elif instance == brightness_input:
+                updated_value = int(slider.value)
+                textinput.text = str(updated_value)
+            elif instance == textinput:
                 # when value is out of range, set it to max/min
-                if int(instance.text) >= brightness_slider.max:
-                    instance.text = str(int(brightness_slider.max)) # 100.0 will give error for slider
-                elif int(instance.text) <= brightness_slider.min:
-                    instance.text = str(int(brightness_slider.min))
-                brightness_value = int(instance.text)
-                brightness_slider.value = brightness_value
-            # update both slider and input box value
-            print('brightness', brightness_value, type(brightness_value))
-
-        elif instance == contrast_slider or instance == contrast_input:
-            if instance == contrast_slider:
-                contrast_value = int(value[0])
-                contrast_input.text = str(contrast_value)
-            elif instance == contrast_input:
-                if int(instance.text) >= contrast_slider.max:
-                    instance.text = str(int(contrast_slider.max))
-                elif int(instance.text) <= contrast_slider.min:
-                    instance.text = str(int(contrast_slider.min))
-                contrast_value = int(instance.text)
-                contrast_slider.value = contrast_value
-            print('contrast', contrast_value, type(contrast_value))
-        #mc.camera_library('brightness',brightness_value)
+                if int(textinput.text) >= slider.max:
+                    textinput.text = str(int(slider.max)) # float will give error for slider
+                elif int(textinput.text) <= slider.min:
+                    textinput.text = str(int(slider.min))
+                updated_value = int(textinput.text)
+                slider.value = updated_value
+        # update camera settings 
+        if instance in [brightness_slider, brightness_input]:
+            print('brightness', updated_value, type(updated_value))
+        elif instance in [contrast_slider, contrast_input]:
+            print('contrast', updated_value, type(updated_value))
 
     # bind sliders and input box to callback functions
-    for i in [brightness_slider, contrast_slider]:
-        i.bind(value = settings_control)
-    for i in [brightness_input, contrast_input]:
-        i.bind(on_text_validate = settings_control)
+    for slider, textinput in [  # for i, j = [[1,2][3,4]]  >>>i = 1,3  j = 2,4
+            [brightness_slider, brightness_input],
+            [contrast_slider, contrast_input]]: 
+        slider.bind(value = settings_control)
+        textinput.bind(on_text_validate = settings_control)
+
     return brightness_controller, contrast_controller
 
-def create_filepath_input():
+def create_filepath_controller():
     global number_of_image # save function can alter this value
     folder = '/home/pi/Desktop/photos/' 
     number_of_image = 1 
@@ -333,7 +338,7 @@ def add_main_page_widgets(page):
     start_preview_button, stop_preview_button = create_preview_buttons()
     save_button, timelapse_button = create_save_buttons()
     #settings_button, back_to_main_button = create_page_buttons()
-    settings_button = create_settings_dropdown()
+    settings_button = create_settings_button()
     focus_label, focus_button_up, focus_button_down = create_focus_buttons()
     step_slider_label, step_slider  = create_step_slider()
     map_controller = create_map_controller()
