@@ -202,6 +202,8 @@ def stage_library(command,direction):
 camera = picamera.PiCamera(resolution=(3280,2464))
 camera.awb_mode = 'off'
 camera.awb_gains = (1,1.2)
+camera.meter_mode = 'spot'
+camera.annotate_text_size = 100
 #camera.exposure_mode = 'off'
 #camera.iso = 0
 
@@ -219,7 +221,7 @@ def camera_library(argv, *value):
         if camera.contrast >= -90:
             camera.contrast -= 10
     elif argv == 'brightness':
-        camera.brightness = value
+        camera.brightness = int(value)
     elif argv == 'shutter_up':
         if camera.shutter_speed <= 1000000:
             camera.shutter_speed += 1000
@@ -230,6 +232,7 @@ def camera_library(argv, *value):
         try:
             fov = fov*3/4
             camera.zoom = (0.5-fov/2, 0.5-fov/2, fov, fov)
+            camera.annotate_text = '{0:.2f} times magnification'.format(1/fov)
         except NameError:
             pass
         
@@ -238,6 +241,7 @@ def camera_library(argv, *value):
             if fov < 1:
                 fov = fov*4/3
                 camera.zoom = (0.5-fov/2, 0.5-fov/2, fov, fov)
+                camera.annotate_text = '{0:.2f} times magnification'.format(1/fov)
         except NameError:
             pass
         

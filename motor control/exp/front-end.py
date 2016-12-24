@@ -109,15 +109,15 @@ def create_preview_buttons():
 def create_map_controller():
     map_controller = Scatter(
         size_hint = (1,1), do_rotation=False, do_translation=True,
-        do_scale=True, scale = 1)
+        do_scale=True)
     map_controller.center = Window.center
     # automatically determine the size based on screen size
-    default_scale = Window.height / map_controller.height*0.75
+    default_scale = Window.height / map_controller.height*1
     # determine the size of active area
     map_controller.scale = default_scale
     # determine the amount of zoom and drag needed before moving
-    map_controller.scale_max = default_scale*1.2
-    map_controller.scale_min = default_scale*0.8
+    map_controller.scale_max = default_scale*1.1
+    map_controller.scale_min = default_scale*0.9
     x_sensitive = Window.width*0.1
     y_sensitive = Window.height*0.2
     # dummy object showing active area
@@ -192,8 +192,9 @@ def create_settings_controllers():
         """single feedback for sliders to control brightness, contrast, etc"""
         # when slide, update the input box text in real-time
         if instance == brightness_slider:
-            brightness_value = int(brightness_slider.value) #unified variable to define brightness
+            brightness_value = int(instance.value) #unified variable to define brightness
             brightness_input.text = str(brightness_value)
+            mc.camera_library('brightness', brightness_value)
             
         # when change input box, update the slider.value
         if instance == brightness_input:
@@ -203,9 +204,8 @@ def create_settings_controllers():
             elif float(instance.text) < brightness_slider.min:
                 instance.text = str(brightness_slider.min)
             brightness_value = int(instance.text)
-            brightness_slider.value = brightness_value    
-
-        mc.camera_library('brightness',brightness_value)
+            brightness_slider.value = brightness_value
+            mc.camera_library('brightness', brightness_value)
 
     # bind sliders and input box to callback functions
     for i in [brightness_slider, contrast_slider]:
