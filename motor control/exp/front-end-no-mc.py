@@ -78,6 +78,9 @@ def create_save_buttons():
     timelapse_button = Button(text = 'time lapse')
     return save_button, timelapse_button
 
+    #camera.capture(fullpath, format="jpeg", use_video_port=True)
+    #camera.annotate_text="Saved '%s'" % (filepath % n)
+
 
 '''def create_page_buttons():
     """Button to switch between pages"""
@@ -221,19 +224,34 @@ def create_settings_controllers():
     return brightness_controller, contrast_controller
 
 def create_filepath_input():
-    filepath_controller = BoxLayout(orientation = 'horizontal', size_hint_y = 0.1)
-    filepath_chooser = Button(label = 'filechooser')
+    global number_of_image # save function can alter this value
+    folder = '/home/pi/Desktop/photos/' 
+    number_of_image = 1 
+    filename = '{:%Y%m%d}-image-{:03}.jpg'.format(datetime.today(), number_of_image)
+    filepath = folder + filename
 
-    filepath_input = TextInput(
-        size_hint_x = 0.8,
-        multiline = False,
-        text = '/home/pi/Desktop/photos/test.jpg')
-    def on_enter(instance):
-        global filepath
-        filepath = instance.text
-        print(filepath)
-    filepath_input.bind(on_text_validate = on_enter)
-    return filepath_input
+    filepath_controller = BoxLayout(orientation = 'horizontal', size_hint_y = 0.1)
+    folder_button = Button(text = 'Choose folder') # a button to popup filechooser
+    filepath_input = TextInput(size_hint_x = 0.8, multiline = True)
+    filepath_input.text = filepath
+
+    for i in [filepath_input, folder_button]:
+        filepath_controller.add_widget(i)
+    
+    folder = FileChooser(size_hint = (1,1))
+    folder.add_widget(FileChooserIconLayout())
+
+    folder_popup = Popup(title = 'choose folder to save image', size_hint = (0.8, 0.8))
+    folder_popup.content = folder
+    folder_button.bind(on_release = folder_popup.open)
+    def choose_folder(instance, value):
+        #print(instance)
+        folder = str(value) + '\\'
+        print(folder)
+        filepath = folder + filename
+        filepath_input.text = filepath
+    folder.bind(path = choose_folder)
+    return filepath_controller
 
 def create_focus_buttons():
     """+ and - buttons to control focus/Z axis"""
