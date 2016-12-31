@@ -198,54 +198,49 @@ def stage_library(command,direction):
         else:
             step = step/2
 
-#defines some camera parameters 
-camera = picamera.PiCamera(resolution=(3280,2464))
-camera.awb_mode = 'off'
-camera.awb_gains = (1,1.2)
-camera.meter_mode = 'spot'
-camera.annotate_text_size = 100
-#camera.exposure_mode = 'off'
-#camera.iso = 0
+
+
 
 def camera_library(argv, *value):
     "Use this function from kivy interface to change picamera etc."
     global fov
+    #defines some camera parameters 
+    camera = picamera.PiCamera(resolution=(3280,2464))
+    camera.awb_mode = 'off'
+    camera.awb_gains = (1,1.2)
+    camera.meter_mode = 'spot'
+    camera.annotate_text_size = 100
+    #camera.exposure_mode = 'off'
+    #camera.iso = 0
+
     if argv == 'start_preview':
         camera.start_preview()
     elif argv == 'stop_preview':
         camera.stop_preview()
-    elif argv == 'contrast_up':
-        if camera.contrast <= 90:
-            camera.contrast += 10
-    elif argv == 'contrast_down':
-        if camera.contrast >= -90:
-            camera.contrast -= 10
+    elif argv == 'contrast':
+            camera.contrast = value
     elif argv == 'brightness':
-        camera.brightness = int(value)
-    elif argv == 'shutter_up':
-        if camera.shutter_speed <= 1000000:
-            camera.shutter_speed += 1000
-    elif argv == 'shutter_down':
-        if camera.shutter_speed >= 1000:
-            camera.shutter_speed -= 1000
-    elif argv == 'zoom_in':
+        camera.brightness = value
+    elif argv == 'shutter':
+            camera.shutter_speed = value
+    elif argv == 'zoom_in' or 'zoom_out':
         try:
-            fov = fov*3/4
-            camera.zoom = (0.5-fov/2, 0.5-fov/2, fov, fov)
-            camera.annotate_text = '{0:.2f} times magnification'.format(1/fov)
-        except NameError:
-            pass
-        
-    elif argv == 'zoom_out':
-        try:
-            if fov < 1:
+            if argv == 'zoom_in':
+                fov = fov*3/4
+            elif argv == 'zoom_out':
                 fov = fov*4/3
-                camera.zoom = (0.5-fov/2, 0.5-fov/2, fov, fov)
-                camera.annotate_text = '{0:.2f} times magnification'.format(1/fov)
+            camera.zoom = (0.5-fov/2, 0.5-fov/2, fov, fov)
+            camera.annotate_text = 'magnification: {0:.2f}X'.format(1/fov)
         except NameError:
             pass
-        
+    elif argv == 'save_image':
+        filepath = value
+        camera.capture(filepath, format = "jpeg", use_video_port=True)
+        camera.annotate_text = "Saved as {}".format(filepath)
+        time.sleep(0.5)
+        self.camera.annotate_text = ""
 
+        
 
     def save_image(self, filepath):
         self.filepath = validate_filepath(filepath)

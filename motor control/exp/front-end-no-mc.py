@@ -74,15 +74,26 @@ def create_preview_buttons():
     return start_preview_button, stop_preview_button
 
 
-def create_save_buttons():
-    save_button = Button(text = 'save image')
+def create_save_image_buttons():
+    save_image_button = Button(text = 'save image')
     timelapse_button = Button(text = 'time lapse')
-    return save_button, timelapse_button
 
-    #camera.capture(fullpath, format="jpeg", use_video_port=True)
-    #camera.annotate_text="Saved '%s'" % (filepath % n)
+    def save_image(instance):
+        global image_number
+        global filepath
+        if instance == save_image_button:
+            print(filepath)
+            print(image_number)
+            image_number += 1
+        elif instance == timelapse_button:
+            print(filepath)
+            print(image_number)
+            image_number += 1
 
-
+    save_image_button.bind(on_release = save_image)
+    timelapse_button.bind(on_release = save_image)
+    return save_image_button, timelapse_button
+    
 '''def create_page_buttons():
     """Button to switch between pages"""
     settings_button = Button(text = 'settings')
@@ -201,9 +212,10 @@ def create_settings_controllers():
     def settings_control(instance,*value):
         """update sliders with TextInput and vice versa. update camera settings"""
         # update Slider and TextInput
-        for slider, textinput in [  # for i, j = [[1,2][3,4]]  >>>i = 1,3  j = 2,4
+        for slider, textinput in [  # for i, j in [[1,2],[3,4]]: >>>i = 1,3  j = 2,4
             [brightness_slider, brightness_input],
             [contrast_slider, contrast_input]]: 
+
             if instance == slider:
                 # unified variable to define brightness
                 # returns a tuple due to optional arguments
@@ -217,11 +229,9 @@ def create_settings_controllers():
                     textinput.text = str(int(slider.min))
                 updated_value = int(textinput.text)
                 slider.value = updated_value
-        # update camera settings 
-        if instance in [brightness_slider, brightness_input]:
-            print('brightness', updated_value, type(updated_value))
-        elif instance in [contrast_slider, contrast_input]:
-            print('contrast', updated_value, type(updated_value))
+            # call microscope library to update the brightness and contrast 
+            print('brightness: {}'.format(brightness_slider.value))
+            print('contrast: {}'.format(contrast_slider.value))
 
     # bind sliders and input box to callback functions
     for slider, textinput in [  # for i, j = [[1,2][3,4]]  >>>i = 1,3  j = 2,4
@@ -233,16 +243,15 @@ def create_settings_controllers():
     return brightness_controller, contrast_controller
 
 def create_filepath_controller():
-    global number_of_image
+    global image_number
+    global filepath
     # if there is no predefined number, give default (1) to the NOI
-    try: 
-        number_of_image
-    except NameError:
-        number_of_image = 1
-
-
+    '''    try: 
+        image_number
+    except NameError:'''
+    image_number = 1
     folder = '/home/pi/Desktop/photos/' 
-    filename = '{:%Y%m%d}-image-{:03}.jpg'.format(datetime.today(), number_of_image)
+    filename = '{:%Y%m%d}-image-{:03}.jpg'.format(datetime.today(), image_number)
     filepath = folder + filename
     filepath_controller = BoxLayout(orientation = 'horizontal', size_hint_y = 0.1)
     folder_chooser_button = Button(text = 'Choose folder', size_hint_x = 0.2) # a button to popup filechooser
@@ -347,7 +356,7 @@ def add_main_page_widgets(page):
     # defining all the elements here: buttons, sliders, map_controllers
     exit_button = create_exit_button()
     start_preview_button, stop_preview_button = create_preview_buttons()
-    save_button, timelapse_button = create_save_buttons()
+    save_image_button, timelapse_button = create_save_image_buttons()
     #settings_button, back_to_main_button = create_page_buttons()
     settings_button = create_settings_button()
     focus_label, focus_button_up, focus_button_down = create_focus_buttons()
@@ -382,7 +391,7 @@ def add_main_page_widgets(page):
     # right section - horizontal_layout_3
     horizontal_layout_3.add_widget(start_preview_button)
     horizontal_layout_3.add_widget(stop_preview_button)
-    horizontal_layout_3.add_widget(save_button)
+    horizontal_layout_3.add_widget(save_image_button)
     horizontal_layout_3.add_widget(timelapse_button)
     horizontal_layout_3.add_widget(settings_button)
 
