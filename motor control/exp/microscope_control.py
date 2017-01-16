@@ -156,8 +156,7 @@ def validate_filepath(filepath):
 
     elif "%d" not in filepath and ".jp" in filepath:
         'add automatic numbering to filename'
-        filepath = filepath.split('.')
-        filepath = filepath[0] + '_%03d.' + filepath[1] 
+
         return filepath
     
     elif "%d" in filepath and ".jp" in filepath:

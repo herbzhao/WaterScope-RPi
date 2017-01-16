@@ -55,256 +55,6 @@ def create_exit_button():
     return exit_button
 
 
-def create_preview_buttons():
-    start_preview_button = Button(text = 'preview')
-    stop_preview_button = Button(text = 'stop preview')
-    def preview_control(instance):
-        pass
-    """	mc.fov = 1.00 #initialise the zoom level
-        if instance.text == 'preview':
-            microscope_control.start_preview()
-        else:
-            microscope_control.stop_preview()
-
-    microscope_control = microscope_map_controller()"""
-
-    start_preview_button.bind(on_press = preview_control)  #start_preview functions
-    stop_preview_button.bind(on_press = preview_control)
-
-    return start_preview_button, stop_preview_button
-
-
-def create_save_image_buttons():
-    save_image_button = Button(text = 'save image')
-    timelapse_button = Button(text = 'time lapse')
-
-    def save_image(instance):
-        global image_number
-        global filepath
-        if instance == save_image_button:
-            print(filepath)
-            print(image_number)
-            image_number += 1
-        elif instance == timelapse_button:
-            print(filepath)
-            print(image_number)
-            image_number += 1
-
-    save_image_button.bind(on_release = save_image)
-    timelapse_button.bind(on_release = save_image)
-    return save_image_button, timelapse_button
-    
-'''def create_page_buttons():
-    """Button to switch between pages"""
-    settings_button = Button(text = 'settings')
-    back_to_main_button = Button(text = 'back')
-
-    def go_to_page(instance):
-        """switch to page/screen based on button.text"""
-        if instance.text == "settings":
-            sm.current = 'settings page'
-        if instance.text == "back":
-            sm.current = 'main page'
-
-    settings_button.bind(on_press = go_to_page)
-    back_to_main_button.bind(on_press = go_to_page)
-
-    return settings_button, back_to_main_button
-'''
-
-def create_step_slider():
-    """Manipulate step of motor movement"""
-    step_slider_label = Label(
-        text='\n Motor \n steps: \n'+'{}'.format(100),
-        color = [0.2,0.2,1,1], halign = 'center', valign = 'middle',
-        size_hint_y = 0.1)
-    step_slider = Slider(
-        min=0, max=1000, value= 100,
-        orientation = 'vertical', size_hint_y = 0.35)
-
-    def motor_step_control(instance, value):
-        """change step and update label when using step_slider"""
-        slider_value = int(value)
-        print(value)
-        step_slider_label.text = '\n Motor \n steps: \n'+'{}'.format(slider_value)
-        print (value)
-
-    step_slider.bind(value = motor_step_control)
-
-    return step_slider_label, step_slider
-
-
-def create_settings_button():
-    # a button to call out settings panel
-    settings_button = Button(text = 'settings')
-
-    # configure a popup window to display settings and parameters
-    settings_popup = Popup( title='Settings', size_hint=(0.8, 0.2))
-    settings_popup.pos_hint =  {'x':0.5-settings_popup.size_hint[0]/2,
-                               'y':0.1-settings_popup.size_hint[1]/2} # distance from popup.center
-    settings_popup_content = GridLayout(cols=1) # a blank layout to put other widgets in
-    settings_popup.content = settings_popup_content
-    
-    def fullscreen_preview(instance):
-        """when popup get dismissed, revert camera preview window to normal"""
-        print('popup dismissed')
-    def reduced_size_preview(instance):
-        """when popup get opened, reduce camera preview window size to prevent blocking"""
-        print('popup opened')
-        
-    settings_popup.bind(on_dismiss = fullscreen_preview)
-    settings_popup.bind(on_open = reduced_size_preview)
-
-    def settings_popup_content_switch(instance):
-        """alter popup content when clicking buttons"""
-        settings_popup_content.clear_widgets()
-        settings_popup.open()
-        if instance == settings_button:
-            settings_popup_content.add_widget(settings_panel)
-        elif instance == contrast_button:
-            settings_popup_content.add_widget(contrast_controller)
-        elif instance == brightness_button:
-            settings_popup_content.add_widget(brightness_controller)
-        elif instance == filepath_button:
-            settings_popup_content.add_widget(filepath_controller)
-    
-    # add buttons to call out popups
-    settings_panel, contrast_button, brightness_button, filepath_button = create_settings_panel()
-    brightness_controller, contrast_controller = create_settings_controllers()
-    filepath_controller = create_filepath_controller()
-
-    for button in [settings_button, contrast_button, brightness_button, filepath_button]:
-        button.bind(on_release= settings_popup_content_switch)
-
-    return settings_button
-
-def create_settings_panel():
-    """a panel to host different option buttons to call individual popup"""
-    settings_panel = BoxLayout()
-    contrast_button = Button(text='contrast')
-    brightness_button = Button(text='brightness')
-    filepath_button = Button(text='change filepath')
-    for i in [contrast_button, brightness_button, filepath_button]:
-        settings_panel.add_widget(i)
-    return (settings_panel, contrast_button, brightness_button, filepath_button)
-
-def create_settings_controllers():
-    # crate a horizontal boxlayout to include label, slider and input box
-    brightness_controller = BoxLayout(orientation = 'horizontal', size_hint_y = 0.1)
-    brightness_label = Label(text = 'Brightness:', size_hint_x = 0.2)
-    brightness_slider = Slider(min = 0, max = 100, value = 50, size_hint_x = 0.5)
-    brightness_input = TextInput(
-        text = '{}'.format(int(brightness_slider.value)),
-        multiline = False,  size_hint_x = 0.3)
-    # add widgets to the boxlayout (controller)
-    for i in [brightness_label, brightness_input, brightness_slider]:
-        brightness_controller.add_widget(i)
-    # contrast control
-    contrast_controller = BoxLayout(orientation = 'horizontal', size_hint_y = 0.1)
-    contrast_label = Label(text = 'Contrast:', size_hint_x = 0.2)
-    contrast_slider = Slider(min=0, max=64, value= 1,  size_hint_x = 0.5)
-    contrast_input = TextInput(
-        text = '{}'.format(int(contrast_slider.value)),
-        multiline = False, size_hint_x = 0.3)
-    for i in [contrast_label, contrast_input, contrast_slider]:
-        contrast_controller.add_widget(i)
-
-    def settings_control(instance,*value):
-        """update sliders with TextInput and vice versa. update camera settings"""
-        # update Slider and TextInput
-        for slider, textinput in [  # for i, j in [[1,2],[3,4]]: >>>i = 1,3  j = 2,4
-            [brightness_slider, brightness_input],
-            [contrast_slider, contrast_input]]: 
-
-            if instance == slider:
-                # unified variable to define brightness
-                # returns a tuple due to optional arguments
-                updated_value = int(slider.value)
-                textinput.text = str(updated_value)
-            elif instance == textinput:
-                # when value is out of range, set it to max/min
-                if int(textinput.text) >= slider.max:
-                    textinput.text = str(int(slider.max)) # float will give error for slider
-                elif int(textinput.text) <= slider.min:
-                    textinput.text = str(int(slider.min))
-                updated_value = int(textinput.text)
-                slider.value = updated_value
-            # call microscope library to update the brightness and contrast 
-            print('brightness: {}'.format(brightness_slider.value))
-            print('contrast: {}'.format(contrast_slider.value))
-
-    # bind sliders and input box to callback functions
-    for slider, textinput in [  # for i, j = [[1,2][3,4]]  >>>i = 1,3  j = 2,4
-            [brightness_slider, brightness_input],
-            [contrast_slider, contrast_input]]: 
-        slider.bind(value = settings_control)
-        textinput.bind(on_text_validate = settings_control)
-
-    return brightness_controller, contrast_controller
-
-def create_filepath_controller():
-    global image_number
-    global filepath
-    # if there is no predefined number, give default (1) to the NOI
-    '''    try: 
-        image_number
-    except NameError:'''
-    image_number = 1
-    folder = '/home/pi/Desktop/photos/' 
-    filename = '{:%Y%m%d}-image-{:03}.jpg'.format(datetime.today(), image_number)
-    filepath = folder + filename
-    filepath_controller = BoxLayout(orientation = 'horizontal', size_hint_y = 0.1)
-    folder_chooser_button = Button(text = 'Choose folder', size_hint_x = 0.2) # a button to popup filechooser
-    filepath_input = TextInput(
-        multiline = True, 
-        size_hint_x = 1 - folder_chooser_button.size_hint_x)
-    filepath_input.text = filepath
-
-    for i in [filepath_input, folder_chooser_button]:
-        filepath_controller.add_widget(i)
-    
-    folder_chooser = FileChooser()
-    folder_chooser.add_widget(FileChooserIconLayout())
-    # a popup window to choose folder
-    folder_chooser_popup = Popup(title = 'choose folder to save image', size_hint = (0.8, 0.8))
-    folder_chooser_popup.content = folder_chooser
-    folder_chooser_button.bind(on_release = folder_chooser_popup.open)
-    def choose_folder(instance, value):
-        #print(instance)
-        folder = str(value) + '\\'
-        print(folder)
-        filepath = folder + filename
-        filepath_input.text = filepath
-    folder_chooser.bind(path = choose_folder)
-    return filepath_controller
-
-def create_focus_buttons():
-    """+ and - buttons to control focus/Z axis"""
-    focus_label = Label(
-        text='Focus', color = [0, 1, 0, 1],
-        halign = 'center', valign = 'middle', size_hint_y = 0.05)
-    focus_button_up = Button(
-        text = '+',
-        background_color = [0, 1, 0, 1], size_hint_y = 0.15)
-    focus_button_down = Button(
-        text = '-',
-        background_color = [0, 1, 0, 1], size_hint_y = 0.15)
-
-    def focus_control(instance):
-        if instance.text == '+':
-            print('focus + ')
-        elif instance.text == '-':
-            print('focus - ')
-
-    focus_button_up.bind(on_press = focus_control)  #start_preview functions
-    focus_button_down.bind(on_press = focus_control)
-
-    return focus_label, focus_button_up, focus_button_down
-
-
-
-
-
 def create_map_controller():
     map_controller = Scatter(
         size_hint = (1,1), do_rotation=False, do_translation=True,
@@ -350,8 +100,278 @@ def create_map_controller():
 
     return map_controller
 
+def create_preview_buttons():
+    start_preview_button = Button(text = 'preview')
+    stop_preview_button = Button(text = 'stop preview')
+    def preview_control(instance):
+        pass
+    """	mc.fov = 1.00 #initialise the zoom level
+        if instance.text == 'preview':
+            microscope_control.start_preview()
+        else:
+            microscope_control.stop_preview()
 
-def add_main_page_widgets(page):
+    microscope_control = microscope_map_controller()"""
+
+    start_preview_button.bind(on_press = preview_control)  #start_preview functions
+    stop_preview_button.bind(on_press = preview_control)
+
+    return start_preview_button, stop_preview_button
+
+
+
+
+def create_focus_buttons():
+    """+ and - buttons to control focus/Z axis"""
+    focus_label = Label(
+        text='Focus', color = [0, 1, 0, 1],
+        halign = 'center', valign = 'middle', size_hint_y = 0.05)
+    focus_button_up = Button(
+        text = '+',
+        background_color = [0, 1, 0, 1], size_hint_y = 0.15)
+    focus_button_down = Button(
+        text = '-',
+        background_color = [0, 1, 0, 1], size_hint_y = 0.15)
+
+    def focus_control(instance):
+        if instance.text == '+':
+            print('focus + ')
+        elif instance.text == '-':
+            print('focus - ')
+
+    focus_button_up.bind(on_press = focus_control)  #start_preview functions
+    focus_button_down.bind(on_press = focus_control)
+    return focus_label, focus_button_up, focus_button_down
+
+def create_step_slider():
+    """Manipulate step of motor movement"""
+    step_slider_label = Label(
+        text='\n Motor \n steps: \n'+'{}'.format(100),
+        color = [0.2,0.2,1,1], halign = 'center', valign = 'middle',
+        size_hint_y = 0.1)
+    step_slider = Slider(
+        min=0, max=1000, value= 100,
+        orientation = 'vertical', size_hint_y = 0.35)
+
+    def motor_step_control(instance, value):
+        """change step and update label when using step_slider"""
+        slider_value = int(value)
+        print(value)
+        step_slider_label.text = '\n Motor \n steps: \n'+'{}'.format(slider_value)
+        print (value)
+
+    step_slider.bind(value = motor_step_control)
+
+    return step_slider_label, step_slider
+
+
+def create_settings_button():
+    # a button to call out settings panel
+    settings_button = Button(text = 'settings')
+
+    # configure a popup window to display settings and parameters
+    settings_popup = Popup( title='Settings', size_hint=(0.8, 0.3))
+    settings_popup.pos_hint =  {'x':0.5-settings_popup.size_hint[0]/2,
+                               'y':0.8-settings_popup.size_hint[1]/2} # distance from popup.center
+    settings_popup_content = GridLayout(cols=1) # a blank layout to put other widgets in
+    settings_popup.content = settings_popup_content
+    
+    # when popup occurs, rezie the preview screen to prevent blockage?
+    '''def fullscreen_preview(instance):
+        """when popup get dismissed, revert camera preview window to normal"""
+        print('popup dismissed')
+    def reduced_size_preview(instance):
+        """when popup get opened, reduce camera preview window size to prevent blocking"""
+        print('popup opened')
+        
+    settings_popup.bind(on_dismiss = fullscreen_preview)
+    settings_popup.bind(on_open = reduced_size_preview)'''
+
+    def switch_settings_popup_content(instance):
+        """alter popup content when clicking buttons"""
+        settings_popup_content.clear_widgets()
+        settings_popup.open()
+        if instance == settings_button:
+            settings_popup_content.add_widget(settings_panel)
+        elif instance == contrast_button:
+            settings_popup_content.add_widget(contrast_controller)
+        elif instance == brightness_button:
+            settings_popup_content.add_widget(brightness_controller)
+        elif instance == filepath_button:
+            settings_popup_content.add_widget(filepath_controller)
+    
+    # add buttons to call out popups
+    # settings_panel with 3 buttons on it
+    settings_panel, contrast_button, brightness_button, filepath_button = create_settings_panel()
+    brightness_controller, contrast_controller = create_settings_controllers()
+    filepath_controller = create_filepath_controller()
+
+    for button in [settings_button, contrast_button, brightness_button, filepath_button]:
+        button.bind(on_release= switch_settings_popup_content)
+
+    return settings_button
+
+def create_settings_panel():
+    """a panel to host different option buttons to call individual popup"""
+    settings_panel = BoxLayout()
+    contrast_button = Button(text='contrast')
+    brightness_button = Button(text='brightness')
+    filepath_button = Button(text='change filepath')
+    for i in [contrast_button, brightness_button, filepath_button]:
+        settings_panel.add_widget(i)
+    return settings_panel, contrast_button, brightness_button, filepath_button
+
+def create_settings_controllers():
+    '''controllers(slider, input box) for brightness, contrast, etc.'''
+    # crate a horizontal boxlayout to include label, slider and input box
+    brightness_controller = BoxLayout(orientation = 'horizontal', size_hint_y = 0.1)
+    brightness_label = Label(text = 'Brightness:', size_hint_x = 0.2)
+    brightness_slider = Slider(min = 0, max = 100, value = 50, size_hint_x = 0.5)
+    brightness_input = TextInput(
+        text = '{}'.format(int(brightness_slider.value)),
+        multiline = False,  size_hint_x = 0.3)
+    # add widgets to the boxlayout (controller)
+    for i in [brightness_label, brightness_input, brightness_slider]:
+        brightness_controller.add_widget(i)
+    # contrast control
+    contrast_controller = BoxLayout(orientation = 'horizontal', size_hint_y = 0.1)
+    contrast_label = Label(text = 'Contrast:', size_hint_x = 0.2)
+    contrast_slider = Slider(min=0, max=64, value= 1,  size_hint_x = 0.5)
+    contrast_input = TextInput(
+        text = '{}'.format(int(contrast_slider.value)),
+        multiline = False, size_hint_x = 0.3)
+    for i in [contrast_label, contrast_input, contrast_slider]:
+        contrast_controller.add_widget(i)
+
+    def settings_control(instance,*value):
+        """update sliders with TextInput and vice versa. update camera settings"""
+        # update Slider and TextInput
+        for slider, textinput in [  # for i, j in [[1,2],[3,4]]: >>>i = 1,3  j = 2,4
+            [brightness_slider, brightness_input],
+            [contrast_slider, contrast_input]]: 
+
+            if instance == slider:
+                # unified variable to define brightness
+                # returns a tuple due to optional arguments
+                updated_value = int(slider.value)
+                textinput.text = str(updated_value)
+            elif instance == textinput:
+                # when value is out of range, set it to max/min
+                if int(textinput.text) >= slider.max:
+                    textinput.text = str(int(slider.max)) # float will give error for slider
+                elif int(textinput.text) <= slider.min:
+                    textinput.text = str(int(slider.min))
+                updated_value = int(textinput.text)
+                slider.value = updated_value
+            # call microscope library to update the brightness and contrast 
+            print('brightness: {}'.format(brightness_slider.value))
+            print('contrast: {}'.format(contrast_slider.value))
+            # mc.microscopelibrary()...
+
+    # bind sliders and input box to callback functions
+    for slider, textinput in [  # for i, j = [[1,2][3,4]]  >>>i = 1,3  j = 2,4
+            [brightness_slider, brightness_input],
+            [contrast_slider, contrast_input]]: 
+        slider.bind(value = settings_control)
+        textinput.bind(on_text_validate = settings_control)
+
+    return brightness_controller, contrast_controller
+
+def update_filepath(
+    folder='C:\\Users\\herbz\\Anaconda3\\envs\\Python_34\\lib\\',
+    image_number=1,
+    filename='{:%Y%m%d}'.format(datetime.today()),
+    filetype='.jpg'):
+    """set default value for filepath, also allow update """
+    # Keep track of change of folder and filename and update filepath immediately"""
+
+    # if user have input a filetype 
+    filename = filename.split('.')
+    try:
+        if filename[1] == 'jpg' or filename[1] == 'jpeg':
+            filetype = '.jpg'
+        if filename[1] == 'tiff' or filename[1] == 'tif':
+            filetype = '.tiff'
+    except IndexError:
+        filetype = '.jpg'
+
+    # if user have input a image_number
+    filename = filename[0].split('-')
+    # element after last dash is the image_number. IN case there is no dash, then stop reading filename for image_number
+    if filename[0] != filename[-1]: 
+        image_number = int(filename[-1])
+    
+    filename = filename[0] + '-{:03}'.format(image_number) + filetype
+    filepath = folder + filename
+    return filepath
+
+def create_filepath_controller():
+    global folder
+    global filename
+    global image_number # this is global so timelapse function can change it
+    folder_sign = '\\' # different os may use different sign / or \
+    filepath_controller = BoxLayout(orientation = 'horizontal', size_hint_y = 0.1)
+    folder_chooser_button = Button(text = 'File viewer \nto choose folder', size_hint_x = 0.2) # a button to popup filechooser
+    filepath_input = TextInput(multiline = False, 
+        size_hint_x = 1 - folder_chooser_button.size_hint_x)
+    filepath = update_filepath() # use the default value which contains date and start from 001
+    filepath_input.text = filepath
+    for i in [filepath_input, folder_chooser_button]:
+        filepath_controller.add_widget(i)
+    folder_chooser = FileChooser()
+    folder_chooser.add_widget(FileChooserIconLayout())
+    # a popup window to choose folder
+    folder_chooser_popup = Popup(title = 'choose folder to save image', size_hint = (0.8, 0.8))
+    folder_chooser_popup.content = folder_chooser
+    folder_chooser_button.bind(on_release = folder_chooser_popup.open)
+    
+    def choose_folder(instance, value):
+        #print(instance)
+        folder = str(value) + '\\'
+        print(folder)
+        filepath = update_filepath(folder = folder)
+        filepath_input.text = filepath
+    
+    folder_chooser.bind(path = choose_folder)
+
+    def update_filepath_input(instance):
+        filepath = filepath_input.text
+        filepath_split = filepath.split(folder_sign)
+        filename = filepath_split[-1] # last element after the folder sign 
+        folder = folder_sign.join(filepath_split[0:-1]) + folder_sign 
+        print(folder)
+        print(filename)
+        filepath = update_filepath(folder = folder, filename = filename)
+        filepath_input.text = filepath
+
+    filepath_input.bind(on_text_validate = update_filepath_input)
+
+    return filepath_controller
+
+
+
+def create_save_image_buttons():
+    '''a global filepath to save image to'''
+    save_image_button = Button(text = 'save image')
+    timelapse_button = Button(text = 'time lapse')
+
+    def save_image(instance):
+        global image_number
+        global filepath
+        if instance == save_image_button:
+            print(filepath)
+            print(image_number)
+            image_number += 1
+        elif instance == timelapse_button:
+            print(filepath)
+            print(image_number)
+            image_number += 1
+
+    save_image_button.bind(on_release = save_image)
+    timelapse_button.bind(on_release = save_image)
+    return save_image_button, timelapse_button
+
+def add_main_page_widgets():
     """Add layouts and widgets to a page (main page)"""
     # defining all the elements here: buttons, sliders, map_controllers
     exit_button = create_exit_button()
@@ -396,61 +416,15 @@ def add_main_page_widgets(page):
     horizontal_layout_3.add_widget(settings_button)
 
     # add the basic layout to new screen
-    page.add_widget(base_layout)
+    return base_layout
 
-
-def add_settings_page_widgets(page):
-    '''
-    # defining all the elements here: buttons, sliders, map_controllers
-    settings_button, back_to_main_button = create_page_buttons()
-    brightness_control, contrast_control = create_settings_controllers()
-    filepath_input = create_filepath_input()
-
-    # Create the basic layout with vertical sections (basic skelton)
-    base_layout = BoxLayout(orientation='vertical')
-
-    # add different controllers to the layout.
-    # The size is defined in create_settings_controllers function
-    base_layout.add_widget(brightness_control)
-    base_layout.add_widget(contrast_control)
-    last_row = BoxLayout(size_hint_y = 0.2)
-    base_layout.add_widget(last_row)
-    last_row.add_widget(filepath_input)
-    last_row.add_widget(back_to_main_button)
-
-    # add widgets to page
-    page.add_widget(base_layout)'''
-
-    pass
-
-
-
-def initialise_screens():
-    """ use ScreenManager to create several screens/pages"""
-    global sm
-    sm = ScreenManager()
-
-    main_page =  Screen(name = 'main page')
-    # add widgets to main_page
-    add_main_page_widgets(main_page)
-    # add this screen to screen manager
-    sm.add_widget(main_page)
-
-    #settings page
-    settings_page = Screen(name='settings page')
-    add_settings_page_widgets(settings_page)
-    sm.add_widget(settings_page)
-
-    #this determines which page the app start with
-    sm.current = 'main page'
-    return sm
 
 class WaterScopeApp(App):
     """create kivy app
     only ever need to change the name of Myapp"""
     def build(self):
-        sm = initialise_screens()
-        return sm
-
+        main_page = add_main_page_widgets()
+        return main_page
+        
 if __name__ == "__main__":
      WaterScopeApp().run()

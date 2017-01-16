@@ -45,7 +45,7 @@ from kivy.uix.filechooser import FileChooser, FileChooserIconLayout, FileChooser
 from kivy.core.window import Window
 from kivy.base import runTouchApp
 from datetime import datetime
-
+from kivy.config import Config
 import os
 
 if __name__ == '__main__':
@@ -78,6 +78,11 @@ if __name__ == '__main__':
         filepath = folder + filename
         filepath_input.text = filepath
     folder.bind(path = choose_folder)'''
+
+
+    # config
+    
+    Config.set('kivy', 'keyboard_mode', 'systemandmulti')
 
     # a panel to host different option buttons
     settings_panel = BoxLayout()
@@ -139,6 +144,7 @@ if __name__ == '__main__':
     
     # a button to call out settings panel
     settings_button = Button(text = 'settings', size_hint = (0.3,0.3))
+
     # configure a popup window to display settings and parameters
     settings_popup = Popup( title='Settings', size_hint=(0.8, 0.2))
     settings_popup.pos_hint =  {'x':0.5-settings_popup.size_hint[0]/2,
@@ -170,6 +176,8 @@ if __name__ == '__main__':
     settings_button.bind(on_release= settings_popup_content_switch)
     contrast_button.bind(on_release= settings_popup_content_switch)
     brightness_button.bind(on_release= settings_popup_content_switch)
+
+
 
 
     Window.add_widget(settings_button)
