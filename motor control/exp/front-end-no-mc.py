@@ -12,6 +12,7 @@ Usage:
 @author: Tianheng Zhao
 """
 from datetime import datetime
+import time
 
 import kivy
 from kivy.app import App  # base Class of your App inherits from the App class
@@ -27,17 +28,15 @@ from kivy.uix.image import Image
 from kivy.uix.label import Label
 # This can be moved, resized and rotated by interactions
 from kivy.uix.scatter import Scatter
-# import kivy misc
-from kivy.uix.screenmanager import (Screen,  # This manage different pages
-                                    ScreenManager)
 from kivy.uix.slider import Slider
 from kivy.uix.textinput import TextInput
-
 from kivy.uix.popup import Popup
-from kivy.uix.dropdown import DropDown
 from kivy.uix.filechooser import FileChooser, FileChooserIconLayout
 
-kivy.require('1.9.1')   # replace with your current kivy version !
+# import kivy misc
+from kivy.clock import Clock
+
+#kivy.require('1.9.1')   # replace with your current kivy version !
 
 #import microscope control parts
 
@@ -102,7 +101,7 @@ def create_map_controller():
 
 def create_preview_buttons():
     start_preview_button = Button(text = 'preview')
-    stop_preview_button = Button(text = 'stop preview')
+    stop_preview_button = Button(text = 'stop \npreview')
     def preview_control(instance):
         pass
     """	mc.fov = 1.00 #initialise the zoom level
@@ -145,12 +144,13 @@ def create_focus_buttons():
 
 def create_step_slider():
     """Manipulate step of motor movement"""
+    default_step = 300
     step_slider_label = Label(
-        text='\n Motor \n steps: \n'+'{}'.format(100),
+        text='\n Motor \n steps: \n'+'{}'.format(default_step),
         color = [0.2,0.2,1,1], halign = 'center', valign = 'middle',
         size_hint_y = 0.1)
     step_slider = Slider(
-        min=0, max=1000, value= 100,
+        min=0, max=1000, value= default_step,
         orientation = 'vertical', size_hint_y = 0.35)
 
     def motor_step_control(instance, value):
@@ -199,7 +199,7 @@ def create_settings_button():
             settings_popup_content.add_widget(brightness_controller)
         elif instance == filepath_button:
             settings_popup_content.add_widget(filepath_controller)
-            filepath_input.text = filepath
+            filepath_input.text = format_filepath()
 
     
     # add buttons to call out popups
@@ -282,12 +282,12 @@ def create_settings_controllers():
 
 def create_filepath_controller():
     global filepath_input # require to update in another function
-    folder_sign = '\\' # different os may use different sign / or \
+    
     filepath_controller = BoxLayout(orientation = 'horizontal', size_hint_y = 0.1)
     folder_chooser_button = Button(text = 'File viewer \nto choose folder', size_hint_x = 0.2) # a button to popup filechooser
     filepath_input = TextInput(multiline = False, 
         size_hint_x = 1 - folder_chooser_button.size_hint_x)
-    filepath = update_filepath() # use the default value which contains date and start from 001
+    filepath = format_filepath() # use the default value which contains date and start from 001
     filepath_input.text = filepath
     for i in [filepath_input, folder_chooser_button]:
         filepath_controller.add_widget(i)
@@ -299,45 +299,49 @@ def create_filepath_controller():
     folder_chooser_button.bind(on_release = folder_chooser_popup.open)
     
     def choose_folder(instance, value):
-        #print(instance)
-        folder = str(value) + '\\'
+        global folder, filename, folder_sign
+        folder = str(value) + folder_sign
         print(folder)
-        filepath = update_filepath(folder = folder)
+        filepath = format_filepath()
         filepath_input.text = filepath
     
     folder_chooser.bind(path = choose_folder)
 
     def update_filepath_input(instance):
+        global folder, filename, folder_sign, filetype
+        # seperate filepath_input elements
         filepath = filepath_input.text
         filepath_split = filepath.split(folder_sign)
         filename = filepath_split[-1] # last element after the folder sign 
         folder = folder_sign.join(filepath_split[0:-1]) + folder_sign 
-        print(folder)
-        print(filename)
-        filepath = update_filepath(folder = folder, filename = filename)
+        # format filepath and update filepath_input
+        filepath = format_filepath()
         filepath_input.text = filepath
 
     filepath_input.bind(on_text_validate = update_filepath_input)
 
     return filepath_controller
 
-image_number = 1 # default value when initialise the app
-def update_filepath(
-    folder='C:\\Users\\herbz\\Anaconda3\\envs\\Python_34\\lib\\',
-    filename='{:%Y%m%d}'.format(datetime.today()),
-    filetype='.jpg'):
+
+# default value when initialise the app
+folder_sign = '\\' # different os may use different sign / or \
+image_number = 1
+folder=folder_sign.join(['C:', 'Users', 'herbz', 'Anaconda3',''])
+filename='{:%Y%m%d}'.format(datetime.today())
+filetype = '.jpg'
+def format_filepath(update = False):
     """set default value for filepath, also allow update """
     # Keep track of change of folder and filename and update filepath immediately"""
       # this is global so timelapse function can change it
     # if user have input a filetype 
-    global filepath
-    global image_number
+    global image_number, folder, filename, filetype
     filename_elements = filename.split('.')
     try:
-        if filename_elements[1] == 'jpg' or filename[1] == 'jpeg':
-            filetype = '.jpg'
-        if filename_elements[1] == 'tiff' or filename[1] == 'tif':
-            filetype = '.tiff'
+        if update == False: # only change image_number when user change filepath_input
+            if filename_elements[1] in ['jpg', 'jpeg', 'JPG', 'JPEG']:
+                filetype = '.jpg'
+            if filename_elements[1] in ['tif', 'tiff', 'TIF', 'TIFF']:
+                filetype = '.tiff'
     except IndexError:
         filetype = '.jpg'
     # if user have input a image_number
@@ -345,10 +349,11 @@ def update_filepath(
     if len(filename_elements) == 1:
         filename = filename_elements[0]
     if len(filename_elements) >= 2:
-        try: 
-            image_number = int(filename_elements[-1])
-        except ValueError:
-            image_number = 1
+        if update == False: # only change image_number when user change filepath_input
+            try: 
+                image_number = int(filename_elements[-1])
+            except ValueError:
+                image_number = 1
         filename = '-'.join(filename_elements[0:-1])
             
     # if there is no specified image_number, then use the system-wide number (default: 1)
@@ -356,35 +361,34 @@ def update_filepath(
     filepath = folder + filename
     return filepath
 
+
 def create_save_image_buttons():
-    global image_number
-    global filepath
     '''a global filepath to save image to'''
     save_image_button = Button(text = 'save image')
-    timelapse_button = Button(text = 'star \ntime lapse')
+    time_lapse_button = Button(text = 'start \ntime lapse') # need to make a popup to choose time_interval etc.
 
     def save_image(instance):
         global image_number
-        global filepath
-        if instance == save_image_button:
-            filepath = update_filepath()
-            image_number += 1
-            print(image_number)
-        elif instance == timelapse_button:
-            print(filepath)
-            print(image_number)
-            image_number += 1
+        filepath = format_filepath(update = True)
+        print('save image to {}'.format(filepath))
+        image_number = image_number + 1
+
+    def start_time_lapse(instance):
+        time_lapse_state = False
+        time_lapse_state = not time_lapse_state
+        time_lapse_interval = .5
+        event = Clock.schedule_interval(save_image, time_lapse_interval)
 
     save_image_button.bind(on_release = save_image)
-    timelapse_button.bind(on_release = save_image)
-    return save_image_button, timelapse_button
+    time_lapse_button.bind(on_release = start_time_lapse)
+    return save_image_button, time_lapse_button
 
 def add_main_page_widgets():
     """Add layouts and widgets to a page (main page)"""
     # defining all the elements here: buttons, sliders, map_controllers
     exit_button = create_exit_button()
     start_preview_button, stop_preview_button = create_preview_buttons()
-    save_image_button, timelapse_button = create_save_image_buttons()
+    save_image_button, time_lapse_button = create_save_image_buttons()
     #settings_button, back_to_main_button = create_page_buttons()
     settings_button = create_settings_button()
     focus_label, focus_button_up, focus_button_down = create_focus_buttons()
@@ -420,7 +424,7 @@ def add_main_page_widgets():
     horizontal_layout_3.add_widget(start_preview_button)
     horizontal_layout_3.add_widget(stop_preview_button)
     horizontal_layout_3.add_widget(save_image_button)
-    horizontal_layout_3.add_widget(timelapse_button)
+    horizontal_layout_3.add_widget(time_lapse_button)
     horizontal_layout_3.add_widget(settings_button)
 
     # add the basic layout to new screen

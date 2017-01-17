@@ -1,13 +1,21 @@
-def test():
-    global a
-    a = 5
+image_number = 1
+folder = 'teeheee'
+def update_filepath():
+    global image_number, filepath
+    filepath = 'hello world {}'.format(image_number)
+    filepath = folder + filepath
+    return filepath
 
-def test_2():
-    global a
-    a = a +1
-    print(a)
+def snap():
+    global image_number, filepathd, folder
+    image_number += 1
+    folder = 'aaaaa'
+    filepath = update_filepath()
+    print(filepath)
 
-test()
-print(a)
-test_2()
-print(a)
+def snap_2():
+    filepath = update_filepath()
+    print(filepath)
+
+
+print(filepath)
