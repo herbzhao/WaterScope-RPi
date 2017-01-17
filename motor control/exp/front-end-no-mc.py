@@ -199,6 +199,8 @@ def create_settings_button():
             settings_popup_content.add_widget(brightness_controller)
         elif instance == filepath_button:
             settings_popup_content.add_widget(filepath_controller)
+            filepath_input.text = filepath
+
     
     # add buttons to call out popups
     # settings_panel with 3 buttons on it
@@ -277,38 +279,9 @@ def create_settings_controllers():
 
     return brightness_controller, contrast_controller
 
-def update_filepath(
-    folder='C:\\Users\\herbz\\Anaconda3\\envs\\Python_34\\lib\\',
-    image_number=1,
-    filename='{:%Y%m%d}'.format(datetime.today()),
-    filetype='.jpg'):
-    """set default value for filepath, also allow update """
-    # Keep track of change of folder and filename and update filepath immediately"""
-
-    # if user have input a filetype 
-    filename = filename.split('.')
-    try:
-        if filename[1] == 'jpg' or filename[1] == 'jpeg':
-            filetype = '.jpg'
-        if filename[1] == 'tiff' or filename[1] == 'tif':
-            filetype = '.tiff'
-    except IndexError:
-        filetype = '.jpg'
-
-    # if user have input a image_number
-    filename = filename[0].split('-')
-    # element after last dash is the image_number. IN case there is no dash, then stop reading filename for image_number
-    if filename[0] != filename[-1]: 
-        image_number = int(filename[-1])
-    
-    filename = filename[0] + '-{:03}'.format(image_number) + filetype
-    filepath = folder + filename
-    return filepath
 
 def create_filepath_controller():
-    global folder
-    global filename
-    global image_number # this is global so timelapse function can change it
+    global filepath_input # require to update in another function
     folder_sign = '\\' # different os may use different sign / or \
     filepath_controller = BoxLayout(orientation = 'horizontal', size_hint_y = 0.1)
     folder_chooser_button = Button(text = 'File viewer \nto choose folder', size_hint_x = 0.2) # a button to popup filechooser
@@ -348,20 +321,55 @@ def create_filepath_controller():
 
     return filepath_controller
 
-
+image_number = 1 # default value when initialise the app
+def update_filepath(
+    folder='C:\\Users\\herbz\\Anaconda3\\envs\\Python_34\\lib\\',
+    filename='{:%Y%m%d}'.format(datetime.today()),
+    filetype='.jpg'):
+    """set default value for filepath, also allow update """
+    # Keep track of change of folder and filename and update filepath immediately"""
+      # this is global so timelapse function can change it
+    # if user have input a filetype 
+    global filepath
+    global image_number
+    filename_elements = filename.split('.')
+    try:
+        if filename_elements[1] == 'jpg' or filename[1] == 'jpeg':
+            filetype = '.jpg'
+        if filename_elements[1] == 'tiff' or filename[1] == 'tif':
+            filetype = '.tiff'
+    except IndexError:
+        filetype = '.jpg'
+    # if user have input a image_number
+    filename_elements = filename_elements[0].split('-')
+    if len(filename_elements) == 1:
+        filename = filename_elements[0]
+    if len(filename_elements) >= 2:
+        try: 
+            image_number = int(filename_elements[-1])
+        except ValueError:
+            image_number = 1
+        filename = '-'.join(filename_elements[0:-1])
+            
+    # if there is no specified image_number, then use the system-wide number (default: 1)
+    filename = filename + '-{:03}'.format(image_number) + filetype
+    filepath = folder + filename
+    return filepath
 
 def create_save_image_buttons():
+    global image_number
+    global filepath
     '''a global filepath to save image to'''
     save_image_button = Button(text = 'save image')
-    timelapse_button = Button(text = 'time lapse')
+    timelapse_button = Button(text = 'star \ntime lapse')
 
     def save_image(instance):
         global image_number
         global filepath
         if instance == save_image_button:
-            print(filepath)
-            print(image_number)
+            filepath = update_filepath()
             image_number += 1
+            print(image_number)
         elif instance == timelapse_button:
             print(filepath)
             print(image_number)

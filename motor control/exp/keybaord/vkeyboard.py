@@ -11,7 +11,6 @@ from kivy.app import App
 from kivy.lang import Builder
 from kivy.core.window import Window
 from kivy.uix.vkeyboard import VKeyboard
-from kivy.properties import ObjectProperty
 from kivy.uix.button import Button
 from functools import partial
 from kivy.config import Config
