@@ -176,9 +176,9 @@ def stage_library(command,direction):
     #stage settings
     if command == 'move_x':
         if direction == '+':
-            stage.move_rel([step,0,0])
-        else:
             stage.move_rel([-step,0,0])
+        else:
+            stage.move_rel([step,0,0])
         
     if command == 'move_y':
         if direction == '+':
@@ -198,11 +198,18 @@ def stage_library(command,direction):
         else:
             step = step/2
 
+#defines some camera parameters 
+camera = picamera.PiCamera(resolution=(3280,2464))
+camera.awb_mode = 'off'
+camera.awb_gains = (1,1.2)
+camera.meter_mode = 'spot'
+camera.annotate_text_size = 100
+#camera.exposure_mode = 'off'
+#camera.iso = 0
 
-camera = picamera.PiCamera(resolution = (3280, 2464))
-def camera_library(argv):
-    global fov
+def camera_library(argv, *value):
     "Use this function from kivy interface to change picamera etc."
+    global fov
     if argv == 'start_preview':
         camera.start_preview()
     elif argv == 'stop_preview':
@@ -213,24 +220,19 @@ def camera_library(argv):
     elif argv == 'contrast_down':
         if camera.contrast >= -90:
             camera.contrast -= 10
-    elif argv == 'brightness_up':
-        if camera.brightness <= 90:
-            camera.brightness += 10
-    elif argv == 'brightness_down':
-        if camera.brightness >= -90:
-            camera.brightness -= 10
+    elif argv == 'brightness':
+        camera.brightness = int(value)
     elif argv == 'shutter_up':
         if camera.shutter_speed <= 1000000:
             camera.shutter_speed += 1000
     elif argv == 'shutter_down':
         if camera.shutter_speed >= 1000:
             camera.shutter_speed -= 1000
-    elif argv == 'save image':
-        camera.capture(filepath % n, format="jpeg", use_video_port=True)
     elif argv == 'zoom_in':
         try:
             fov = fov*3/4
             camera.zoom = (0.5-fov/2, 0.5-fov/2, fov, fov)
+            camera.annotate_text = '{0:.2f} times magnification'.format(1/fov)
         except NameError:
             pass
         
@@ -239,9 +241,9 @@ def camera_library(argv):
             if fov < 1:
                 fov = fov*4/3
                 camera.zoom = (0.5-fov/2, 0.5-fov/2, fov, fov)
+                camera.annotate_text = '{0:.2f} times magnification'.format(1/fov)
         except NameError:
             pass
-    
         
 
 
@@ -264,7 +266,7 @@ def camera_library(argv):
 #run microscope_control.py directly
 if __name__ == '__main__':
     pass
-    
+    '''
     argv = docopt.docopt(__doc__, options_first=True)
     
     stage = Stage()
@@ -366,6 +368,6 @@ if __name__ == '__main__':
 
         curses.wrapper(move_stage_with_keyboard)
 
-    
+    '''
 
 

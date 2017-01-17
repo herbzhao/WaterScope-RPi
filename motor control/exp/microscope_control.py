@@ -171,7 +171,6 @@ def stage_library(command,direction):
     "Use this class from kivy interface to use motors, change picamera etc."
     global step
     stage = Stage()
-
     #stage settings
     if command == 'move_x':
         if direction == '+':
@@ -184,42 +183,47 @@ def stage_library(command,direction):
             stage.move_rel([0,step,0])
         else:
             stage.move_rel([0,-step,0])
-
     if command == 'move_z':
         if direction == '+':
             stage.move_rel([0,0,step])
         else:
             stage.move_rel([0,0,-step])
-
     if command == 'change_step':
         if direction == '+':
             step = step*2
         else:
             step = step/2
 
-
+#defines some camera parameters 
+camera = picamera.PiCamera(resolution=(3280,2464))
+camera.awb_mode = 'off'
+camera.awb_gains = (1,1.2)
+camera.meter_mode = 'spot'
+camera.annotate_text_size = 100
+#camera.exposure_mode = 'off'
+#camera.iso = 0
 def camera_library(argv, *value):
     "Use this function from kivy interface to change picamera etc."
     global fov
-    #defines some camera parameters 
-    camera = picamera.PiCamera(resolution=(3280,2464))
-    camera.awb_mode = 'off'
-    camera.awb_gains = (1,1.2)
-    camera.meter_mode = 'spot'
-    camera.annotate_text_size = 100
-    #camera.exposure_mode = 'off'
-    #camera.iso = 0
-
     if argv == 'start_preview':
         camera.start_preview()
     elif argv == 'stop_preview':
         camera.stop_preview()
-    elif argv == 'contrast':
-        camera.contrast = value[0]
-    elif argv == 'brightness':
-        camera.brightness = value[0]
-    elif argv == 'shutter':
-        camera.shutter_speed = value[0]
+    elif argv == 'reduced_size_preview':
+        camera.start_preview(fullscreen = False, window = value[0])
+    elif argv == 'fullscreen_preview':  
+        camera.start_preview(fullscreen = True) 
+    elif argv == 'save_image':
+        folder = value[0]
+        if not os.path.isdir(folder):
+            os.mkdir(folder)
+        image_filepath = value[1]
+        camera.capture(image_filepath)
+        camera.annotate_text = "Image saved as {}".format(image_filepath)
+    elif argv == 'set_contrast':
+        camera.contrast = int(value[0])
+    elif argv == 'set_brightness':
+        camera.brightness = int(value[0])
     elif argv == 'zoom_in' or 'zoom_out':
         try:
             if argv == 'zoom_in':
@@ -230,15 +234,10 @@ def camera_library(argv, *value):
             camera.annotate_text = 'magnification: {0:.2f}X'.format(1/fov)
         except NameError:
             pass
-    elif argv == 'save_image':
-        filepath = value[0]
-        camera.capture(filepath, format = "jpeg", use_video_port=True)
-        camera.annotate_text = "Saved as {}".format(filepath)
-        time.sleep(0.5)
-        camera.annotate_text = ""
 
+    
         
-
+'''
     def save_image(self, filepath):
         self.filepath = validate_filepath(filepath)
         # self.filepath =  '~/Desktop/images/image_%d.jpg'
@@ -249,7 +248,7 @@ def camera_library(argv, *value):
         self.camera.annotate_text="Saved '%s'" % (filepath % n)
         time.sleep(0.5)
         self.camera.annotate_text=""
-    
+    '''
 
 
 

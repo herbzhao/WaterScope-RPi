@@ -11,17 +11,15 @@ Usage:
 
 @author: Tianheng Zhao
 """
-import time
+
 from datetime import datetime
+import time
 
 import kivy
 from kivy.app import App  # base Class of your App inherits from the App class
-# import kivy misc
-from kivy.clock import Clock
 from kivy.core.window import Window  # This helps define window size, center..
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
-from kivy.uix.filechooser import FileChooser, FileChooserIconLayout
 from kivy.uix.floatlayout import FloatLayout
 # import layout
 # A layout is a special kind of widget that manages the size and/or position of its child widgets
@@ -29,17 +27,19 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.image import Image
 # import widgets
 from kivy.uix.label import Label
-from kivy.uix.popup import Popup
 # This can be moved, resized and rotated by interactions
 from kivy.uix.scatter import Scatter
 from kivy.uix.slider import Slider
 from kivy.uix.textinput import TextInput
-
+from kivy.uix.popup import Popup
+from kivy.uix.filechooser import FileChooser, FileChooserIconLayout
+# import kivy misc
+from kivy.clock import Clock
 
 #kivy.require('1.9.1')   # replace with your current kivy version !
 
 #import microscope control parts
-
+import microscope_control as mc
 
 def create_exit_button():
     exit_button = Button(text = 'exit', size_hint_y = 0.2 , background_color = [1, 0, 0, 1])
@@ -66,31 +66,25 @@ def create_map_controller():
     # determine the amount of zoom and drag needed before moving
     map_controller.scale_max = default_scale*1.2
     map_controller.scale_min = default_scale*0.8
-    x_sensitive = Window.width*0.3
-    y_sensitive = Window.height*0.3
+    x_sensitive = Window.width*0.2
+    y_sensitive = Window.height*0.2
     # dummy object showing active area
-    map_controller.add_widget(Image())
+    # map_controller.add_widget(Image())
 
     def map_control_feedback(instance, value):
         """the callback functions for map_controller scatter object"""
         if map_controller.center[0] - Window.center[0] > x_sensitive:
-            #microscope_control.drag_right()
-            print('moving x+')
+            mc.stage_library('move_x', '-')
         elif map_controller.center[0] - Window.center[0] < -1* x_sensitive:
-            #microscope_control.drag_left()
-            pass
+            mc.stage_library('move_x', '+')
         elif map_controller.center[1] - Window.center[1] > y_sensitive:
-            #microscope_control.drag_top()
-            print('moving y+')
+            mc.stage_library('move_y', '-')
         elif map_controller.center[1] - Window.center[1] < -1*y_sensitive:
-            #microscope_control.drag_bot()
-            pass
+            mc.stage_library('move_y', '+')
         elif map_controller.scale < default_scale*0.9:
-            #microscope_control.pinch_out()
-            print('pinch')
+            mc.camera_library('zoom_out')
         elif map_controller.scale > default_scale*1.1:
-            #microscope_control.pinch_in()
-            pass
+            mc.camera_library('zoom_in')
         #after taking actions, reset scatter location and scale to default
         map_controller.center = Window.center
         map_controller.scale = default_scale
@@ -103,22 +97,16 @@ def create_preview_buttons():
     start_preview_button = Button(text = 'preview')
     stop_preview_button = Button(text = 'stop \npreview')
     def preview_control(instance):
-        pass
-    """	mc.fov = 1.00 #initialise the zoom level
+        mc.fov = 1.00 #initialise the zoom level
         if instance.text == 'preview':
-            microscope_control.start_preview()
+            mc.camera_library('start_preview')
         else:
-            microscope_control.stop_preview()
-
-    microscope_control = microscope_map_controller()"""
+            mc.camera_library('stop_preview')
 
     start_preview_button.bind(on_press = preview_control)  #start_preview functions
     stop_preview_button.bind(on_press = preview_control)
 
     return start_preview_button, stop_preview_button
-
-
-
 
 def create_focus_buttons():
     """+ and - buttons to control focus/Z axis"""
@@ -133,10 +121,10 @@ def create_focus_buttons():
         background_color = [0, 1, 0, 1], size_hint_y = 0.15)
 
     def focus_control(instance):
-        if instance.text == '+':
-            print('focus + ')
-        elif instance.text == '-':
-            print('focus - ')
+        if instance == focus_button_up:
+            mc.stage_library('move_z','+')
+        elif instance == focus_button_down:
+            mc.stage_library('move_z','-')
 
     focus_button_up.bind(on_press = focus_control)  #start_preview functions
     focus_button_down.bind(on_press = focus_control)
@@ -144,13 +132,14 @@ def create_focus_buttons():
 
 def create_step_slider():
     """Manipulate step of motor movement"""
-    default_step = 300
+    step_value = 300 # default value
+    mc.step = step_value
     step_slider_label = Label(
-        text='\n Motor \n steps: \n'+'{}'.format(default_step),
+        text='\n Motor \n steps: \n'+'{}'.format(step_value),
         color = [0.2,0.2,1,1], halign = 'center', valign = 'middle',
         size_hint_y = 0.1)
     step_slider = Slider(
-        min=0, max=1000, value= default_step,
+        min=0, max=1000, value= step_value,
         orientation = 'vertical', size_hint_y = 0.35)
 
     def motor_step_control(instance, value):
@@ -158,7 +147,7 @@ def create_step_slider():
         step_value = int(value)
         step_slider_label.text = '\n Motor \n steps: \n'+'{}'.format(step_value)
         mc.step = step_value
-
+    
     step_slider.bind(value = motor_step_control)
 
     return step_slider_label, step_slider
@@ -171,20 +160,23 @@ def create_settings_button():
     # configure a popup window to display settings and parameters
     settings_popup = Popup( title='Settings', size_hint=(0.8, 0.2))
     settings_popup.pos_hint =  {'x':0.5-settings_popup.size_hint[0]/2,
-                               'y':0.95-settings_popup.size_hint[1]/2} # distance from popup.center
+                               'y':0.9-settings_popup.size_hint[1]/2} # distance from popup.center
     settings_popup_content = GridLayout(cols=1) # a blank layout to put other widgets in
     settings_popup.content = settings_popup_content
     
     # when popup occurs, rezie the preview screen to prevent blockage?
-    '''def fullscreen_preview(instance):
+    def fullscreen_preview(instance):
         """when popup get dismissed, revert camera preview window to normal"""
-        print('popup dismissed')
+        mc.camera_library('stop_preview')
+        mc.camera_library('fullscreen_preview')
     def reduced_size_preview(instance):
         """when popup get opened, reduce camera preview window size to prevent blocking"""
-        print('popup opened')
+        mc.camera_library('stop_preview')
+        reduced_size_window = (int(Window.width*0.2), int(Window.height*0.25), int(Window.width*0.6), int(Window.width*0.6/1.33))
+        mc.camera_library('reduced_size_preview',reduced_size_window)
         
     settings_popup.bind(on_dismiss = fullscreen_preview)
-    settings_popup.bind(on_open = reduced_size_preview)'''
+    settings_popup.bind(on_open = reduced_size_preview)
 
     def switch_settings_popup_content(instance):
         """alter popup content when clicking buttons"""
@@ -198,6 +190,7 @@ def create_settings_button():
             settings_popup_content.add_widget(brightness_controller)
         elif instance == filepath_button:
             settings_popup_content.add_widget(filepath_controller)
+            mc.camera_library('stop_preview') # the preview will block the keyboard
             filepath_input.text = format_filepath()
 
     
@@ -237,7 +230,7 @@ def create_settings_controllers():
     # contrast control
     contrast_controller = BoxLayout(orientation = 'horizontal', size_hint_y = 0.1)
     contrast_label = Label(text = 'Contrast:', size_hint_x = 0.2)
-    contrast_slider = Slider(min=0, max=64, value= 1,  size_hint_x = 0.5)
+    contrast_slider = Slider(min=-100, max=100, value= 0,  size_hint_x = 0.5)
     contrast_input = TextInput(
         text = '{}'.format(int(contrast_slider.value)),
         multiline = False, size_hint_x = 0.3)
@@ -265,10 +258,8 @@ def create_settings_controllers():
                 updated_value = int(textinput.text)
                 slider.value = updated_value
             # call microscope library to update the brightness and contrast 
-            print('brightness: {}'.format(brightness_slider.value))
-            print('contrast: {}'.format(contrast_slider.value))
-            # mc.microscopelibrary()...
-            
+            mc.camera_library('set_brightness', brightness_slider.value)
+            mc.camera_library('set_contrast', contrast_slider.value)
 
     # bind sliders and input box to callback functions
     for slider, textinput in [  # for i, j = [[1,2][3,4]]  >>>i = 1,3  j = 2,4
@@ -301,7 +292,6 @@ def create_filepath_controller():
     def choose_folder(instance, value):
         global folder, filename, folder_sign
         folder = str(value) + folder_sign
-        print(folder)
         filepath = format_filepath()
         filepath_input.text = filepath
     
@@ -326,7 +316,7 @@ def create_filepath_controller():
 # default value when initialise the app
 folder_sign = '/' # different os may use different sign / or \
 image_number = 1
-folder=folder_sign.join(['','home', 'pi', 'Desktop',''])
+folder=folder_sign.join(['','home', 'pi', 'Desktop', 'images',''])
 filename='{:%Y%m%d}'.format(datetime.today())
 filetype = '.jpg'
 def format_filepath(update = False):
@@ -370,7 +360,8 @@ def create_save_image_buttons():
     def save_image(instance):
         global image_number
         filepath = format_filepath(update = True)
-        print('save image to {}'.format(filepath))
+        print(filepath)
+        mc.camera_library('save_image', folder, filepath)
         image_number = image_number + 1
 
     def start_time_lapse(instance):
@@ -379,7 +370,7 @@ def create_save_image_buttons():
         time_lapse_interval = .5
         event = Clock.schedule_interval(save_image, time_lapse_interval)'''
         pass
-
+        
     save_image_button.bind(on_release = save_image)
     time_lapse_button.bind(on_release = start_time_lapse)
     return save_image_button, time_lapse_button
@@ -403,7 +394,7 @@ def add_main_page_widgets():
     # The preview window's aspect ratio is 4:3 and the touch screen is 5:3.
     # There are gaps with Window.width*0.1 on left and right side
     horizontal_layout_1 = BoxLayout(size_hint_x = 0.1, orientation = 'vertical')
-    horizontal_layout_2 = GridLayout(size_hint_x = 0.8, cols = 0)    #there is some minor bug to fix
+    horizontal_layout_2 = GridLayout(size_hint_x = 0.8, cols = 0)  
     horizontal_layout_3 = BoxLayout(size_hint_x = 0.1,  orientation = 'vertical')
     # add 3 layers to base_layout
     base_layout.add_widget(horizontal_layout_1)
