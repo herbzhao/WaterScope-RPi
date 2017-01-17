@@ -198,8 +198,6 @@ def stage_library(command,direction):
             step = step/2
 
 
-
-
 def camera_library(argv, *value):
     "Use this function from kivy interface to change picamera etc."
     global fov
@@ -217,11 +215,11 @@ def camera_library(argv, *value):
     elif argv == 'stop_preview':
         camera.stop_preview()
     elif argv == 'contrast':
-            camera.contrast = value
+        camera.contrast = value[0]
     elif argv == 'brightness':
-        camera.brightness = value
+        camera.brightness = value[0]
     elif argv == 'shutter':
-            camera.shutter_speed = value
+        camera.shutter_speed = value[0]
     elif argv == 'zoom_in' or 'zoom_out':
         try:
             if argv == 'zoom_in':
@@ -233,11 +231,11 @@ def camera_library(argv, *value):
         except NameError:
             pass
     elif argv == 'save_image':
-        filepath = value
+        filepath = value[0]
         camera.capture(filepath, format = "jpeg", use_video_port=True)
         camera.annotate_text = "Saved as {}".format(filepath)
         time.sleep(0.5)
-        self.camera.annotate_text = ""
+        camera.annotate_text = ""
 
         
 

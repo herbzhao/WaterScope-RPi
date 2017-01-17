@@ -374,11 +374,12 @@ def create_save_image_buttons():
         image_number = image_number + 1
 
     def start_time_lapse(instance):
-        time_lapse_state = False
+        '''time_lapse_state = False
         time_lapse_state = not time_lapse_state
         time_lapse_interval = .5
-        event = Clock.schedule_interval(save_image, time_lapse_interval)
-
+        event = Clock.schedule_interval(save_image, time_lapse_interval)'''
+        pass
+        
     save_image_button.bind(on_release = save_image)
     time_lapse_button.bind(on_release = start_time_lapse)
     return save_image_button, time_lapse_button
