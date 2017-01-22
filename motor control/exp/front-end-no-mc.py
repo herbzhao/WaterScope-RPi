@@ -34,8 +34,9 @@ from kivy.uix.popup import Popup
 from kivy.uix.scatter import Scatter
 from kivy.uix.slider import Slider
 from kivy.uix.textinput import TextInput
+from  kivy.uix.switch import Switch
 
-
+from functools import partial
 #kivy.require('1.9.1')   # replace with your current kivy version !
 
 #import microscope control parts
@@ -291,13 +292,16 @@ def create_filepath_controller():
     filepath_input.text = filepath
     for i in [filepath_input, folder_chooser_button]:
         filepath_controller.add_widget(i)
+    
     folder_chooser = FileChooser()
     folder_chooser.add_widget(FileChooserIconLayout())
-    # a popup window to choose folder
+# a popup window to choose folder
     folder_chooser_popup = Popup(title = 'choose folder to save image', size_hint = (0.8, 0.8))
+    folder_chooser_popup.pos_hint =  {'x':0.5-folder_chooser_popup.size_hint[0]/2,
+                               'y':0.5-folder_chooser_popup.size_hint[1]/2} 
     folder_chooser_popup.content = folder_chooser
     folder_chooser_button.bind(on_release = folder_chooser_popup.open)
-    
+
     def choose_folder(instance, value):
         global folder, filename, folder_sign
         folder = str(value) + folder_sign
@@ -361,35 +365,43 @@ def format_filepath(update = False):
     filepath = folder + filename
     return filepath
 
-
 def create_save_image_buttons():
     '''a global filepath to save image to'''
-    save_image_button = Button(text = 'save image')
-    time_lapse_button = Button(text = 'start \ntime lapse') # need to make a popup to choose time_interval etc.
-
+    save_image_button = Button(text = 'save image') 
+    time_lapse_button = Switch() # need to make a popup to choose time_interval etc.
+    time_lapse_interval = 0.5
+    time_lapse_interval_input = TextInput(text = '{}'.format(time_lapse_interval), multiline = False)
+    
     def save_image(instance):
         global image_number
         filepath = format_filepath(update = True)
         print('save image to {}'.format(filepath))
         image_number = image_number + 1
 
-    def start_time_lapse(instance):
-        '''time_lapse_state = False
-        time_lapse_state = not time_lapse_state
-        time_lapse_interval = .5
-        event = Clock.schedule_interval(save_image, time_lapse_interval)'''
-        pass
+    def set_time_lapse_interval(instance):
+        time_lapse_interval = float(time_lapse_interval_input.text)
 
+    def start_time_lapse(instance, value):
+        print(time_lapse_interval)
+        if value is True:
+            event()
+        elif value is False:
+            # unschedule using cancel
+            Clock.unschedule(event)
+
+    event = Clock.schedule_interval(save_image, time_lapse_interval)
+    Clock.unschedule(event)
     save_image_button.bind(on_release = save_image)
-    time_lapse_button.bind(on_release = start_time_lapse)
-    return save_image_button, time_lapse_button
+    time_lapse_button.bind(active = start_time_lapse)
+    time_lapse_interval_input.bind(on_text_validate = set_time_lapse_interval)
+    return save_image_button, time_lapse_button, time_lapse_interval_input
 
 def add_main_page_widgets():
     """Add layouts and widgets to a page (main page)"""
     # defining all the elements here: buttons, sliders, map_controllers
     exit_button = create_exit_button()
     start_preview_button, stop_preview_button = create_preview_buttons()
-    save_image_button, time_lapse_button = create_save_image_buttons()
+    save_image_button, time_lapse_button, time_lapse_interval_input = create_save_image_buttons()
     #settings_button, back_to_main_button = create_page_buttons()
     settings_button = create_settings_button()
     focus_label, focus_button_up, focus_button_down = create_focus_buttons()
@@ -425,6 +437,7 @@ def add_main_page_widgets():
     horizontal_layout_3.add_widget(start_preview_button)
     horizontal_layout_3.add_widget(stop_preview_button)
     horizontal_layout_3.add_widget(save_image_button)
+    horizontal_layout_3.add_widget(time_lapse_interval_input)
     horizontal_layout_3.add_widget(time_lapse_button)
     horizontal_layout_3.add_widget(settings_button)
 

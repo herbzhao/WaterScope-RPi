@@ -282,15 +282,18 @@ def create_filepath_controller():
     filepath_input.text = filepath
     for i in [filepath_input, folder_chooser_button]:
         filepath_controller.add_widget(i)
+
     folder_chooser = FileChooser()
     folder_chooser.add_widget(FileChooserIconLayout())
-    # a popup window to choose folder
+# a popup window to choose folder
     folder_chooser_popup = Popup(title = 'choose folder to save image', size_hint = (0.8, 0.8))
+    folder_chooser_popup.pos_hint =  {'x':0.5-folder_chooser_popup.size_hint[0]/2,
+                               'y':0.5-folder_chooser_popup.size_hint[1]/2} 
     folder_chooser_popup.content = folder_chooser
     folder_chooser_button.bind(on_release = folder_chooser_popup.open)
     
     def choose_folder(instance, value):
-        global folder, filename, folder_sign
+        global folder, folder_sign
         folder = str(value) + folder_sign
         filepath = format_filepath()
         filepath_input.text = filepath
