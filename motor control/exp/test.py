@@ -48,48 +48,38 @@ from datetime import datetime
 from kivy.config import Config
 import os
 
-if __name__ == '__main__':
+
     # Set default value for folder and filename
-    '''    
-    global number_of_image # save function can alter this value
-    folder = '/home/pi/Desktop/photos/' 
-    number_of_image = 1 
-    filename = '{:%Y%m%d}-image-{:03}.jpg'.format(datetime.today(), number_of_image)
-    filepath = folder + filename
 
-    filepath_controller = BoxLayout(orientation = 'horizontal', size_hint_y = 0.1)
-    folder_button = Button(text = 'Choose folder') # a button to popup filechooser
-    filepath_input = TextInput(size_hint_x = 0.8, multiline = True)
-    filepath_input.text = filepath
 
-    for i in [filepath_input, folder_button]:
-        filepath_controller.add_widget(i)
+
+class create_buttons():
+    def __init__(self):
+        pass
+
+    def create_exit_button(self):
+        self.exit_button = Button(text = 'exit', size_hint_y = 0.2 , background_color = [1, 0, 0, 1])
+        self.exit_button.bind(on_press = self.exit_GUI)
+
+    def exit_GUI(self, instance):
+        """function to quit GUI"""
+        print('quitting')
+        raise SystemExit(0)
+
     
-    folder = FileChooser(size_hint = (1,1))
-    folder.add_widget(FileChooserIconLayout())
 
-    folder_popup = Popup(title = 'choose folder to save image', size_hint = (0.8, 0.8))
-    folder_popup.content = folder
-    folder_button.bind(on_release = folder_popup.open)
-    def choose_folder(instance, valeasystroke ue):
-        #print(instance)
-        folder = str(value) + '\\'
-        print(folder)
-        filepath = folder + filename
-        filepath_input.text = filepath
-    folder.bind(path = choose_folder)'''
+if __name__ == '__main__':
+    new_buttons = create_buttons()
+    exit_button = new_buttons.create_exit_button()
 
-
-    # config
-    folder_chooser_button = Button(text = 'File viewer \nto choose folder', size_hint_x = 0.2) # a button to popup filechooser
-    folder_chooser = FileChooser()
-    folder_chooser.add_widget(FileChooserIconLayout())
-    # a popup window to choose folder
-    folder_chooser_popup = Popup(title = 'choose folder to save image', size_hint = (0.8, 0.8))
-    folder_chooser_popup.content = folder_chooser
-    folder_chooser_button.bind(on_release = folder_chooser_popup.open)
+    a = [0.3, 2.3, 5.3, 4.3]
+    for i in range(len(a)):
+        a[i] = int(a[i])
+    
+    b = tuple(a)
+    print(a)
+    print(b)
 
 
-
-    Window.add_widget(folder_chooser_button)
+    Window.add_widget(exit_button)
     runTouchApp()

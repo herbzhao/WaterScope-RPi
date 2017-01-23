@@ -1,8 +1,14 @@
+class test(object):
+    def __init__(self):
+        pass
+    def test1(self):
+        self.a = 5
 
+    def test2(self):
+        
+        self.test1()
+        print(self.a)
 
-def abc(arg, *value):
-    test = value[0] + 5
-    print(test)
-
-
-abc(1,5)
+if __name__ == '__main__':
+    abc = test()
+    abc.test2()
