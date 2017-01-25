@@ -57,29 +57,19 @@ class create_buttons():
     def __init__(self):
         pass
 
-    def create_exit_button(self):
-        self.exit_button = Button(text = 'exit', size_hint_y = 0.2 , background_color = [1, 0, 0, 1])
-        self.exit_button.bind(on_press = self.exit_GUI)
-
-    def exit_GUI(self, instance):
-        """function to quit GUI"""
-        print('quitting')
-        raise SystemExit(0)
-
+    def create_grid(self, resolution):
+        map_grid = GridLayout(rows = resolution)
+        map_buttons = []
+        for i in range(0,resolution**2):
+            map_buttons.append(Button(text = '{}'.format(i+1), background_color = [0, 0.1, 0, 0.5]))
+            map_grid.add_widget(map_buttons[i])
+        
+        return map_grid
     
 
 if __name__ == '__main__':
     new_buttons = create_buttons()
-    exit_button = new_buttons.create_exit_button()
+    map_grid = new_buttons.create_grid(resolution = 9)
 
-    a = [0.3, 2.3, 5.3, 4.3]
-    for i in range(len(a)):
-        a[i] = int(a[i])
-    
-    b = tuple(a)
-    print(a)
-    print(b)
-
-
-    Window.add_widget(exit_button)
+    Window.add_widget(map_grid)
     runTouchApp()

@@ -204,7 +204,6 @@ camera.annotate_text_size = 100
 #camera.iso = 0
 def camera_library(argv, *value):
     "Use this function from kivy interface to change picamera etc."
-    global fov
     if argv == 'start_preview':
         camera.start_preview()
     elif argv == 'stop_preview':
