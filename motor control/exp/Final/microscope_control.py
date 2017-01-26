@@ -167,96 +167,83 @@ def validate_filepath(filepath):
                          " either be [creatable] directories, or end with a "
                          "filename that contains '%d' and ends in '.jpg' or '.jpeg'")
 
-def stage_library(command,direction):
-    "Use this class from kivy interface to use motors, change picamera etc."
-    global step
-    stage = Stage()
-    #stage settings
-    if command == 'move_x':
-        if direction == '+':
-            stage.move_rel([-step,0,0])
-        else:
-            stage.move_rel([step,0,0])
-        
-    if command == 'move_y':
-        if direction == '+':
-            stage.move_rel([0,step,0])
-        else:
-            stage.move_rel([0,-step,0])
-    if command == 'move_z':
-        if direction == '+':
-            stage.move_rel([0,0,step])
-        else:
-            stage.move_rel([0,0,-step])
-    if command == 'change_step':
-        if direction == '+':
-            step = step*2
-        else:
-            step = step/2
 
-#defines some camera parameters 
-camera = picamera.PiCamera(resolution=(3280,2464))
-camera.awb_mode = 'off'
-camera.awb_gains = (1,1.2)
-camera.meter_mode = 'spot'
-camera.annotate_text_size = 100
-#camera.exposure_mode = 'off'
-#camera.iso = 0
-def camera_library(argv, *value):
-    "Use this function from kivy interface to change picamera etc."
-    if argv == 'start_preview':
-        camera.start_preview()
-    elif argv == 'stop_preview':
-        camera.stop_preview()
-    elif argv == 'reduced_size_preview':
-        camera.start_preview(fullscreen = False, window = value[0])
-    elif argv == 'fullscreen_preview':  
-        camera.start_preview(fullscreen = True) 
-    elif argv == 'save_image':
-        folder = value[0]
-        if not os.path.isdir(folder):
-            os.mkdir(folder)
-        image_filepath = value[1]
-        camera.capture(image_filepath)
-        camera.annotate_text = "Image saved as {}".format(image_filepath)
-    elif argv == 'set_contrast':
-        camera.contrast = int(value[0])
-    elif argv == 'set_brightness':
-        camera.brightness = int(value[0])
-    elif argv == 'zoom_in' or 'zoom_out':
-        try:
-            if argv == 'zoom_in':
-                fov = fov*3/4
-            elif argv == 'zoom_out':
-                fov = fov*4/3
-            camera.zoom = (0.5-fov/2, 0.5-fov/2, fov, fov)
-            camera.annotate_text = 'magnification: {0:.2f}X'.format(1/fov)
-        except NameError:
-            pass
+class camera_control():
 
-    
-        
-'''
-    def save_image(self, filepath):
-        self.filepath = validate_filepath(filepath)
-        # self.filepath =  '~/Desktop/images/image_%d.jpg'
-        n = 0
-        while os.path.isfile(os.path.join(self.filepath % n)):
-            n += 1
-        self.camera.capture(filepath % n, format="jpeg", use_video_port=True)
-        self.camera.annotate_text="Saved '%s'" % (filepath % n)
-        time.sleep(0.5)
-        self.camera.annotate_text=""
-    '''
+    def __init__(self):
+    #defines some camera parameters 
+        self.stage = Stage()
+        self.camera = picamera.PiCamera(resolution=(3280,2464))
+        self.camera.awb_mode = 'off'
+        self.camera.awb_gains = (1,1.2)
+        self.camera.meter_mode = 'spot'
+        self.camera.annotate_text_size = 100
+        self.step = 300
+        #camera.exposure_mode = 'off'
+        #camera.iso = 0
 
+    def stage_library(self, command, direction):
+        "Use this class from kivy interface to use motors, change picamera etc."        
+        #stage settings
+        if command == 'move_x':
+            if direction == '+':
+                self.stage.move_rel([-self.step,0,0])
+            else:
+                self.stage.move_rel([self.step,0,0])
+            
+        if command == 'move_y':
+            if direction == '+':
+                self.stage.move_rel([0,self.step,0])
+            else:
+                self.stage.move_rel([0,-self.step,0])
+        if command == 'move_z':
+            if direction == '+':
+                self.stage.move_rel([0,0,self.step])
+            else:
+                self.stage.move_rel([0,0,-self.step])
+        if command == 'change_self.step':
+            if direction == '+':
+                self.step = self.step*2
+            else:
+                self.step = self.step/2
+
+    def camera_library(self, argv, *value):
+        "Use this function from kivy interface to change picamera etc."
+        if argv == 'start_preview':
+            self.camera.start_preview()
+        elif argv == 'stop_preview':
+            self.camera.stop_preview()
+        elif argv == 'reduced_size_preview':
+            self.camera.start_preview(fullscreen = False, window = value[0])
+        elif argv == 'fullscreen_preview':  
+            self.camera.start_preview(fullscreen = True) 
+        elif argv == 'set_contrast':
+            self.camera.contrast = int(value[0])
+        elif argv == 'set_brightness':
+            self.camera.brightness = int(value[0])
+        elif argv == 'zoom_in' or 'zoom_out':
+            try:
+                if argv == 'zoom_in':
+                    self.fov = self.fov*3/4
+                elif argv == 'zoom_out':
+                    self.fov = self.fov*4/3
+                self.camera.zoom = (0.5-self.fov/2, 0.5-self.fov/2, self.fov, self.fov)
+                self.camera.annotate_text = 'magnification: {0:.2f}X'.format(1/self.fov)
+            except NameError:
+                pass
+        elif argv == 'save_image':
+            folder = value[0]
+            if not os.path.isdir(folder):
+                os.mkdir(folder)
+            image_filepath = value[1]
+            self.camera.capture(image_filepath)
+            self.camera.annotate_text = "Image saved as {}".format(image_filepath)
 
 
 
 
 #run microscope_control.py directly
 if __name__ == '__main__':
-    pass
-    '''
     argv = docopt.docopt(__doc__, options_first=True)
     
     stage = Stage()
@@ -357,7 +344,5 @@ if __name__ == '__main__':
                         stdscr.addstr("New output filepath: %s\n" % filepath)
 
         curses.wrapper(move_stage_with_keyboard)
-
-    '''
 
 

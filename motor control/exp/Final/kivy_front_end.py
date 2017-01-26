@@ -40,7 +40,8 @@ from kivy.uix.textinput import TextInput
 # set this to True for development on computer, set to Fals to run on RaspberryPi
 debug_mode = True
 if debug_mode is False:
-    import microscope_control as mc
+    from microscope_control import camera_control
+    mc = camera_control()
 
 
 
@@ -353,14 +354,15 @@ class control_elements(object):
         folder_chooser_popup.pos_hint =  {'x':0.5-folder_chooser_popup.size_hint[0]/2,
                                 'y':0.5-folder_chooser_popup.size_hint[1]/2} 
         folder_chooser_popup.content = folder_chooser
-            
+        
+        def activate_folder_chooser(instance):
+            folder_chooser_popup.open()
         def choose_folder(instance, value):
             '''Callback function for FileChooser'''
             self.folder = str(value) + self.folder_sign
             print(self.folder)
             self.filepath = self.format_filepath(update = True)
             self.filepath_input.text = self.filepath
-        
 
         def update_filepath_input(instance):
             '''Callback function for TextInput'''
@@ -373,7 +375,7 @@ class control_elements(object):
             self.filepath = self.format_filepath(update = True)
             self.filepath_input.text = self.filepath
 
-        folder_chooser_button.bind(on_release = folder_chooser_popup.open)
+        folder_chooser_button.bind(on_release = activate_folder_chooser)
         folder_chooser.bind(path = choose_folder)
         self.filepath_input.bind(on_text_validate = update_filepath_input)
         return filepath_controller
@@ -410,45 +412,43 @@ class control_elements(object):
         self.filepath = self.folder + self.filename
         return self.filepath
 
-
-
-
     def create_save_image_buttons(self):
+        default_time_lapse_interval = 60
         time_lapse_layout = BoxLayout(orientation = 'vertical', size_hint_y = 0.6)
         save_image_button = Button(text = 'save image', size_hint_y = 0.2, background_color = [0, 0.3, 1, 1]) 
-        time_lapse_interval_input = TextInput(text = '60', multiline = False, size_hint_y = 0.3)
+        time_lapse_interval_input = TextInput(text = str(default_time_lapse_interval), multiline = False, size_hint_y = 0.3)
         time_lapse_interval_label = Label(text = 'time_lapse\ninterval(sec)', size_hint_y = 0.15, color = [0, 1, 0, 1])
         time_lapse_button = Switch(size_hint_y = 0.2) # need to make a popup to choose time_interval etc.
         time_lapse_button_label = Label(text = 'on/off\ntime_lapse', size_hint_y = 0.15,  color = [0, 1, 0, 1])
         
-
         def save_image(instance):
             ''' Callback for save_image_button'''
             self.filepath_update = False # this prevents saving image mess up naming 
             self.filepath = self.format_filepath(update = False)
             print('save image to {}'.format(self.filepath))
             if debug_mode is False:
-                mc.camera_library('save_image', folder, filepath)
+                mc.camera_library('save_image', self.folder, self.filepath)
             self.image_number = self.image_number + 1
 
         def start_time_lapse(instance, value):
             ''' Callback for time_lapse_button'''
+            update_time_lapse_interval(time_lapse_interval_input)
+            if value is True:
+                self.event = Clock.schedule_interval(save_image, self.time_lapse_interval)
+            if value is False:
+                Clock.unschedule(self.event)
+        def update_time_lapse_interval(instance):
             try: 
                 self.time_lapse_interval = float(time_lapse_interval_input.text)
             except:
-                time_lapse_interval_input.text = '60'
+                # if the text_input is not a valid value, use 60 as default value
+                time_lapse_interval_input.text = str(default_time_lapse_interval)
                 self.time_lapse_interval = float(time_lapse_interval_input.text)
-
-            print(self.time_lapse_interval)
-            if value is True:
-                self.event = Clock.schedule_interval(save_image, self.time_lapse_interval)
-                self.event()
-            elif value is False:
-                # unschedule using cancel
-                Clock.unschedule(self.event)
+                print(self.time_lapse_interval)
 
         save_image_button.bind(on_release = save_image)
         time_lapse_button.bind(active = start_time_lapse)
+        time_lapse_interval_input.bind(on_text_validate = update_time_lapse_interval)
         for i in [save_image_button, time_lapse_interval_label, time_lapse_interval_input, time_lapse_button_label, time_lapse_button]:
             time_lapse_layout.add_widget(i)
 
