@@ -363,11 +363,13 @@ class control_elements(object):
         self.folder_chooser.rootpath = self.root_folder
         # set folder_chooser's default opening folder
         self.folder_chooser.path = self.folder
+        # create another popup for image_viewer
+        image_viewer_popup = Popup(title = 'image viewer', size_hint = (0.8, 0.8))
         
         def activate_folder_chooser(instance):
             folder_chooser_popup.open()
         def choose_folder(instance, value):
-            '''Callback function for FileChooser'''
+            '''Callback function for FileChooser when select folders'''
             self.folder = str(value)
             self.filepath = self.format_filepath(update = True)
             self.filepath_input.text = self.filepath
@@ -382,9 +384,21 @@ class control_elements(object):
             # format filepath and update filepath_input
             self.filepath = self.format_filepath(update = True)
             self.filepath_input.text = self.filepath
+        
+        def view_image(instance, value):
+            '''Callback function for FileChooser when select files'''
+            # change from "['C:\\abc.jpg']" to "C:\\abc.jpg"
+            filepath = str(value).replace('[','').replace(']','').replace('\'','')
+            # check the file type
+            filepath_split = filepath.split('.')
+            if filepath_split[-1] in ['jpg', 'jpeg', 'png', 'tif', 'tiff']:
+                image_object = Image(source = filepath)
+                image_viewer_popup.content = image_object
+                image_viewer_popup.open()
 
         folder_chooser_button.bind(on_release = activate_folder_chooser)
         self.folder_chooser.bind(path = choose_folder)
+        self.folder_chooser.bind(selection = view_image)
         self.filepath_input.bind(on_text_validate = update_filepath_input)
         return filepath_controller
 
