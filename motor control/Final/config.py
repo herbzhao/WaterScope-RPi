@@ -5,4 +5,4 @@ Config.set('kivy', 'keyboard_mode', 'systemanddock')
 Config.set('kivy', 'keyboard_layout', 'qwerty')
 Config.write()
 
-print('restart to take effect')
+print('restart kivy app to take effect')
