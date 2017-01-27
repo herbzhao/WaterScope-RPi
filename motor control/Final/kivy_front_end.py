@@ -4,6 +4,7 @@
 Kivy interface for WaterScope motor control and picamera control
 
 Usage:
+    0. Change the line debug_mode = True to debug_mode = False when using on RaspberryPi
     1. Press start preview to start streaming microscopic image
     2. swipe horizontal and vertical to move field of view
     3. pinch in and out to zoom in and out
@@ -11,6 +12,9 @@ Usage:
 
 @author: Tianheng Zhao
 """
+# set this to True for development on computer, set to Fals to run on RaspberryPi
+debug_mode = True
+
 import time
 from datetime import datetime
 from functools import partial
@@ -37,13 +41,11 @@ from kivy.uix.slider import Slider
 from kivy.uix.switch import Switch
 from kivy.uix.textinput import TextInput
 
-# set this to True for development on computer, set to Fals to run on RaspberryPi
-debug_mode = True
+
 if debug_mode is False:
     from microscope_control import camera_control
     mc = camera_control()
-
-
+    mc.fov = 1.00 #initialise the zoom level
 
 #kivy.require('1.9.1')   # replace with your current kivy version !
 
@@ -52,17 +54,21 @@ if debug_mode is False:
 class control_elements(object):
     def __init__(self):
         """ Some default class-wide values"""
-        self.drag_x_sensitive = Window.width*0.2
-        self.drag_y_sensitive = Window.height*0.2
+        # this determines how much user need to swipe before motor moves in x-y directions
+        self.drag_x_sensitive = Window.width*0.15
+        self.drag_y_sensitive = Window.height*0.15
+        # these are default values for file saving
         self.folder_sign = '/' # different os may use different sign / or \
         self.image_number = 1
-        self.folder=self.folder_sign.join(['','home', 'pi', 'Desktop',''])
+        self.folder=self.folder_sign.join(['','home', 'pi', 'Desktop', 'images'])
+        # set root folder for FileChooser, prevent saving files to random places
+        self.root_folder = self.folder_sign.join(['','home', 'pi', ''])
         self.filename='{:%Y%m%d}'.format(datetime.today())
         self.filetype = '.jpg'
         self.filepath_update = True
-        self.time_lapse_interval = 0.5
-
-
+        self.time_lapse_interval = 30
+        
+        
     def create_exit_button(self):
         exit_button = Button(text = 'exit', size_hint_y = 0.2 , background_color = [1, 0, 0, 1])
 
@@ -146,7 +152,6 @@ class control_elements(object):
             """the callback functions for map_controller scatter object"""
             if debug_mode is True: 
                 if map_controller.center[0] - Window.center[0] > self.drag_x_sensitive:
-                    # mc.stage_library('move_x', '-')
                     print('moving x+')
                 elif map_controller.center[0] - Window.center[0] < -1* self.drag_x_sensitive:
                     print('moving x-')
@@ -171,10 +176,9 @@ class control_elements(object):
                     mc.camera_library('zoom_out')
                 elif map_controller.scale > default_scale*1.1:
                     mc.camera_library('zoom_in')
-
-        #after taking actions, reset scatter location and scale to default
-        map_controller.center = Window.center
-        map_controller.scale = default_scale
+            #after taking actions, reset scatter location and scale to default
+            map_controller.center = Window.center
+            map_controller.scale = default_scale
 
         map_controller.bind(on_touch_up = map_control_feedback)
         return map_controller
@@ -192,7 +196,6 @@ class control_elements(object):
                 else:
                     print('stop_preview')
             elif debug_mode is False:
-                mc.fov = 1.00 #initialise the zoom level
                 if instance.text == 'preview':
                     mc.camera_library('start_preview')
                 else:
@@ -256,7 +259,9 @@ class control_elements(object):
                 if debug_mode is False:
                     mc.camera_library('stop_preview') # the preview will block the keyboard
                 settings_popup_content.add_widget(filepath_controller)
-                # self.filepath_input.text = self.format_filepath(update = True)
+                # Update the filepath_input and folder_chooser (after taking images, possibly)
+                self.filepath_input.text = self.format_filepath(update = True)
+                self.folder_chooser.path = self.folder
 
         # add buttons to call out popups
         # settings_panel with 3 buttons on it
@@ -347,20 +352,23 @@ class control_elements(object):
         self.filepath_input.text = control_elements.filepath
         for i in [self.filepath_input, folder_chooser_button]:
             filepath_controller.add_widget(i)
-        folder_chooser = FileChooser()
-        folder_chooser.add_widget(FileChooserIconLayout())
+        self.folder_chooser = FileChooser()
+        self.folder_chooser.add_widget(FileChooserIconLayout())
     # a popup window to choose folder
         folder_chooser_popup = Popup(title = 'choose folder to save image', size_hint = (0.8, 0.8))
         folder_chooser_popup.pos_hint =  {'x':0.5-folder_chooser_popup.size_hint[0]/2,
                                 'y':0.5-folder_chooser_popup.size_hint[1]/2} 
-        folder_chooser_popup.content = folder_chooser
+        folder_chooser_popup.content = self.folder_chooser
+        # set the rootpath that user can get access to
+        self.folder_chooser.rootpath = self.root_folder
+        # set folder_chooser's default opening folder
+        self.folder_chooser.path = self.folder
         
         def activate_folder_chooser(instance):
             folder_chooser_popup.open()
         def choose_folder(instance, value):
             '''Callback function for FileChooser'''
-            self.folder = str(value) + self.folder_sign
-            print(self.folder)
+            self.folder = str(value)
             self.filepath = self.format_filepath(update = True)
             self.filepath_input.text = self.filepath
 
@@ -370,13 +378,13 @@ class control_elements(object):
             self.filepath = self.filepath_input.text
             filepath_split = self.filepath.split(self.folder_sign)
             self.filename = filepath_split[-1] # last element after the folder sign 
-            self.folder = self.folder_sign.join(filepath_split[0:-1]) + self.folder_sign 
+            self.folder = self.folder_sign.join(filepath_split[0:-1])
             # format filepath and update filepath_input
             self.filepath = self.format_filepath(update = True)
             self.filepath_input.text = self.filepath
 
         folder_chooser_button.bind(on_release = activate_folder_chooser)
-        folder_chooser.bind(path = choose_folder)
+        self.folder_chooser.bind(path = choose_folder)
         self.filepath_input.bind(on_text_validate = update_filepath_input)
         return filepath_controller
 
@@ -409,14 +417,13 @@ class control_elements(object):
                 
         # if there is no specified self.image_number, then use the system-wide number (default: 1)
         self.filename = self.filename + '-{:03}'.format(self.image_number) + self.filetype
-        self.filepath = self.folder + self.filename
+        self.filepath = self.folder + self.folder_sign +self.filename
         return self.filepath
 
     def create_save_image_buttons(self):
-        default_time_lapse_interval = 60
         time_lapse_layout = BoxLayout(orientation = 'vertical', size_hint_y = 0.6)
         save_image_button = Button(text = 'save image', size_hint_y = 0.2, background_color = [0, 0.3, 1, 1]) 
-        time_lapse_interval_input = TextInput(text = str(default_time_lapse_interval), multiline = False, size_hint_y = 0.3)
+        time_lapse_interval_input = TextInput(text = str(self.time_lapse_interval), multiline = False, size_hint_y = 0.3)
         time_lapse_interval_label = Label(text = 'time_lapse\ninterval(sec)', size_hint_y = 0.15, color = [0, 1, 0, 1])
         time_lapse_button = Switch(size_hint_y = 0.2) # need to make a popup to choose time_interval etc.
         time_lapse_button_label = Label(text = 'on/off\ntime_lapse', size_hint_y = 0.15,  color = [0, 1, 0, 1])
@@ -425,7 +432,8 @@ class control_elements(object):
             ''' Callback for save_image_button'''
             self.filepath_update = False # this prevents saving image mess up naming 
             self.filepath = self.format_filepath(update = False)
-            print('save image to {}'.format(self.filepath))
+            if debug_mode is True:
+                print('save image to {}'.format(self.filepath))
             if debug_mode is False:
                 mc.camera_library('save_image', self.folder, self.filepath)
             self.image_number = self.image_number + 1
@@ -442,7 +450,7 @@ class control_elements(object):
                 self.time_lapse_interval = float(time_lapse_interval_input.text)
             except:
                 # if the text_input is not a valid value, use 60 as default value
-                time_lapse_interval_input.text = str(default_time_lapse_interval)
+                time_lapse_interval_input.text = str(self.time_lapse_interval)
                 self.time_lapse_interval = float(time_lapse_interval_input.text)
                 print(self.time_lapse_interval)
 
