@@ -90,7 +90,7 @@ class create_buttons():
             filepath_split = filepath.split('.')
             print(filepath_split[-1])
             if filepath_split[-1] in ['jpg', 'jpeg', 'png', 'tif', 'tiff']:
-                image_object = Image(source = filepath)
+                image_object = Image(source = filepath, size_hint_x = 0.8, size_hint_y = 0.8)
                 image_viewer_popup.content = image_object
                 image_viewer_popup.open()
 

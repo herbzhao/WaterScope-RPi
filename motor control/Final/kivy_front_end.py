@@ -255,6 +255,8 @@ class control_elements(object):
                 settings_popup_content.add_widget(contrast_controller)
             elif instance == brightness_button:
                 settings_popup_content.add_widget(brightness_controller)
+            elif instance == white_balance_button:
+                settings_popup_content.add_widget(white_balance_controller)
             elif instance == filepath_button:
                 if debug_mode is False:
                     mc.camera_library('stop_preview') # the preview will block the keyboard
@@ -265,10 +267,10 @@ class control_elements(object):
 
         # add buttons to call out popups
         # settings_panel with 3 buttons on it
-        settings_panel, contrast_button, brightness_button, filepath_button = self.create_settings_panel()
-        brightness_controller, contrast_controller = self.create_settings_controllers()
+        settings_panel, contrast_button, brightness_button, white_balance_button, filepath_button = self.create_settings_panel()
+        brightness_controller, contrast_controller, white_balance_controller = self.create_settings_controllers()
         filepath_controller = self.create_filepath_controller()
-        for button in [settings_button, contrast_button, brightness_button, filepath_button]:
+        for button in [settings_button, contrast_button, brightness_button, white_balance_button, filepath_button]:
             button.bind(on_release= switch_settings_popup_content)
         return settings_button
 
@@ -277,10 +279,11 @@ class control_elements(object):
         settings_panel = BoxLayout()
         contrast_button = Button(text='contrast')
         brightness_button = Button(text='brightness')
+        white_balance_button = Button(text='white balance')
         filepath_button = Button(text='change filepath')
-        for i in [contrast_button, brightness_button, filepath_button]:
+        for i in [contrast_button, brightness_button, white_balance_button, filepath_button]:
             settings_panel.add_widget(i)
-        return settings_panel, contrast_button, brightness_button, filepath_button
+        return settings_panel, contrast_button, brightness_button, white_balance_button, filepath_button
 
     def create_settings_controllers(self):
         '''controllers(slider, input box) for brightness, contrast, etc.'''
@@ -303,8 +306,41 @@ class control_elements(object):
             multiline = False, size_hint_x = 0.3)
         for i in [contrast_label, contrast_input, contrast_slider]:
             contrast_controller.add_widget(i)
-
-        def settings_control(instance,*value):
+        # white balance control
+        white_balance_controller = BoxLayout(orientation = 'horizontal', size_hint_y = 0.1)
+        blue_gain_label = Label(text = 'Blue gain:', size_hint_x = 0.2)
+        blue_gain_input = TextInput(
+            text = '1.5',
+            multiline = False, size_hint_x = 0.3)
+        red_gain_label = Label(text = 'Red gain:', size_hint_x = 0.2)
+        red_gain_input = TextInput(
+            text = '1.1',
+            multiline = False, size_hint_x = 0.3)
+        def white_balance_control(instance, *value):
+            try:
+                blue_gain = float(blue_gain_input.text)
+                red_gain = float(red_gain_input.text)
+                # if the value is out of range
+                if blue_gain < 0 or blue_gain > 8.0:
+                    blue_gain = 1.5
+                if red_gain < 0 or red_gain > 8.0:
+                    red_gain = 1.1
+            except ValueError:
+                # if user input characters
+                blue_gain = 1.5
+                red_gain = 1.1
+            blue_gain_input.text = str(blue_gain)
+            red_gain_input.text = str(red_gain)
+            if debug_mode is True:
+                print('set blue gain as {} and red gain as {}'.format(blue_gain, red_gain))
+            elif debug_mode is False:
+                mc.camera_library('set_white_balance', blue_gain, red_gain)
+        for i in [blue_gain_input, red_gain_input]:
+            i.bind(on_text_validate = white_balance_control)
+        for i in [blue_gain_label, blue_gain_input, red_gain_label, red_gain_input]:
+            white_balance_controller.add_widget(i)
+        
+        def contrast_and_brightness_control(instance,*value):
             """callback function of sliders and input box for brightness/contrast
             
             update sliders with TextInput and vice versa. update camera settings"""
@@ -338,9 +374,9 @@ class control_elements(object):
         for slider, textinput in [  # for i, j = [[1,2][3,4]]  >>>i = 1,3  j = 2,4
                 [brightness_slider, brightness_input],
                 [contrast_slider, contrast_input]]: 
-            slider.bind(value = settings_control)
-            textinput.bind(on_text_validate = settings_control)
-        return brightness_controller, contrast_controller
+            slider.bind(value = contrast_and_brightness_control)
+            textinput.bind(on_text_validate = contrast_and_brightness_control)
+        return brightness_controller, contrast_controller, white_balance_controller
 
 
     def create_filepath_controller(self):

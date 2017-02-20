@@ -167,20 +167,22 @@ def validate_filepath(filepath):
                          " either be [creatable] directories, or end with a "
                          "filename that contains '%d' and ends in '.jpg' or '.jpeg'")
 
-
 class camera_control():
-
     def __init__(self):
     #defines some camera parameters 
         self.stage = Stage()
         self.camera = picamera.PiCamera(resolution=(3280,2464))
+        # some initial default values
+        self.camera.exposure_mode = 'off'
         self.camera.awb_mode = 'off'
-        self.camera.awb_gains = (1,1.2)
-        self.camera.meter_mode = 'spot'
+        self.camera.awb_gains = (1.5,1.1)
+        self.camera.meter_mode = 'backlit'
         self.camera.annotate_text_size = 100
+        self.camera.iso = 100
+        self.camera.shutter_speed = 900
+        self.camera.saturation = 0
         self.step = 300
-        #camera.exposure_mode = 'off'
-        #camera.iso = 0
+
 
     def stage_library(self, command, direction):
         "Use this class from kivy interface to use motors, change picamera etc."        
@@ -220,6 +222,8 @@ class camera_control():
             self.camera.contrast = int(value[0])
         elif argv == 'set_brightness':
             self.camera.brightness = int(value[0])
+        elif argv == 'set_white_balance':
+            self.camera.awb_gains = (value[0],value[1])
         # 'save_image' cannot be the last elif for some reason?
         elif argv == 'save_image':
             folder = value[0]
