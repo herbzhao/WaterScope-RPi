@@ -47,10 +47,11 @@ from kivy.base import runTouchApp
 from datetime import datetime
 from kivy.config import Config
 import os
-
+from PIL import Image as PIL_Image
 
     # Set default value for folder and filename
 
+image_path = r'C:\Users\herbz\OneDrive - University Of Cambridge\Documents\GitHub\WaterScope-RPi\motor control\exp\resources\20170127-002.jpg'
 
 
 class create_buttons():
@@ -78,22 +79,33 @@ class create_buttons():
         folder_chooser_popup.content = self.folder_chooser
 
         image_viewer_popup = Popup(title = 'image viewer', size_hint = (0.8, 0.8))
-        
+        self.number = 1
         def activate_folder_chooser(instance):
             folder_chooser_popup.open()
         def choose_image(instance, value):
             '''Callback function for FileChooser'''
             # change from "['C:\\abc.jpg']" to "C:\\abc.jpg"
             filepath = str(value).replace('[','').replace(']','').replace('\'','')
-            print(filepath)
+            print('file:' + filepath)
             # check the file type
             filepath_split = filepath.split('.')
-            print(filepath_split[-1])
+            print('image: '+ filepath)
+            
             if filepath_split[-1] in ['jpg', 'jpeg', 'png', 'tif', 'tiff']:
-                image_object = Image(source = filepath, size_hint_x = 0.8, size_hint_y = 0.8)
-                image_viewer_popup.content = image_object
+                im = PIL_Image.open(filepath)
+                im.thumbnail((300,300))
+                os.remove(self.thumbnail_location)
+                self.thumbnail_location = r"C:\Users\herbz\OneDrive - University Of Cambridge\Documents\GitHub\WaterScope-RPi\motor control\exp\resources\thumbnail{}.jpg".format(self.number)
+                im.save(self.thumbnail_location, "JPEG")
+                im.close()
+                self.image_object = Image(source = self.thumbnail_location, size_hint_x = 0.8, size_hint_y = 0.8)
+                self.number = self.number*-1
+                #self.image_object = Image(source = filepath)
+                image_viewer_popup.content = self.image_object
                 image_viewer_popup.open()
-
+                os.remove(self.thumbnail_location)
+            
+            
         self.folder_chooser.bind(selection = choose_image)
         folder_chooser_button.bind(on_release = activate_folder_chooser)
         
@@ -105,4 +117,6 @@ if __name__ == '__main__':
     #map_grid = new_buttons.create_grid(resolution = 9)
     folder_chooser_button = new_buttons.create_gallery()
     Window.add_widget(folder_chooser_button)
+
     runTouchApp()
+

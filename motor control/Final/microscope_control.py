@@ -171,42 +171,50 @@ class camera_control():
     def __init__(self):
     #defines some camera parameters 
         self.stage = Stage()
-        self.camera = picamera.PiCamera(resolution=(3280,2464))
+        camera_resolution = (3280, 2464)
+        #camera_resolution = (1024, 768)
+        self.camera = picamera.PiCamera(resolution = camera_resolution)
         # some initial default values
-        self.camera.exposure_mode = 'off'
+        
         self.camera.awb_mode = 'off'
         self.camera.awb_gains = (1.5,1.1)
-        self.camera.meter_mode = 'backlit'
-        self.camera.annotate_text_size = 100
-        self.camera.iso = 100
+        self.camera.iso = 0
+        # when set exposure_mode to "off", output will be black
+        #self.camera.exposure_mode = 'auto'
+        
         self.camera.shutter_speed = 900
         self.camera.saturation = 0
+        self.camera.annotate_text_size = int(camera_resolution[0]*0.03) # reasonable ratio for any resolution
         self.step = 300
 
-
     def stage_library(self, command, direction):
-        "Use this class from kivy interface to use motors, change picamera etc."        
-        #stage settings
-        if command == 'move_x':
-            if direction == '+':
-                self.stage.move_rel([-self.step,0,0])
-            else:
-                self.stage.move_rel([self.step,0,0])
-        if command == 'move_y':
-            if direction == '+':
-                self.stage.move_rel([0,self.step,0])
-            else:
-                self.stage.move_rel([0,-self.step,0])
-        if command == 'move_z':
-            if direction == '+':
-                self.stage.move_rel([0,0,self.step])
-            else:
-                self.stage.move_rel([0,0,-self.step])
-        if command == 'change_self.step':
-            if direction == '+':
-                self.step = self.step*2
-            else:
-                self.step = self.step/2
+        """Use this class from kivy interface to use motors, change picamera etc.
+        
+        in case there is no stage connected, use the exception to avoid crash"""        
+        try:
+            if command == 'move_x':
+                if direction == '+':
+                    self.stage.move_rel([-self.step,0,0])
+                else:
+                    self.stage.move_rel([self.step,0,0])
+            if command == 'move_y':
+                if direction == '+':
+                    self.stage.move_rel([0,self.step,0])
+                else:
+                    self.stage.move_rel([0,-self.step,0])
+            if command == 'move_z':
+                if direction == '+':
+                    self.stage.move_rel([0,0,self.step])
+                else:
+                    self.stage.move_rel([0,0,-self.step])
+            if command == 'change_self.step':
+                if direction == '+':
+                    self.step = self.step*2
+                else:
+                    self.step = self.step/2
+        except IOError:
+            # When there is no actual motorised stage connected, do nothing
+            pass
 
     def camera_library(self, argv, *value):
         "Use this function from kivy interface to change picamera etc."
@@ -226,11 +234,21 @@ class camera_control():
             self.camera.awb_gains = (value[0],value[1])
         # 'save_image' cannot be the last elif for some reason?
         elif argv == 'save_image':
+            # remove any text overlay
+            self.camera.annotate_text = ""
             folder = value[0]
             if not os.path.isdir(folder):
                 os.mkdir(folder)
             image_filepath = value[1]
-            self.camera.capture(image_filepath)
+            while True:
+                if os.path.isfile(image_filepath):
+                    # if there is a file with same name, add a -new behind file name
+                    image_filepath = image_filepath.split('.')
+                    image_filepath = image_filepath[0] + '-new.' + image_filepath[1]
+                else:
+                    break
+            # save the raw data on jpeg
+            self.camera.capture(image_filepath, 'jpeg', bayer = True)
             self.camera.annotate_text = "Image saved as {}".format(image_filepath)
         elif argv == 'zoom_in' or 'zoom_out':
             if argv == 'zoom_in':

@@ -41,6 +41,8 @@ from kivy.uix.slider import Slider
 from kivy.uix.switch import Switch
 from kivy.uix.textinput import TextInput
 
+from PIL import Image as PIL_Image
+import os
 
 if debug_mode is False:
     from microscope_control import camera_control
@@ -60,7 +62,7 @@ class control_elements(object):
         # these are default values for file saving
         self.folder_sign = '/' # different os may use different sign / or \
         self.image_number = 1
-        self.folder=self.folder_sign.join(['','home', 'pi', 'Desktop', 'images'])
+        self.folder = self.folder_sign.join(['','home', 'pi', 'Desktop', 'images'])
         # set root folder for FileChooser, prevent saving files to random places
         self.root_folder = self.folder_sign.join(['','home', 'pi', ''])
         self.filename='{:%Y%m%d}'.format(datetime.today())
@@ -68,13 +70,14 @@ class control_elements(object):
         self.filepath_update = True
         self.time_lapse_interval = 30
         
-        
     def create_exit_button(self):
         exit_button = Button(text = 'exit', size_hint_y = 0.2 , background_color = [1, 0, 0, 1])
 
         def exit_GUI(instance):
             """ Callback function to quit GUI"""
             print('quitting')
+            if debug_mode is False:
+                mc.camera_library('stop_preview')
             raise SystemExit(0)
 
         exit_button.bind(on_press = exit_GUI)
@@ -214,7 +217,7 @@ class control_elements(object):
         # configure a popup window to display settings and parameters
         settings_popup = Popup( title='Settings', size_hint=(0.8, 0.2))
         settings_popup.pos_hint =  {'x':0.5-settings_popup.size_hint[0]/2,
-                                'y':0.95-settings_popup.size_hint[1]/2} # distance from popup.center
+                                'y':0.9-settings_popup.size_hint[1]/2} # distance from popup.center
         settings_popup_content = GridLayout(cols=1) # a blank layout to put other widgets in
         settings_popup.content = settings_popup_content
 
@@ -287,95 +290,62 @@ class control_elements(object):
 
     def create_settings_controllers(self):
         '''controllers(slider, input box) for brightness, contrast, etc.'''
-        # crate a horizontal boxlayout to include label, slider and input box
-        brightness_controller = BoxLayout(orientation = 'horizontal', size_hint_y = 0.1)
-        brightness_label = Label(text = 'Brightness:', size_hint_x = 0.2)
-        brightness_slider = Slider(min = 0, max = 100, value = 50, size_hint_x = 0.5)
-        brightness_input = TextInput(
-            text = '{}'.format(int(brightness_slider.value)),
-            multiline = False,  size_hint_x = 0.3)
+        # brightness control
+        brightness_controller = BoxLayout(orientation = 'horizontal')
+        brightness_slider = Slider(min = 0, max = 100, value = 50, size_hint_x = 0.7)
+        brightness_label = Label(
+            text = 'Brightness: {}'.format(int(brightness_slider.value),
+            size_hint_x = 0.3), font_size='20sp')
         # add widgets to the boxlayout (controller)
-        for i in [brightness_label, brightness_input, brightness_slider]:
+        for i in [brightness_label, brightness_slider]:
             brightness_controller.add_widget(i)
         # contrast control
-        contrast_controller = BoxLayout(orientation = 'horizontal', size_hint_y = 0.1)
-        contrast_label = Label(text = 'Contrast:', size_hint_x = 0.2)
-        contrast_slider = Slider(min=0, max=64, value= 1,  size_hint_x = 0.5)
-        contrast_input = TextInput(
-            text = '{}'.format(int(contrast_slider.value)),
-            multiline = False, size_hint_x = 0.3)
-        for i in [contrast_label, contrast_input, contrast_slider]:
+        contrast_controller = BoxLayout(orientation = 'horizontal')
+        contrast_slider = Slider(min=0, max=64, value= 1,  size_hint_x = 0.7)
+        contrast_label = Label(
+            text = 'Brightness:{}'.format(int(contrast_slider.value),
+            size_hint_x = 0.3), font_size='20sp')
+
+        for i in [contrast_label, contrast_slider]:
             contrast_controller.add_widget(i)
+
         # white balance control
-        white_balance_controller = BoxLayout(orientation = 'horizontal', size_hint_y = 0.1)
-        blue_gain_label = Label(text = 'Blue gain:', size_hint_x = 0.2)
-        blue_gain_input = TextInput(
-            text = '1.5',
-            multiline = False, size_hint_x = 0.3)
-        red_gain_label = Label(text = 'Red gain:', size_hint_x = 0.2)
-        red_gain_input = TextInput(
-            text = '1.1',
-            multiline = False, size_hint_x = 0.3)
-        def white_balance_control(instance, *value):
-            try:
-                blue_gain = float(blue_gain_input.text)
-                red_gain = float(red_gain_input.text)
-                # if the value is out of range
-                if blue_gain < 0 or blue_gain > 8.0:
-                    blue_gain = 1.5
-                if red_gain < 0 or red_gain > 8.0:
-                    red_gain = 1.1
-            except ValueError:
-                # if user input characters
-                blue_gain = 1.5
-                red_gain = 1.1
-            blue_gain_input.text = str(blue_gain)
-            red_gain_input.text = str(red_gain)
-            if debug_mode is True:
-                print('set blue gain as {} and red gain as {}'.format(blue_gain, red_gain))
-            elif debug_mode is False:
-                mc.camera_library('set_white_balance', blue_gain, red_gain)
-        for i in [blue_gain_input, red_gain_input]:
-            i.bind(on_text_validate = white_balance_control)
-        for i in [blue_gain_label, blue_gain_input, red_gain_label, red_gain_input]:
+        white_balance_controller = BoxLayout(orientation = 'horizontal')
+        blue_gain_slider = Slider(min = 0, max = 8.0, value = 1.5, size_hint_x = 0.7)
+        blue_gain_label = Label(text = 'Blue gain: {}'.format(float(blue_gain_slider.value)), size_hint_x = 0.3)
+        red_gain_slider = Slider(min = 0, max = 8.0, value = 1, size_hint_x = 0.7)
+        red_gain_label = Label(text = 'Blue gain: {}'.format(float(blue_gain_slider.value)), size_hint_x = 0.3)
+        for i in [blue_gain_label, blue_gain_slider, red_gain_label, red_gain_slider]:
             white_balance_controller.add_widget(i)
-        
-        def contrast_and_brightness_control(instance,*value):
-            """callback function of sliders and input box for brightness/contrast
-            
+
+        def setting_slider_update_label(instance,*value):
+            """callback function of sliders and input box for brightness/contrast 
             update sliders with TextInput and vice versa. update camera settings"""
             # update Slider and TextInput
-            for slider, textinput in [  # for i, j in [[1,2],[3,4]]: >>>i = 1,3  j = 2,4
-                [brightness_slider, brightness_input],
-                [contrast_slider, contrast_input]]: 
-
+            for slider, label in [  # for i, j in [[1,2],[3,4]]: >>>i = 1,3  j = 2,4
+                [brightness_slider, brightness_label],
+                [contrast_slider, contrast_label],
+                [blue_gain_slider, blue_gain_label],
+                [red_gain_slider, red_gain_label]]: 
                 if instance == slider:
-                    # unified variable to define brightness
-                    # returns a tuple due to optional arguments
-                    updated_value = int(slider.value)
-                    textinput.text = str(updated_value)
-                elif instance == textinput:
-                    # when value is out of range, set it to max/min
-                    if int(textinput.text) >= slider.max:
-                        textinput.text = str(int(slider.max)) # float will give error for slider
-                    elif int(textinput.text) <= slider.min:
-                        textinput.text = str(int(slider.min))
-                    updated_value = int(textinput.text)
-                    slider.value = updated_value
+                    label.text = label.text.split(':')[0] + ': ' + '{:.1f}'.format(slider.value)
                 # call microscope library to update the brightness and contrast 
                 if debug_mode is True:
                     print('brightness: {}'.format(brightness_slider.value))
                     print('contrast: {}'.format(contrast_slider.value))
+                    print('white balance: blue gain: {}, red gain: {}'.format(blue_gain_slider.value, red_gain_slider.value))
                 elif debug_mode is False:
                     mc.camera_library('set_brightness', brightness_slider.value)
                     mc.camera_library('set_contrast', contrast_slider.value)
+                    mc.camera_library('set_white_balance', blue_gain_slider.value, red_gain_slider.value)
 
         # bind sliders and input box to callback functions
-        for slider, textinput in [  # for i, j = [[1,2][3,4]]  >>>i = 1,3  j = 2,4
-                [brightness_slider, brightness_input],
-                [contrast_slider, contrast_input]]: 
-            slider.bind(value = contrast_and_brightness_control)
-            textinput.bind(on_text_validate = contrast_and_brightness_control)
+        for slider, label in [  # for i, j in [[1,2],[3,4]]: >>>i = 1,3  j = 2,4
+            [brightness_slider, brightness_label],
+            [contrast_slider, contrast_label],
+            [blue_gain_slider, blue_gain_label],
+            [red_gain_slider, red_gain_label]]:
+            slider.bind(value = setting_slider_update_label)
         return brightness_controller, contrast_controller, white_balance_controller
 
 
@@ -384,26 +354,22 @@ class control_elements(object):
         folder_chooser_button = Button(text = 'File viewer \nto choose folder', size_hint_x = 0.2) # a button to popup filechooser
         self.filepath_input = TextInput(multiline = False, 
             size_hint_x = 1 - folder_chooser_button.size_hint_x)
-        control_elements.filepath = self.format_filepath(update = True) # use the default value which contains date and start from 001
-        self.filepath_input.text = control_elements.filepath
         for i in [self.filepath_input, folder_chooser_button]:
             filepath_controller.add_widget(i)
         self.folder_chooser = FileChooser()
         self.folder_chooser.add_widget(FileChooserIconLayout())
     # a popup window to choose folder
-        folder_chooser_popup = Popup(title = 'choose folder to save image', size_hint = (0.8, 0.8))
-        folder_chooser_popup.pos_hint =  {'x':0.5-folder_chooser_popup.size_hint[0]/2,
-                                'y':0.5-folder_chooser_popup.size_hint[1]/2} 
-        folder_chooser_popup.content = self.folder_chooser
+        self.folder_chooser_popup = Popup(title = 'choose folder to save image', size_hint = (0.8, 0.8))
+        self.folder_chooser_popup.pos_hint =  {'x':0.5-self.folder_chooser_popup.size_hint[0]/2,
+                                'y':0.5-self.folder_chooser_popup.size_hint[1]/2} 
+        self.folder_chooser_popup.content = self.folder_chooser
         # set the rootpath that user can get access to
         self.folder_chooser.rootpath = self.root_folder
-        # set folder_chooser's default opening folder
-        self.folder_chooser.path = self.folder
-        # create another popup for image_viewer
-        image_viewer_popup = Popup(title = 'image viewer', size_hint = (0.8, 0.8))
         
         def activate_folder_chooser(instance):
-            folder_chooser_popup.open()
+            # default open the folder that is selected for saving images
+            self.folder_chooser.path = self.folder
+            self.folder_chooser_popup.open()
         def choose_folder(instance, value):
             '''Callback function for FileChooser when select folders'''
             self.folder = str(value)
@@ -420,23 +386,67 @@ class control_elements(object):
             # format filepath and update filepath_input
             self.filepath = self.format_filepath(update = True)
             self.filepath_input.text = self.filepath
+
+        folder_chooser_button.bind(on_release = activate_folder_chooser)
+        self.folder_chooser.bind(path = choose_folder)
+        self.filepath_input.bind(on_text_validate = update_filepath_input)
+        return filepath_controller
+
+    def image_viewer(self):
+        '''A quick and easy image viewer without leaving kivy'''
+        image_viewer_button = Button(text = 'image viewer', size_hint_y = 0.2, background_color = [1, 1, 0, 1])
         
+        # a popup window to display image
+        image_viewer_popup = Popup(title = 'image viewer', size_hint = (1,1))
+        image_viewer_exit_button = Button(text = 'exit image preview', size_hint_y = 0.1, font_size='20sp')
+        self.image_object = Image(size_hint_y = 0.9)
+        image_viewer_layout = BoxLayout(orientation = "vertical")
+        image_viewer_layout.add_widget(self.image_object)
+        image_viewer_layout.add_widget(image_viewer_exit_button)
+        image_viewer_popup.content = image_viewer_layout
+        # A count number for preview
+        self.temp_file_number = 0
+
+        def activate_folder_chooser(instance):
+            #self.folder_chooser.path = self.folder
+            self.folder_chooser_popup.open()
+
         def view_image(instance, value):
             '''Callback function for FileChooser when select files'''
             # change from "['C:\\abc.jpg']" to "C:\\abc.jpg"
             filepath = str(value).replace('[','').replace(']','').replace('\'','')
             # check the file type
             filepath_split = filepath.split('.')
-            if filepath_split[-1] in ['jpg', 'jpeg', 'png', 'tif', 'tiff']:
-                image_object = Image(source = filepath)
-                image_viewer_popup.content = image_object
-                image_viewer_popup.open()
 
-        folder_chooser_button.bind(on_release = activate_folder_chooser)
-        self.folder_chooser.bind(path = choose_folder)
+            if filepath_split[-1] in ['jpg', 'jpeg', 'png', 'tif', 'tiff']:
+                # if the file is a image, then open the image_viewer
+                # use pillow to create a thumbnail of the image, save memory
+                size = (Window.width, Window.height)
+                im = PIL_Image.open(filepath)
+                im.thumbnail(size)
+                # save as a temporary file
+                temp_file_location = "/home/pi/microscope/temp/{}.jpg".format(self.temp_file_number)
+                self.temp_file_number += 1
+                temp_file_location = "/home/pi/microscope/temp/{}.jpg".format(self.temp_file_number)
+                im.save(temp_file_location, "JPEG")
+                # load the image again as a kivy object
+                self.image_object.source = temp_file_location
+
+                # scatter_image_object = Scatter(size_hint_x = 0.5, size_hint_y = 0.5)
+                # scatter_image_object.add_widget(image_object)
+                # image_viewer_popup.content = scatter_image_object
+                # add a layout with an exit button
+                
+                image_viewer_popup.open()
+                os.remove(temp_file_location)
+        def dismiss_image_viewer_popup(instance, *value):
+            image_viewer_popup.dismiss()
+
+        image_viewer_button.bind(on_release = activate_folder_chooser)
+        image_viewer_exit_button.bind(on_release = dismiss_image_viewer_popup)
         self.folder_chooser.bind(selection = view_image)
-        self.filepath_input.bind(on_text_validate = update_filepath_input)
-        return filepath_controller
+        return image_viewer_button
+
 
     def format_filepath(self, update):
         """set default value for filepath, also allow update """
@@ -446,10 +456,13 @@ class control_elements(object):
         filename_elements = self.filename.split('.')
         try:
             if update == True: # only change image_number when user change filepath_input
+                 # automatically change the filetype based on user input
                 if filename_elements[1] in ['jpg', 'jpeg', 'JPG', 'JPEG']:
                     self.filetype = '.jpg'
-                if filename_elements[1] in ['tif', 'tiff', 'TIF', 'TIFF']:
+                elif filename_elements[1] in ['tif', 'tiff', 'TIF', 'TIFF']:
                     self.filetype = '.tiff'
+                else:
+                    self.filetype = '.jpg'
         except IndexError:
             self.filetype = '.jpg'
         # if user have input a image_number
@@ -458,7 +471,7 @@ class control_elements(object):
             self.filename = filename_elements[0]
         if len(filename_elements) >= 2:
             # only change image_number when user change filepath_input
-            if update == True: 
+            if update is True: 
                 try: 
                     self.image_number = int(filename_elements[-1])
                 except ValueError:
@@ -503,9 +516,12 @@ class control_elements(object):
                 time_lapse_interval_input.text = str(self.time_lapse_interval)
                 self.time_lapse_interval = float(time_lapse_interval_input.text)
                 print(self.time_lapse_interval)
-
+            
         save_image_button.bind(on_release = save_image)
         time_lapse_button.bind(active = start_time_lapse)
+        if debug_mode is False:
+            # When click the time_lapse_interval_input, stop the preview
+            time_lapse_interval_input.bind(focus = partial(mc.camera_library, 'stop_preview'))
         time_lapse_interval_input.bind(on_text_validate = update_time_lapse_interval)
         for i in [save_image_button, time_lapse_interval_label, time_lapse_interval_input, time_lapse_button_label, time_lapse_button]:
             time_lapse_layout.add_widget(i)
@@ -517,16 +533,17 @@ class control_elements(object):
 def add_main_page_widgets():
     """Add layouts and widgets to a page (main page)"""
     # defining all the elements here: buttons, sliders, map_controllers
-    buttons = control_elements()
-    exit_button = buttons.create_exit_button()
-    start_preview_button, stop_preview_button = buttons.create_preview_buttons()
-    time_lapse_layout = buttons.create_save_image_buttons()
+    controlling_elements = control_elements()
+    exit_button = controlling_elements.create_exit_button()
+    start_preview_button, stop_preview_button = controlling_elements.create_preview_buttons()
+    time_lapse_layout = controlling_elements.create_save_image_buttons()
     #settings_button, back_to_main_button = create_page_buttons()
-    settings_button = buttons.create_settings_button()
-    focus_label, focus_button_up, focus_button_down = buttons.create_focus_buttons()
-    step_slider_label, step_slider  = buttons.create_step_slider()
-    map_controller = buttons.create_map_controller()
+    settings_button = controlling_elements.create_settings_button()
+    focus_label, focus_button_up, focus_button_down = controlling_elements.create_focus_buttons()
+    step_slider_label, step_slider  = controlling_elements.create_step_slider()
+    map_controller = controlling_elements.create_map_controller()
 
+    image_viewer_button = controlling_elements.image_viewer()
     #  Create the basic layout with 3 horizontal sections (basic skelton)
     base_layout = BoxLayout(orientation='horizontal')
 
@@ -556,6 +573,7 @@ def add_main_page_widgets():
     horizontal_layout_3.add_widget(start_preview_button)
     horizontal_layout_3.add_widget(stop_preview_button)
     horizontal_layout_3.add_widget(time_lapse_layout)
+    horizontal_layout_3.add_widget(image_viewer_button)
     horizontal_layout_3.add_widget(settings_button)
 
     # add the basic layout to new screen
