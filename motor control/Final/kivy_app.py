@@ -14,7 +14,8 @@ Usage:
 @author: Tianheng Zhao
 """
 # set this to True for development on computer, set to Fals to run on RaspberryPi
-debug_mode = True
+debug_mode = False
+expert_mode = False
 
 import time
 from datetime import datetime
@@ -47,11 +48,13 @@ import os
 
 if debug_mode is False:
     from microscope_control import camera_control
-    mc = camera_control()
-    mc.fov = 1.00 #initialise the zoom level
-    from read_config import initialise_config
-    config = initialise_config()
-
+    try:
+        mc = camera_control()
+        mc.fov = 1.00 #initialise the zoom level
+    except:
+        # if there is no camera connected, default set the software to run at debug_mode
+        debug_mode = True
+    
 
 #kivy.require('1.9.1')   # replace with your current kivy version !
 
@@ -73,6 +76,9 @@ class control_elements(object):
         self.filetype = '.jpg'
         self.filepath_update = True
         self.time_lapse_interval = 30
+
+        if expert_mode is False:
+            self.
         
     def create_exit_button(self):
         exit_button = Button(text = 'exit', size_hint_y = 0.2 , background_color = [1, 0, 0, 1])
@@ -317,7 +323,7 @@ class control_elements(object):
         # white balance control
         white_balance_controller = BoxLayout(orientation = 'horizontal')
         blue_gain_slider = Slider(min = 0, max = 8.0, value = 1.5, size_hint_x = 0.7)
-        blue_gain_label = Label(text = 'Red gain: {}'.format(float(blue_gain_slider.value)), size_hint_x = 0.3)
+        blue_gain_label = Label(text = 'Blue gain: {}'.format(float(blue_gain_slider.value)), size_hint_x = 0.3)
         red_gain_slider = Slider(min = 0, max = 8.0, value = 1, size_hint_x = 0.7)
         red_gain_label = Label(text = 'Blue gain: {}'.format(float(blue_gain_slider.value)), size_hint_x = 0.3)
         for i in [blue_gain_label, blue_gain_slider, red_gain_label, red_gain_slider]:
@@ -398,24 +404,6 @@ class control_elements(object):
         self.filepath_input.bind(on_text_validate = update_filepath_input)
         return filepath_controller
 
-    def new_sample(self):
-        new_sample_button = Button(text = 'new sample', size_hint_y = 0.2, background_color = [1, 1, 0, 1])
-        def create_new_sample(isinstance, *value):
-            ase_info = open('case_info.txt','a+')
-            case_info.seek(0,0)
-            self.case_number = case_info.readlines()[-1].replace('case_','')
-            self.case_number += 1
-            config_file.write('\n')
-            config_file.write('{:%Y%m%d}').format(datetime.today())
-            config_file.write('\n')
-            case_info.write('case_{}'.format(self.case_number))
-            self.folder = '/home/pi/case_{}'.format(self.case_number)
-            self.filename='case{}'.format(self.case_number)
-            self.filetype = '.jpg'
-            self.filepath_update = True    
-        
-        return new_sample_button
-
     def image_viewer(self):
         '''A quick and easy image viewer without leaving kivy'''
         image_viewer_button = Button(text = 'image viewer', size_hint_y = 0.2, background_color = [1, 1, 0, 1])
@@ -439,7 +427,7 @@ class control_elements(object):
             self.folder_chooser_popup.open()
 
         def view_image(instance, value):
-            '''Callback function for FileChooser when select files'''
+            # Callback function for FileChooser when select files
             # change from "['C:\\abc.jpg']" to "C:\\abc.jpg"
             filepath = str(value).replace('[','').replace(']','').replace('\'','')
             # check the file type
@@ -558,6 +546,25 @@ class control_elements(object):
 
         return time_lapse_layout
 
+
+    def new_sample(self):
+        new_sample_button = Button(text = 'new sample', size_hint_y = 0.2, background_color = [1, 1, 0, 1])
+        
+        def create_new_sample(isinstance, *value):
+            sample_info = open('sample_info.txt','a+')
+            sample_info.seek(0,0)
+            self.sample_number = sample_info.readlines()[-1].replace('sample_','')
+            self.sample_number += 1
+            config_file.write('\n')
+            config_file.write('{:%Y%m%d}').format(datetime.today())
+            config_file.write('\n')
+            sample_info.write('sample_{}'.format(self.sample_number))
+            self.folder = '/home/pi/sample_{}'.format(self.sample_number)
+            self.filename='sample{}'.format(self.sample_number)
+            self.filetype = '.jpg'
+            self.filepath_update = True    
+        
+        return new_sample_button
 
 
 def add_main_page_widgets():
