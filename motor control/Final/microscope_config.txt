@@ -1,14 +1,8 @@
 # preset value for paul to change
-red_gain = 1.5
-blue_gain = 1.5
+red_gain = 1
+blue_gain = 5
 iso = 50
-shutter_speed = 900
+shutter_speed = 50
 saturation = 20
 
 # record data
-20170309 21:40:55
-sample = 1
-20170309 21:40:56
-sample = 2
-20170309 21:47:50
-sample = 3

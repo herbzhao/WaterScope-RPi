@@ -181,8 +181,7 @@ class camera_control():
         self.camera.iso = 0
         # when set exposure_mode to "off", output will be black
         #self.camera.exposure_mode = 'auto'
-        
-        self.camera.shutter_speed = 900
+        self.camera.shutter_speed = 50 # condenser require much lower shutter speed
         self.camera.saturation = 0
         self.camera.annotate_text_size = int(camera_resolution[0]*0.03) # reasonable ratio for any resolution
         self.step = 300
@@ -232,6 +231,12 @@ class camera_control():
             self.camera.brightness = int(value[0])
         elif argv == 'set_white_balance':
             self.camera.awb_gains = (value[0],value[1])
+        elif argv == 'set_iso':
+            self.camera.iso = int(value[0])
+        elif argv == 'set_shutter_speed':
+            self.camera.shutter_speed = int(value[0])
+        elif argv == 'set_saturation':
+            self.camera.saturation = int(value[0])
         # 'save_image' cannot be the last elif for some reason?
         elif argv == 'save_image':
             # remove any text overlay

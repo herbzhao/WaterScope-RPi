@@ -14,7 +14,7 @@ Usage:
 @author: Tianheng Zhao
 """
 # set this to True for development on computer, set to Fals to run on RaspberryPi
-debug_mode = False
+debug_mode = True
 expert_mode = False
 
 import time
@@ -45,7 +45,10 @@ from kivy.uix.textinput import TextInput
 
 from PIL import Image as PIL_Image
 import os
-
+# customised modules
+from read_config import initialise_config
+config = initialise_config()
+# only read microscope_control if on Pi
 if debug_mode is False:
     from microscope_control import camera_control
     try:
@@ -54,13 +57,14 @@ if debug_mode is False:
     except:
         # if there is no camera connected, default set the software to run at debug_mode
         debug_mode = True
-    
+
+
 
 #kivy.require('1.9.1')   # replace with your current kivy version !
 
 #import microscope control parts
 
-class control_elements(object):
+class create_control_elements(object):
     def __init__(self):
         """ Some default class-wide values"""
         # this determines how much user need to swipe before motor moves in x-y directions
@@ -76,9 +80,12 @@ class control_elements(object):
         self.filetype = '.jpg'
         self.filepath_update = True
         self.time_lapse_interval = 30
-
-        if expert_mode is False:
-            self.
+        
+        if debug_mode is False and expert_mode is False:
+            config.read_config_file()
+            mc.camera_library('set_iso', config.iso)
+            mc.camera_library('set_shutter_speed', config.shutter_speed)
+            mc.camera_library('set_white_balance', config.red_gain, config.blue_gain)
         
     def create_exit_button(self):
         exit_button = Button(text = 'exit', size_hint_y = 0.2 , background_color = [1, 0, 0, 1])
@@ -136,10 +143,10 @@ class control_elements(object):
 
         def motor_step_control(instance, value):
             """ Change step and update label when using step_slider"""
-            control_elements.step_value = int(value)
+            self.step_value = int(value)
             step_slider_label.text = '\n Motor \n steps: \n'+'{}'.format(control_elements.step_value)
             if debug_mode is False:
-                mc.step = control_elements.step_value
+                mc.step = self.step_value
 
         step_slider.bind(value = motor_step_control)
         return step_slider_label, step_slider
@@ -336,26 +343,26 @@ class control_elements(object):
             for slider, label in [  # for i, j in [[1,2],[3,4]]: >>>i = 1,3  j = 2,4
                 [brightness_slider, brightness_label],
                 [contrast_slider, contrast_label],
-                [blue_gain_slider, blue_gain_label],
-                [red_gain_slider, red_gain_label]]: 
+                [red_gain_slider, red_gain_label],
+                [blue_gain_slider, blue_gain_label]]: 
                 if instance == slider:
                     label.text = label.text.split(':')[0] + ': ' + '{:.1f}'.format(slider.value)
                 # call microscope library to update the brightness and contrast 
                 if debug_mode is True:
                     print('brightness: {}'.format(brightness_slider.value))
                     print('contrast: {}'.format(contrast_slider.value))
-                    print('white balance: blue gain: {}, red gain: {}'.format(blue_gain_slider.value, red_gain_slider.value))
+                    print('white balance: red gain: {}, blue gain: {}'.format(red_gain_slider.value, blue_gain_slider.value))
                 elif debug_mode is False:
                     mc.camera_library('set_brightness', brightness_slider.value)
                     mc.camera_library('set_contrast', contrast_slider.value)
-                    mc.camera_library('set_white_balance', blue_gain_slider.value, red_gain_slider.value)
+                    mc.camera_library('set_white_balance', red_gain_slider.value, blue_gain_slider.value)
 
         # bind sliders and input box to callback functions
         for slider, label in [  # for i, j in [[1,2],[3,4]]: >>>i = 1,3  j = 2,4
             [brightness_slider, brightness_label],
             [contrast_slider, contrast_label],
-            [blue_gain_slider, blue_gain_label],
-            [red_gain_slider, red_gain_label]]:
+            [red_gain_slider, red_gain_label],
+            [blue_gain_slider, blue_gain_label]]:
             slider.bind(value = setting_slider_update_label)
         return brightness_controller, contrast_controller, white_balance_controller
 
@@ -547,40 +554,37 @@ class control_elements(object):
         return time_lapse_layout
 
 
-    def new_sample(self):
-        new_sample_button = Button(text = 'new sample', size_hint_y = 0.2, background_color = [1, 1, 0, 1])
-        
+    def create_new_sample_button(self):
+        ''' new_sample button, only shows up when expert mode is off'''
+        new_sample_button = Button(text = 'new \nsample', size_hint_y = 0.2, background_color = [1, 1, 0, 1])
         def create_new_sample(isinstance, *value):
-            sample_info = open('sample_info.txt','a+')
-            sample_info.seek(0,0)
-            self.sample_number = sample_info.readlines()[-1].replace('sample_','')
-            self.sample_number += 1
-            config_file.write('\n')
-            config_file.write('{:%Y%m%d}').format(datetime.today())
-            config_file.write('\n')
-            sample_info.write('sample_{}'.format(self.sample_number))
-            self.folder = '/home/pi/sample_{}'.format(self.sample_number)
-            self.filename='sample{}'.format(self.sample_number)
+            config.read_config_file()
+            config.record_new_sample()
+            config.read_config_file()
+            self.folder = '/home/pi/sample_{}'.format(config.last_sample_number)
+            self.filename='sample{}'.format(config.last_sample_number)
             self.filetype = '.jpg'
             self.filepath_update = True    
-        
+        new_sample_button.bind(on_press = create_new_sample)
         return new_sample_button
 
 
 def add_main_page_widgets():
     """Add layouts and widgets to a page (main page)"""
     # defining all the elements here: buttons, sliders, map_controllers
-    controlling_elements = control_elements()
-    exit_button = controlling_elements.create_exit_button()
-    start_preview_button, stop_preview_button = controlling_elements.create_preview_buttons()
-    time_lapse_layout = controlling_elements.create_save_image_buttons()
-    #settings_button, back_to_main_button = create_page_buttons()
-    settings_button = controlling_elements.create_settings_button()
-    focus_label, focus_button_up, focus_button_down = controlling_elements.create_focus_buttons()
-    step_slider_label, step_slider  = controlling_elements.create_step_slider()
-    map_controller = controlling_elements.create_map_controller()
+    control_element = create_control_elements()
+    focus_label, focus_button_up, focus_button_down = control_element.create_focus_buttons()
+    step_slider_label, step_slider  = control_element.create_step_slider()
+    exit_button = control_element.create_exit_button()
+    map_controller = control_element.create_map_controller()
+    start_preview_button, stop_preview_button = control_element.create_preview_buttons()
+    time_lapse_layout = control_element.create_save_image_buttons()
+    settings_button = control_element.create_settings_button()
 
-    image_viewer_button = controlling_elements.image_viewer()
+
+    # image_viewer_button = control_element.image_viewer()
+    new_sample_button = control_element.create_new_sample_button()
+
     #  Create the basic layout with 3 horizontal sections (basic skelton)
     base_layout = BoxLayout(orientation='horizontal')
 
@@ -594,25 +598,34 @@ def add_main_page_widgets():
     base_layout.add_widget(horizontal_layout_1)
     base_layout.add_widget(horizontal_layout_2)
     base_layout.add_widget(horizontal_layout_3)
+    if expert_mode is True:
+        # Left section - horizontal_layout_1
+        horizontal_layout_1.add_widget(step_slider_label)
+        horizontal_layout_1.add_widget(step_slider)
+        horizontal_layout_1.add_widget(focus_label)
+        horizontal_layout_1.add_widget(focus_button_up)
+        horizontal_layout_1.add_widget(focus_button_down)
+        horizontal_layout_1.add_widget(exit_button)
 
-    # Left section - horizontal_layout_1
-    horizontal_layout_1.add_widget(step_slider_label)
-    horizontal_layout_1.add_widget(step_slider)
-    horizontal_layout_1.add_widget(focus_label)
-    horizontal_layout_1.add_widget(focus_button_up)
-    horizontal_layout_1.add_widget(focus_button_down)
-    horizontal_layout_1.add_widget(exit_button)
+        # middle section  - horizontal_layout_2
+        horizontal_layout_2.add_widget(map_controller)
 
-    # middle section  - horizontal_layout_2
-    horizontal_layout_2.add_widget(map_controller)
+        # right section - horizontal_layout_3
+        horizontal_layout_3.add_widget(start_preview_button)
+        horizontal_layout_3.add_widget(stop_preview_button)
+        horizontal_layout_3.add_widget(time_lapse_layout)
+        #horizontal_layout_3.add_widget(image_viewer_button)
+        horizontal_layout_3.add_widget(settings_button)
 
-    # right section - horizontal_layout_3
-    horizontal_layout_3.add_widget(start_preview_button)
-    horizontal_layout_3.add_widget(stop_preview_button)
-    horizontal_layout_3.add_widget(time_lapse_layout)
-    horizontal_layout_3.add_widget(image_viewer_button)
-    horizontal_layout_3.add_widget(settings_button)
-
+    if expert_mode is False:
+        if debug_mode is False:
+            mc.camera_library('start_preview')
+        # Left section - horizontal_layout_1
+        # middle section  - horizontal_layout_2
+        # right section - horizontal_layout_3
+        horizontal_layout_3.add_widget(start_preview_button)
+        horizontal_layout_3.add_widget(stop_preview_button)
+        horizontal_layout_3.add_widget(new_sample_button)
     # add the basic layout to new screen
     return base_layout
 
