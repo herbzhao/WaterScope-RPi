@@ -14,7 +14,7 @@ Usage:
 @author: Tianheng Zhao
 """
 # set this to True for development on computer, set to Fals to run on RaspberryPi
-debug_mode = False
+debug_mode = True
 expert_mode = False
 
 import time
@@ -49,6 +49,7 @@ import glob # this module finds all the pathnames matching a specified pattern
 # customised modules
 from read_config import initialise_config
 config = initialise_config()
+
 # only read microscope_control if on Pi
 if debug_mode is False:
     from microscope_control import camera_control
@@ -76,10 +77,10 @@ class create_control_elements(object):
         self.folder_sign = '/'
         self.root_folder = r'/home/pi/'
         self.image_number = 1
-        self.folder = '/home/pi/Desktop/images/'
+        self.default_folder = '/home/pi/Desktop/images/'
+        self.folder = self.default_folder
         self.filename = '{:%Y%m%d}'.format(datetime.today())
         self.filetype = '.jpg'
-        self.filepath_update = True
         self.time_lapse_interval = 30
         
         if debug_mode is False and expert_mode is False:
@@ -88,21 +89,6 @@ class create_control_elements(object):
             mc.camera_library('set_iso', config.iso)
             mc.camera_library('set_shutter_speed', config.shutter_speed)
             mc.camera_library('set_white_balance', config.red_gain, config.blue_gain)
-            # change file saving folder to usb stick
-            usb_root_path = r'/media/pi/' + os.listdir('/media/pi')[0]
-            self.folder = usb_root_path + 'sample{}'.format(config.last_sample_number)
-            # find existing file name and append after this
-            existing_files = glob.glob(self.folder + '*.jpg')
-            for i in range(len(existing_files)):
-                existing_files[i] = int(existing_files.replace('sample-',''))
-            try:    
-                self.image_number = max(existing_files)
-            except ValueError:
-                self.image_number = 1
-            self.filename = 'sample{}'.format(config.last_sample_number)
-            self.filetype = '.jpg'
-            self.filepath_update = True
-
 
 
     def create_exit_button(self):
@@ -536,7 +522,6 @@ class create_control_elements(object):
         
         def save_image(instance):
             ''' Callback for save_image_button'''
-            self.filepath_update = False # this prevents saving image mess up naming 
             self.filepath = self.format_filepath(update = False)
             if debug_mode is True:
                 print('save image to {}'.format(self.filepath))
@@ -580,17 +565,19 @@ class create_control_elements(object):
         def create_new_sample(isinstance, *value):
             config.read_config_file()
             config.record_new_sample()
-            # change the filepath to usb
-            usb_root_path = r'/media/pi/' + os.listdir('/media/pi')[0] + '/'
+            # change the filepath to usw
+            try:
+                usb_root_path = r'/media/pi/' + os.listdir('/media/pi')[0] + '/'
+            except FileNotFoundError:
+                usb_root_path = self.default_folder
             self.folder = usb_root_path + 'sample{}'.format(config.last_sample_number)
             self.filename = 'sample{}'.format(config.last_sample_number)
             self.filetype = '.jpg' 
             self.image_number = 1
-            self.filepath_update = True
-
         new_sample_button.bind(on_press = create_new_sample)
+        create_new_sample(new_sample_button)
         return new_sample_button
-    
+        
 
 
 def add_main_page_widgets():
@@ -646,6 +633,7 @@ def add_main_page_widgets():
         horizontal_layout_1.add_widget(exit_button)
         horizontal_layout_3.add_widget(save_image_button)
         horizontal_layout_3.add_widget(new_sample_button)
+        #new_sample_button._do_press()
     # add the basic layout to new screen
     return base_layout
 
@@ -658,7 +646,6 @@ class WaterScopeApp(App):
         return main_page
         
 if __name__ == "__main__":
-    if debug_mode is False:
-        if expert_mode is False:
-            mc.camera_library('start_preview')
+    if debug_mode is False and expert_mode is False:
+        mc.camera_library('start_preview')
     WaterScopeApp().run()
