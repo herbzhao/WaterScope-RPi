@@ -14,7 +14,7 @@ Usage:
 @author: Tianheng Zhao
 """
 # set this to True for development on computer, set to Fals to run on RaspberryPi
-debug_mode = True
+debug_mode = False
 expert_mode = False
 
 import time
@@ -45,6 +45,7 @@ from kivy.uix.textinput import TextInput
 
 from PIL import Image as PIL_Image
 import os
+import glob # this module finds all the pathnames matching a specified pattern 
 # customised modules
 from read_config import initialise_config
 config = initialise_config()
@@ -71,22 +72,39 @@ class create_control_elements(object):
         self.drag_x_sensitive = Window.width*0.15
         self.drag_y_sensitive = Window.height*0.15
         # these are default values for file saving
-        self.folder_sign = '/' # different os may use different sign / or \
-        self.image_number = 1
-        self.folder = self.folder_sign.join(['','home', 'pi', 'Desktop', 'images'])
         # set root folder for FileChooser, prevent saving files to random places
-        self.root_folder = self.folder_sign.join(['','home', 'pi', ''])
-        self.filename='{:%Y%m%d}'.format(datetime.today())
+        self.folder_sign = '/'
+        self.root_folder = r'/home/pi/'
+        self.image_number = 1
+        self.folder = '/home/pi/Desktop/images/'
+        self.filename = '{:%Y%m%d}'.format(datetime.today())
         self.filetype = '.jpg'
         self.filepath_update = True
         self.time_lapse_interval = 30
         
         if debug_mode is False and expert_mode is False:
             config.read_config_file()
+            # update camera settings
             mc.camera_library('set_iso', config.iso)
             mc.camera_library('set_shutter_speed', config.shutter_speed)
             mc.camera_library('set_white_balance', config.red_gain, config.blue_gain)
-        
+            # change file saving folder to usb stick
+            usb_root_path = r'/media/pi/' + os.listdir('/media/pi')[0]
+            self.folder = usb_root_path + 'sample{}'.format(config.last_sample_number)
+            # find existing file name and append after this
+            existing_files = glob.glob(self.folder + '*.jpg')
+            for i in range(len(existing_files)):
+                existing_files[i] = int(existing_files.replace('sample-',''))
+            try:    
+                self.image_number = max(existing_files)
+            except ValueError:
+                self.image_number = 1
+            self.filename = 'sample{}'.format(config.last_sample_number)
+            self.filetype = '.jpg'
+            self.filepath_update = True
+
+
+
     def create_exit_button(self):
         exit_button = Button(text = 'exit', size_hint_y = 0.2 , background_color = [1, 0, 0, 1])
 
@@ -484,6 +502,8 @@ class create_control_elements(object):
                     self.filetype = '.jpg'
                 elif filename_elements[1] in ['tif', 'tiff', 'TIF', 'TIFF']:
                     self.filetype = '.tiff'
+                elif filename_elements[1] in ['png', 'PNG']:
+                    self.filetype = '.png'
                 else:
                     self.filetype = '.jpg'
         except IndexError:
@@ -548,10 +568,10 @@ class create_control_elements(object):
             # When click the time_lapse_interval_input, stop the preview
             time_lapse_interval_input.bind(focus = partial(mc.camera_library, 'stop_preview'))
         time_lapse_interval_input.bind(on_text_validate = update_time_lapse_interval)
-        for i in [save_image_button, time_lapse_interval_label, time_lapse_interval_input, time_lapse_button_label, time_lapse_button]:
+        for i in [time_lapse_interval_label, time_lapse_interval_input, time_lapse_button_label, time_lapse_button]:
             time_lapse_layout.add_widget(i)
 
-        return time_lapse_layout
+        return save_image_button, time_lapse_layout
 
 
     def create_new_sample_button(self):
@@ -560,13 +580,17 @@ class create_control_elements(object):
         def create_new_sample(isinstance, *value):
             config.read_config_file()
             config.record_new_sample()
-            config.read_config_file()
-            self.folder = '/home/pi/sample_{}'.format(config.last_sample_number)
-            self.filename='sample{}'.format(config.last_sample_number)
-            self.filetype = '.jpg'
-            self.filepath_update = True    
+            # change the filepath to usb
+            usb_root_path = r'/media/pi/' + os.listdir('/media/pi')[0] + '/'
+            self.folder = usb_root_path + 'sample{}'.format(config.last_sample_number)
+            self.filename = 'sample{}'.format(config.last_sample_number)
+            self.filetype = '.jpg' 
+            self.image_number = 1
+            self.filepath_update = True
+
         new_sample_button.bind(on_press = create_new_sample)
         return new_sample_button
+    
 
 
 def add_main_page_widgets():
@@ -578,16 +602,13 @@ def add_main_page_widgets():
     exit_button = control_element.create_exit_button()
     map_controller = control_element.create_map_controller()
     start_preview_button, stop_preview_button = control_element.create_preview_buttons()
-    time_lapse_layout = control_element.create_save_image_buttons()
+    save_image_button, time_lapse_layout = control_element.create_save_image_buttons()
     settings_button = control_element.create_settings_button()
-
-
     # image_viewer_button = control_element.image_viewer()
     new_sample_button = control_element.create_new_sample_button()
 
     #  Create the basic layout with 3 horizontal sections (basic skelton)
     base_layout = BoxLayout(orientation='horizontal')
-
     # Create the horizontal BoxLayouts in vertical element
     # The preview window's aspect ratio is 4:3 and the touch screen is 5:3.
     # There are gaps with Window.width*0.1 on left and right side
@@ -613,18 +634,17 @@ def add_main_page_widgets():
         # right section - horizontal_layout_3
         horizontal_layout_3.add_widget(start_preview_button)
         horizontal_layout_3.add_widget(stop_preview_button)
+        horizontal_layout_3.add_widget(save_image_button)
         horizontal_layout_3.add_widget(time_lapse_layout)
         #horizontal_layout_3.add_widget(image_viewer_button)
         horizontal_layout_3.add_widget(settings_button)
 
     if expert_mode is False:
-        if debug_mode is False:
-            mc.camera_library('start_preview')
         # Left section - horizontal_layout_1
         # middle section  - horizontal_layout_2
         # right section - horizontal_layout_3
-        horizontal_layout_3.add_widget(start_preview_button)
-        horizontal_layout_3.add_widget(stop_preview_button)
+        horizontal_layout_1.add_widget(exit_button)
+        horizontal_layout_3.add_widget(save_image_button)
         horizontal_layout_3.add_widget(new_sample_button)
     # add the basic layout to new screen
     return base_layout
@@ -638,4 +658,7 @@ class WaterScopeApp(App):
         return main_page
         
 if __name__ == "__main__":
-     WaterScopeApp().run()
+    if debug_mode is False:
+        if expert_mode is False:
+            mc.camera_library('start_preview')
+    WaterScopeApp().run()

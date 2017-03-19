@@ -6,7 +6,6 @@ from datetime import datetime
 #self.config_file = open(os.path.join(self.config_file_directory, 'microscope_self.config.txt'),"r")
 class initialise_config():
     def __init__(self):
-        
         #self.last_sample_number = 0
         # regex for text index
         self.red_gain_re = re.compile('red_gain.*')
@@ -15,14 +14,13 @@ class initialise_config():
         self.shutter_speed_re = re.compile('shutter_speed.*')
         self.saturation_re = re.compile('saturation.*')
         self.sample_number_re = re.compile('sample.*')
+        self.config_file_path = r'microscope_config.txt'
         
-
-
     def read_config_file(self):
-        self.config_file = open(r'microscope_config.txt','a+')
+        self.config_file = open(self.config_file_path,'r')
         self.config_file.seek(0,0) # change the pointer to the beginnging of the file
         self.config_file_content = self.config_file.read()
-        
+
         config = {}
         self.config_content = {}
         for i,j in [
@@ -37,9 +35,9 @@ class initialise_config():
             except IndexError:
                 self.config_content[j] = 0
         
-        self.red_gain = self.config_content['red_gain']
-        self.blue_gain = self.config_content['blue_gain']
-        self.awb_gain = (float(self.red_gain), float(self.blue_gain))
+        self.red_gain = float(self.config_content['red_gain'])
+        self.blue_gain = float(self.config_content['blue_gain'])
+        self.awb_gain = (self.red_gain, self.blue_gain)
         print('awb_gains = {}'.format(self.awb_gain))
         self.iso = int(self.config_content['iso'])
         print('iso',self.iso)
@@ -53,13 +51,12 @@ class initialise_config():
         self.config_file.close()
 
     def record_new_sample(self):
-        self.config_file = open(r'microscope_config.txt','a+')
+        self.config_file = open(self.config_file_path,'a+')
         # create new sample
-        self.config_file.write('\n')
-        self.config_file.write('{:%Y%m%d %H:%M:%S}'.format(datetime.today()))
-        self.config_file.write('\n')
-        print(self.last_sample_number)
-        self.config_file.write('sample = {}'.format(int(self.last_sample_number)+1))
+        self.config_file.write('\r\n{:%Y%m%d %H:%M:%S}\r\n'.format(datetime.today()))
+        self.last_sample_number = str(int(self.last_sample_number) + 1)
+        print('new sample:{}'.format(self.last_sample_number))
+        self.config_file.write('sample = {}'.format(self.last_sample_number))
         self.config_file.close()
         
 
