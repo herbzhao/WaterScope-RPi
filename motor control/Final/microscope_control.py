@@ -253,9 +253,9 @@ class camera_control():
                 else:
                     break
             # save the raw data on jpeg
-            #self.camera.capture(image_filepath, 'jpeg', bayer = True)
-            # save image as png
-            self.camera.capture(image_filepath, 'jpeg')
+            #self.camera.capture(image_filepath, format = 'jpeg', bayer = True)
+            # save image type as extension indicated (png, jpg.. )
+            self.camera.capture(image_filepath, format = None)
             # self.camera.capture(image_filepath, 'jpeg', bayer = False)
             self.camera.annotate_text = "Image saved as {}".format(image_filepath)
         elif argv == 'zoom_in' or 'zoom_out':
