@@ -15,7 +15,7 @@ Usage:
 """
 # set this to True for development on computer, set to Fals to run on RaspberryPi
 debug_mode = True
-expert_mode = True
+expert_mode = False
 
 import time
 from datetime import datetime
@@ -583,6 +583,7 @@ class create_control_elements(object):
             new_sample_popup.open()
 
         new_sample_button.bind(on_press = create_new_sample)
+        # press once when starting the application
         create_new_sample(new_sample_button)
         
         return new_sample_button
