@@ -11,18 +11,22 @@
 #define PIN            6
 #define NUMPIXELS      8
 
-
 // Setup a oneWire instance to communicate with any OneWire devices 
 // (not just Maxim/Dallas temperature ICs)
 float threshold = 37.5;
-OneWire oneWire(ONE_WIRE_BUS);
 
+OneWire oneWire(ONE_WIRE_BUS);
+ 
 // Pass our oneWire reference to Dallas Temperature.
 DallasTemperature sensors(&oneWire);
  Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
-
 int delayval = 500; // delay for half a second
+byte LED_flag = 1;
+String inputString = "";         // a string to hold incoming data
+boolean stringComplete = false;  // whether the string is complete
+int incomingByte = 1;   // for incoming serial data
+
 void setup(void)
 {
   // start serial port
@@ -31,6 +35,7 @@ void setup(void)
   Serial.println("Dallas Temperature IC Control Library Demo");
   // Start up the library
   sensors.begin();
+  inputString.reserve(200);
   pinMode(CONTROL_PIN,OUTPUT);
   #if defined (__AVR_ATtiny85__)
   if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
@@ -53,6 +58,25 @@ void setup(void)
  
 void loop(void)
 {
+          // send data only when you receive data:
+        if (Serial.available() > 0) {
+                // read the incoming byte:
+                incomingByte = Serial.read();
+
+                // say what you got:
+                
+          if(incomingByte == 0)
+          {
+            Serial.println("LED OFF");
+            LED_flag = 48;
+          }
+          else
+          {
+            Serial.println("LED ON");
+            LED_flag = 1;
+          }
+        }
+
   // call sensors.requestTemperatures() to issue a global temperature
   // request to all devices on the bus
   sensors.requestTemperatures(); // Send the command to get temperatures
@@ -80,8 +104,13 @@ void loop(void)
     for(int i=0;i<NUMPIXELS;i++){
 
     // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
+    if (LED_flag==1){
     pixels.setPixelColor(i, pixels.Color(255,0,0)); // Moderately bright green color.
-
+    }
+    else {
+      
+    pixels.setPixelColor(i, pixels.Color(0,0,0)); // Moderately bright green color.
+    }
     pixels.show(); // This sends the updated pixel color to the hardware.
 
     delay(5); // Delay for a period of time (in milliseconds).
@@ -92,7 +121,13 @@ void loop(void)
        for(int i=0;i<NUMPIXELS;i++){
 
     // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
+    if (LED_flag==1){
     pixels.setPixelColor(i, pixels.Color(0,0,255)); // Moderately bright green color.
+    }
+    else {
+      
+    pixels.setPixelColor(i, pixels.Color(0,0,0)); // Moderately bright green color.
+    }
 
     pixels.show(); // This sends the updated pixel color to the hardware.
 

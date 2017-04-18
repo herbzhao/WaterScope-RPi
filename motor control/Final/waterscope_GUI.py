@@ -15,7 +15,7 @@ Usage:
 """
 # set this to True for development on computer, set to Fals to run on RaspberryPi
 debug_mode = True
-expert_mode = False
+expert_mode = True
 
 import time
 from datetime import datetime
@@ -61,34 +61,36 @@ if debug_mode is False:
         debug_mode = True
 
 
-
-#kivy.require('1.9.1')   # replace with your current kivy version !
-
-#import microscope control parts
-
 class create_control_elements(object):
     def __init__(self):
-        """ Some default class-wide values"""
-        # this determines how much user need to swipe before motor moves in x-y directions
-        self.drag_x_sensitive = Window.width*0.15
-        self.drag_y_sensitive = Window.height*0.15
+        """ Some default class-wide values"""        
         # these are default values for file saving
-        # set root folder for FileChooser, prevent saving files to random places
         self.folder_sign = '/'
+        # set root folder for FileChooser, prevent saving files to random places
         self.root_folder = r'/home/pi/'
         self.image_number = 1
         self.default_folder = '/home/pi/Desktop/images/'
         self.folder = self.default_folder
         self.filename = '{:%Y%m%d}'.format(datetime.today())
         self.filetype = '.jpg'
+        
+        # other interface settings
+        # default timelapse interval
         self.time_lapse_interval = 30
+        # this determines how much user need to swipe before motor moves in x-y directions
+        self.drag_x_sensitive = Window.width*0.15
+        self.drag_y_sensitive = Window.height*0.15
+        # microscope_control default parameters
+        self.step_value = 500
+
         
         if debug_mode is False and expert_mode is False:
+            # update camera settings from microscope_config.txt
             config.read_config_file()
-            # update camera settings
             mc.camera_library('set_iso', config.iso)
             mc.camera_library('set_shutter_speed', config.shutter_speed)
             mc.camera_library('set_white_balance', config.red_gain, config.blue_gain)
+            mc.camera_library('set_saturation', config.saturation)
 
 
     def create_exit_button(self):
@@ -134,21 +136,20 @@ class create_control_elements(object):
 
     def create_step_slider(self):
         """ Manipulate step of motor movement"""
-        default_step = 500
         if debug_mode is False:
-            mc.step = default_step
+            mc.step = self.step_value
         step_slider_label = Label(
-            text='\n Motor \n steps: \n'+'{}'.format(default_step),
+            text='\n Motor \n steps: \n'+'{}'.format(self.step_value),
             color = [0.2,0.2,1,1], halign = 'center', valign = 'middle',
             size_hint_y = 0.1)
         step_slider = Slider(
-            min=0, max=1000, value= default_step,
+            min=0, max=1000, value= self.step_value,
             orientation = 'vertical', size_hint_y = 0.35)
 
         def motor_step_control(instance, value):
             """ Change step and update label when using step_slider"""
             self.step_value = int(value)
-            step_slider_label.text = '\n Motor \n steps: \n'+'{}'.format(control_elements.step_value)
+            step_slider_label.text = '\n Motor \n steps: \n'+'{}'.format(self.step_value)
             if debug_mode is False:
                 mc.step = self.step_value
 
@@ -562,24 +563,30 @@ class create_control_elements(object):
     def create_new_sample_button(self):
         ''' new_sample button, only shows up when expert mode is off'''
         new_sample_button = Button(text = 'new \nsample', size_hint_y = 0.2, background_color = [1, 1, 0, 1])
+
         def create_new_sample(isinstance, *value):
             config.read_config_file()
-            config.record_new_sample()
-            # change the filepath to usw
+            config.record_new_sample()    
+            # change the filepath to usb
             try:
-                usb_root_path = r'/media/pi/' + os.listdir('/media/pi')[0] + '/'
+                self.folder = r'/media/pi/' + os.listdir('/media/pi')[0] + '/'
+            # if there is no usb stick inserted
             except FileNotFoundError:
-                usb_root_path = self.default_folder
-            self.folder = usb_root_path + 'sample{}'.format(config.last_sample_number)
+                self.folder = self.default_folder
+            self.folder = self.folder + 'sample{}'.format(config.last_sample_number)
             self.filename = 'sample{}'.format(config.last_sample_number)
             self.filetype = '.jpg' 
             self.image_number = 1
+            # create a popup whenever a new sample is created
+            new_sample_popup_content = Label(text='Sample number {}'.format(config.last_sample_number))
+            new_sample_popup = Popup(title='You have created a new sample!', size_hint = (0.3, 0.3), content = new_sample_popup_content, disabled=False)
+            new_sample_popup.open()
+
         new_sample_button.bind(on_press = create_new_sample)
         create_new_sample(new_sample_button)
+        
         return new_sample_button
         
-
-
 def add_main_page_widgets():
     """Add layouts and widgets to a page (main page)"""
     # defining all the elements here: buttons, sliders, map_controllers
@@ -635,6 +642,7 @@ def add_main_page_widgets():
         horizontal_layout_3.add_widget(new_sample_button)
         #new_sample_button._do_press()
     # add the basic layout to new screen
+    print(control_element.folder)
     return base_layout
 
 
@@ -649,3 +657,4 @@ if __name__ == "__main__":
     if debug_mode is False and expert_mode is False:
         mc.camera_library('start_preview')
     WaterScopeApp().run()
+    
