@@ -14,7 +14,7 @@ class initialise_config():
         self.shutter_speed_re = re.compile('shutter_speed.*')
         self.saturation_re = re.compile('saturation.*')
         self.sample_number_re = re.compile('sample.*')
-        self.config_file_path = r'microscope_config.txt'
+        self.config_file_path = r'config.txt'
         
     def read_config_file(self):
         self.config_file = open(self.config_file_path,'r')

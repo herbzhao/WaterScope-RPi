@@ -61,6 +61,8 @@ if debug_mode is False:
         debug_mode = True
 
 
+
+
 class create_control_elements(object):
     def __init__(self):
         """ Some default class-wide values"""        
@@ -72,7 +74,7 @@ class create_control_elements(object):
         self.default_folder = '/home/pi/Desktop/images/'
         self.folder = self.default_folder
         self.filename = '{:%Y%m%d}'.format(datetime.today())
-        self.filetype = '.jpg'
+        self.format = 'jpg'
         
         # other interface settings
         # default timelapse interval
@@ -84,13 +86,6 @@ class create_control_elements(object):
         self.step_value = 500
 
         
-        if debug_mode is False and expert_mode is False:
-            # update camera settings from microscope_config.txt
-            config.read_config_file()
-            mc.camera_library('set_iso', config.iso)
-            mc.camera_library('set_shutter_speed', config.shutter_speed)
-            mc.camera_library('set_white_balance', config.red_gain, config.blue_gain)
-            mc.camera_library('set_saturation', config.saturation)
 
 
     def create_exit_button(self):
@@ -229,6 +224,8 @@ class create_control_elements(object):
 
         start_preview_button.bind(on_press = preview_control)  #start_preview functions
         stop_preview_button.bind(on_press = preview_control)
+        if debug_mode is False:
+            mc.camera_library('start_preview')
         return start_preview_button, stop_preview_button
 
     def create_settings_button(self):
@@ -336,7 +333,7 @@ class create_control_elements(object):
         white_balance_controller = BoxLayout(orientation = 'horizontal')
         blue_gain_slider = Slider(min = 0, max = 8.0, value = 1.5, size_hint_x = 0.7)
         blue_gain_label = Label(text = 'Blue gain: {}'.format(float(blue_gain_slider.value)), size_hint_x = 0.3)
-        red_gain_slider = Slider(min = 0, max = 8.0, value = 1, size_hint_x = 0.7)
+        red_gain_slider = Slider(min = 0, max = 8.0, value = 1.1, size_hint_x = 0.7)
         red_gain_label = Label(text = 'Blue gain: {}'.format(float(blue_gain_slider.value)), size_hint_x = 0.3)
         for i in [blue_gain_label, blue_gain_slider, red_gain_label, red_gain_slider]:
             white_balance_controller.add_widget(i)
@@ -370,6 +367,8 @@ class create_control_elements(object):
             [blue_gain_slider, blue_gain_label]]:
             slider.bind(value = setting_slider_update_label)
         return brightness_controller, contrast_controller, white_balance_controller
+
+
 
 
     def create_filepath_controller(self):
@@ -486,15 +485,15 @@ class create_control_elements(object):
             if update == True: # only change image_number when user change filepath_input
                  # automatically change the filetype based on user input
                 if filename_elements[1] in ['jpg', 'jpeg', 'JPG', 'JPEG']:
-                    self.filetype = '.jpg'
-                elif filename_elements[1] in ['tif', 'tiff', 'TIF', 'TIFF']:
-                    self.filetype = '.tiff'
+                    self.format = 'jpg'
+                elif filename_elements[1] in ['raw', 'bayer']:
+                    self.format = 'raw'
                 elif filename_elements[1] in ['png', 'PNG']:
-                    self.filetype = '.png'
+                    self.format = 'png'
                 else:
-                    self.filetype = '.jpg'
+                    self.format = 'jpg'
         except IndexError:
-            self.filetype = '.jpg'
+            self.format = 'jpg'
         # if user have input a image_number
         filename_elements = filename_elements[0].split('-')
         if len(filename_elements) == 1:
@@ -509,7 +508,7 @@ class create_control_elements(object):
             self.filename = '-'.join(filename_elements[0:-1])
                 
         # if there is no specified self.image_number, then use the system-wide number (default: 1)
-        self.filename = self.filename + '-{:03}'.format(self.image_number) + self.filetype
+        self.filename = self.filename + '-{:03}'.format(self.image_number)
         self.filepath = self.folder + self.folder_sign + self.filename
         return self.filepath
 
@@ -527,7 +526,7 @@ class create_control_elements(object):
             if debug_mode is True:
                 print('save image to {}'.format(self.filepath))
             if debug_mode is False:
-                mc.camera_library('save_image', self.folder, self.filepath)
+                mc.camera_library('save_image', self.folder, self.filepath, self.format)
             self.image_number = self.image_number + 1
 
         def start_time_lapse(instance, value):
@@ -571,20 +570,23 @@ class create_control_elements(object):
             try:
                 self.folder = r'/media/pi/' + os.listdir('/media/pi')[0] + '/'
             # if there is no usb stick inserted
-            except FileNotFoundError:
+            except OSError:
                 self.folder = self.default_folder
             self.folder = self.folder + 'sample{}'.format(config.last_sample_number)
             self.filename = 'sample{}'.format(config.last_sample_number)
             self.filetype = '.jpg' 
             self.image_number = 1
             # create a popup whenever a new sample is created
-            new_sample_popup_content = Label(text='Sample number {}'.format(config.last_sample_number))
+            '''new_sample_popup_content = Label(text='Sample number {}'.format(config.last_sample_number))
             new_sample_popup = Popup(title='You have created a new sample!', size_hint = (0.3, 0.3), content = new_sample_popup_content, disabled=False)
-            new_sample_popup.open()
-
+            new_sample_popup.open()'''
+            try:
+                mc.camera_library('change_annotation', 'Sample number {}'.format(config.last_sample_number))
+            except:
+                pass
         new_sample_button.bind(on_press = create_new_sample)
         # press once when starting the application
-        create_new_sample(new_sample_button)
+        #create_new_sample(new_sample_button)
         
         return new_sample_button
         
