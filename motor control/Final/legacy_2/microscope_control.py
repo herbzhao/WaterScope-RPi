@@ -30,9 +30,6 @@ import curses
 import curses.ascii
 import picamera
 
-from read_config import initialise_config
-
-
 class Stage:
     def __init__(self, config_dict=None, **kwargs):
         """Class representing a 3-axis microscope stage.
@@ -174,23 +171,23 @@ class camera_control():
     def __init__(self):
     #defines some camera parameters 
         self.stage = Stage()
-        #self.step = 300 # step of motor movement
         camera_resolution = (3280, 2464)
         #camera_resolution = (1024, 768)
+
         self.camera = picamera.PiCamera(resolution = camera_resolution)
-        # some initial default values - modified in microscope_config.txt
-        time.sleep(2)
-        config = initialise_config()
-        config.read_config_file()
-        self.camera.shutter_speed = int(config.shutter_speed)
-        self.camera.exposure_mode = 'off'
-        self.camera.awb_mode = 'off'
-        self.camera.awb_gains = (float(config.red_gain), float(config.blue_gain))
-        self.camera.iso = int(config.iso)
-        self.camera.saturation = int(config.saturation)
-        self.camera.brightness = 50
-        self.camera.annotate_text_size = int(camera_resolution[0]*0.03) # reasonable ratio for any resolution
+
+        # some initial default values
         
+        self.camera.awb_mode = 'off'
+        self.camera.awb_gains = (1.5,1.1)
+        self.camera.iso = 0
+        # when set exposure_mode to "off", output will be black
+        #self.camera.exposure_mode = 'auto'
+        
+        self.camera.shutter_speed = 50 # condenser require much lower shutter speed
+        self.camera.saturation = 0
+        self.camera.annotate_text_size = int(camera_resolution[0]*0.03) # reasonable ratio for any resolution
+        self.step = 300
 
     def stage_library(self, command, direction):
         """Use this class from kivy interface to use motors, change picamera etc.
@@ -237,40 +234,25 @@ class camera_control():
             self.camera.brightness = int(value[0])
         elif argv == 'set_white_balance':
             self.camera.awb_gains = (value[0],value[1])
-        elif argv == 'set_iso':
-            self.camera.iso = int(value[0])
-        elif argv == 'set_shutter_speed':
-            self.camera.shutter_speed = int(value[0])
-        elif argv == 'set_saturation':
-            self.camera.saturation = int(value[0])
-        elif argv == 'change_annotation':
-            self.camera.annotate_text  = value[0]
         # 'save_image' cannot be the last elif for some reason?
         elif argv == 'save_image':
             # remove any text overlay
+            self.camera.annotate_text = ""
             folder = value[0]
             if not os.path.isdir(folder):
                 os.mkdir(folder)
             image_filepath = value[1]
-            # format can be 'jpg', 'jpeg', 'raw', 'png'
-            file_format = value[2]
-
             while True:
-                # if there is a file with same name, add a -new behind file name
-                if os.path.isfile(image_filepath+'.jpeg') or os.path.isfile(image_filepath+'.png'):
-                    image_filepath = image_filepath + '-new.'
+                if os.path.isfile(image_filepath):
+                    # if there is a file with same name, add a -new behind file name
+                    image_filepath = image_filepath.split('.')
+                    image_filepath = image_filepath[0] + '-new.' + image_filepath[1]
                 else:
                     break
-
-            if file_format == 'raw':
-                self.camera.capture(image_filepath + '.jpeg', format = 'jpeg', bayer = True)
-            elif file_format == 'png':
-                self.camera.capture(image_filepath + '.png', format = 'png')                
-            else:
-                self.camera.capture(image_filepath + '.jpeg', format = 'jpeg')
-            time.sleep(2)
+            # save the raw data on jpeg
+            self.camera.capture(image_filepath, 'jpeg', bayer = True)
+            # self.camera.capture(image_filepath, 'jpeg', bayer = False)
             self.camera.annotate_text = "Image saved as {}".format(image_filepath)
-            
         elif argv == 'zoom_in' or 'zoom_out':
             if argv == 'zoom_in':
                 self.fov = self.fov*3/4
@@ -278,7 +260,6 @@ class camera_control():
                 self.fov = self.fov*4/3
             self.camera.zoom = (0.5-self.fov/2, 0.5-self.fov/2, self.fov, self.fov)
             self.camera.annotate_text = 'magnification: {0:.2f}X'.format(1/self.fov)
-
 
 
 #run microscope_control.py directly

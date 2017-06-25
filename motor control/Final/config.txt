@@ -6,18 +6,4 @@ shutter_speed = 150
 saturation = 20
 
 # record data
-
-20170420 08:52:20
-sample = 1
-20170420 08:53:22
-sample = 2
-20170420 08:53:23
-sample = 3
-20170420 08:53:24
-sample = 4
-20170420 08:53:26
-sample = 5
-20170420 08:53:31
-sample = 6
-20170420 08:53:32
-sample = 7
+
