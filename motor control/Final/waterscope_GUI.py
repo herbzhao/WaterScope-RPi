@@ -14,8 +14,8 @@ Usage:
 @author: Tianheng Zhao
 """
 # set this to True for development on computer, set to Fals to run on RaspberryPi
-debug_mode = True
-expert_mode = False
+debug_mode = False
+expert_mode = True
 
 import time
 from datetime import datetime

@@ -1,0 +1,155 @@
+.title {
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  font-size: 400%;
+  text-align: center;
+}
+
+.stream_container
+{
+  height: 100%;
+  width: 100%;
+}
+
+.button{
+  text-align: center;
+}
+
+.click {
+  font-size:100%;
+  height: 15%;
+  width: 20%;
+}
+
+
+.motor_control {
+  font-size:100%;
+  height: 15%;
+  width: 10%;
+}
+
+div.tab {
+    overflow: hidden;
+    border: 1px solid #ccc;
+    background-color: #f1f1f1;
+}
+
+/* Style the buttons inside the tab */
+div.tab button {
+    background-color: inherit;
+    float: left;
+    border: none;
+    cursor: pointer;
+    padding: 2% 2%;
+    transition: 0.3s;
+}
+
+/* Change background color of buttons on hover */
+div.tab button:hover {
+    background-color: #ddd;
+}
+
+/* Create an active/current tablink class */
+.active {
+    background-color: #ccc;
+}
+
+/* Style the tab content */
+.tabcontent {
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;  
+  font-size: 75%;
+  display: none;
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-top: none;
+}
+
+.header{
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+}
+
+.apply
+{
+  float: right;
+}
+
+.sub_header
+{
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  text-align: left;
+  font-size: 100%;
+}
+
+/* The switch - the box around the slider */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+/* Hide default HTML checkbox */
+.switch input {display:none;}
+
+/* The slider */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+.microswitch{
+  
+  background-color:#CCC;  
+  border-radius: 100%;
+  display: block;
+  height: 34px;
+  width: 34px;
+  opacity: 1;
+}
+
+.microswitch.active { 
+  background-color: green;
+  opacity: 1; 
+  box-shadow: 0 0 10px green;
+}
