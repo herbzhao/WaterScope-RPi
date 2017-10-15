@@ -6,12 +6,13 @@ import subprocess
 
 from werkzeug.datastructures import MultiDict
 # cutomised modules
-from add_on_modules import time_lapse_module
+#from add_on_modules import time_lapse_module
 
 app = Flask(__name__)
 
 
 # MJPEG streaming library
+
 
 class MJpegStream():
     def __init__(self):

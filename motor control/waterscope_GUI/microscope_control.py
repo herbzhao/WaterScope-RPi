@@ -184,7 +184,7 @@ class camera_control():
         config.read_config_file()
         self.camera.shutter_speed = int(config.shutter_speed)
         self.camera.exposure_mode = 'off'
-        self.camera.awb_mode = 'off'
+        self.camera.awb_mode = config.awb_mode
         self.camera.awb_gains = (float(config.red_gain), float(config.blue_gain))
         self.camera.iso = int(config.iso)
         self.camera.saturation = int(config.saturation)

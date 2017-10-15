@@ -13,7 +13,7 @@ Usage:
 
 @author: Tianheng Zhao
 """
-# set this to True for development on computer, set to Fals to run on RaspberryPi
+# set this to True for development on computer, set to False to run on RaspberryPi
 debug_mode = False
 expert_mode = True
 
@@ -53,14 +53,8 @@ config = initialise_config()
 # only read microscope_control if on Pi
 if debug_mode is False:
     from microscope_control import camera_control
-    try:
-        mc = camera_control()
-        mc.fov = 1.00 #initialise the zoom level
-    except:
-        # if there is no camera connected, default set the software to run at debug_mode
-        debug_mode = True
-
-
+    mc = camera_control()
+    mc.fov = 1.00 #initialise the zoom level
 
 
 class create_control_elements(object):

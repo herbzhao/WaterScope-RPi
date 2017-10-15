@@ -1,5 +1,0 @@
-iso: 40
-shutter_speed: 40
-saturation: 40
-red_gain: 40
-blue_gain: 40

@@ -8,11 +8,12 @@ class initialise_config():
     def __init__(self):
         #self.last_sample_number = 0
         # regex for text index
-        self.red_gain_re = re.compile('red_gain.*')
-        self.blue_gain_re = re.compile('blue_gain.*')
-        self.iso_re = re.compile('iso.*')
-        self.shutter_speed_re = re.compile('shutter_speed.*')
-        self.saturation_re = re.compile('saturation.*')
+        self.awb_mode_re = re.compile('awb_mode:.*')
+        self.red_gain_re = re.compile('red_gain:.*')
+        self.blue_gain_re = re.compile('blue_gain:.*')
+        self.iso_re = re.compile('iso:.*')
+        self.shutter_speed_re = re.compile('shutter_speed:.*')
+        self.saturation_re = re.compile('saturation:.*')
         self.sample_number_re = re.compile('sample.*')
         self.config_file_path = r'config.txt'
         
@@ -24,17 +25,18 @@ class initialise_config():
         config = {}
         self.config_content = {}
         for i,j in [
-            [self.red_gain_re, 'red_gain'], [self.blue_gain_re, 'blue_gain'], 
+            [self.awb_mode_re, 'awb_mode'],[self.red_gain_re, 'red_gain'], [self.blue_gain_re, 'blue_gain'], 
             [self.iso_re, 'iso'],
             [self.shutter_speed_re, 'shutter_speed'],[self.saturation_re, 'saturation'],
             [self.sample_number_re, 'sample']]:
             config[j] = i.findall(self.config_file_content)
             try:
                 # in case there is no sample information
-                self.config_content[j] = config[j][-1].replace(j,'').replace('=','').replace(' ','')
+                self.config_content[j] = config[j][-1].replace(j,'').replace('=','').replace(' ','').replace(":","").replace("\r","")
             except IndexError:
                 self.config_content[j] = 0
         
+        self.awb_mode = str(self.config_content['awb_mode'])
         self.red_gain = float(self.config_content['red_gain'])
         self.blue_gain = float(self.config_content['blue_gain'])
         self.awb_gain = (self.red_gain, self.blue_gain)
