@@ -1,3 +1,5 @@
+debug_mode = True
+
 from flask import Flask, render_template, request, jsonify, Response
 import json
 import sys
@@ -6,8 +8,9 @@ import subprocess
 
 from werkzeug.datastructures import MultiDict
 # cutomised modules
-from add_on_modules import time_lapse_module
-from autofocus import Autofocus
+if debug_mode is False:
+    from add_on_modules import time_lapse_module
+    from autofocus import Autofocus
 
 app = Flask(__name__)
 
