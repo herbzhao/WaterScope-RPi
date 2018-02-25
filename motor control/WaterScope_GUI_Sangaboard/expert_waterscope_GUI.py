@@ -15,7 +15,7 @@ Usage:
 """
 # set this to True for development on computer, set to False to run on RaspberryPi
 debug_mode = False
-expert_mode = True
+expert_mode = False
 
 import time
 from datetime import datetime
