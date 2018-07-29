@@ -1,0 +1,27 @@
+Incubator not ready
+Temperature363
+Incubator not ready
+Temperature is 26.37 Heating effort is 80.00
+Incubator not ready
+Temperature is 26.37 Heating effort is 255.00
+Incubator not ready
+Temperature is 26.37 Heating effort is 255.00
+Incubator not ready
+Temperature is 26.44 Heating effort is 255.00
+Incubator not ready
+Temperature is 26.44 Heating effort is 255.00
+Incubator not ready
+Temperature is 26.44 Heating effort is 255.00
+Incubator not ready
+Temperature is 26.44 Heating effort is 255.00
+Incubator not ready
+Temperature is 26.50 Heating effort is 255.00
+Moving
+Incubator not ready
+Temperature is 26.50 Heating effort is 255.00
+Incubator not ready
+Temperature is 26.50 Heating effort is 255.00
+Incubator not ready
+Temperature is 26.50 Heating effort is 255.00
+Incubator not ready
+Temperature is 26.50 Heating effort is 255.00
