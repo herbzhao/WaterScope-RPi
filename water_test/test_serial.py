@@ -20,7 +20,18 @@ with serial.Serial(arduino_port,9600) as ser: #change ACM number as found from l
     while True:
         line = ser.readline()
         print(line)
-        time.sleep(1)
+        time.sleep(5)
+	print('turn on led')
+	ser.write('66')
+	time.sleep(5)
+	print('moving up 1000')
+	ser.write('-500')
+	time.sleep(5)
+	ser.write('-66')
+
+
+
+
         # For arduino, positive is move up
         #command = input('Enter your input:')
         #try:

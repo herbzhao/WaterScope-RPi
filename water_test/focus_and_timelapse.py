@@ -15,12 +15,12 @@ def temperature_reading():
         #ser.flush()
         serial_output = ser.readline()
         print(serial_output)
-        time.sleep(2)
+        time.sleep(10)
         temperature_log = open('/home/pi/WaterScope-RPi/water_test/timelapse/{}/{}.txt'.format(starting_time, starting_time), 'a+')
         temperature_log.writelines(serial_output)
         temperature_log.close()
     
-def send_arduino_commend(user_input):
+def send_arduino_command(user_input):
     global ser
     ser.write(user_input)
     print('command: {}'.format(user_input))
@@ -36,7 +36,7 @@ def start_time_lapse():
     #camera.exposure_mode = 'off'
 
     # time lapse settings in minutes 
-    time_interval = 5
+    time_interval = 0.1
     
     while True:
         for i in range(1000): 
@@ -83,9 +83,6 @@ with serial.Serial(arduino_port,9600) as ser: #change ACM number as found from l
     threading1.daemon = True
     threading1.start()
 
-    # turn on LED
-    ser.write('66')
-
     while True:
         #print('type the distance whenever you want')
         # python 2.7 raw_input
@@ -93,4 +90,5 @@ with serial.Serial(arduino_port,9600) as ser: #change ACM number as found from l
         if user_input == 'tl':
             start_time_lapse()
         else:
-            send_arduino_commend(user_input)
+            send_arduino_command(user_input)
+	    print(user_input)
