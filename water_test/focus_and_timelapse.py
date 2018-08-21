@@ -1,3 +1,5 @@
+from __future__ import division
+
 from picamera import PiCamera
 import threading
 import serial.tools.list_ports
@@ -8,25 +10,39 @@ import sys
 import os
 
 
+'''
+To run the code, use 
+$ python focus_and_timelapse.py
+then type number for stage movement, 66/-66 for LED and tl for timelapse
+
+To run the code for timelapse in background direclty
+$ nohup python focus_and_timelapse.py tl &
+'''
+
+
 def temperature_reading():
     global ser
     global starting_time
     while True:
-        #ser.flush()
-        serial_output = ser.readline()
-        print(serial_output)
-        time.sleep(2)
-        temperature_log = open('/home/pi/WaterScope-RPi/water_test/timelapse/{}/{}.txt'.format(starting_time, starting_time), 'a+')
-        temperature_log.writelines(serial_output)
+        temperature_log = open('/home/pi/WaterScope-RPi/water_test/timelapse/{}/{}.txt'.format(starting_time, starting_time), 'a+')        
+        
+        # clear the inputs and read the two lines, now it doenst care about sync problem
+        ser.flushInput()
+        for i in range(2):
+            serial_output = ser.readline()
+            print(serial_output)
+            temperature_log.writelines(serial_output)
         temperature_log.close()
+        time.sleep(10)
     
-def send_arduino_commend(user_input):
+def send_arduino_command(user_input):
+    # does not read ser yet
     global ser
     ser.write(user_input)
     print('command: {}'.format(user_input))
 
 
-def start_time_lapse():       
+def start_time_lapse(time_interval=10):       
     global ser
     # initialise the camera
     camera = PiCamera()
@@ -36,24 +52,27 @@ def start_time_lapse():
     #camera.exposure_mode = 'off'
 
     # time lapse settings in minutes 
-    time_interval = 5
+    #time_interval = 20/60
     
     while True:
         for i in range(1000): 
             print('timelapse_{}th_cycle'.format(i))
             filename = '/home/pi/WaterScope-RPi/water_test/timelapse/{}/timelapse_{:03d}.jpg'.format(starting_time, i)
-            time_elapsed = i * time_interval
+            # time_elapsed = i * time_interval
             # turn on the LED by serial code
-            ser.write('66')
+            ser.flush()
+            send_arduino_command('66')
             print('LED on')
-            time.sleep(5)
+            time.sleep(3)
             # take photo
             camera.capture(filename, format = 'jpeg', bayer = True)
-            print('image taken: image number: {}, time elapsed: {:f}.jpg'.format(i, time_elapsed))
-            time.sleep(5)
+            print('image taken: image number: {}'.format(i))
+            time.sleep(3)
             # turn off the LED by serial code
-            ser.write('-66')
+            ser.flush()
+            send_arduino_command('-66')
             print('LED off')
+
             time.sleep(time_interval*60)
 
 #############################################
@@ -77,20 +96,28 @@ with serial.Serial(arduino_port,9600) as ser: #change ACM number as found from l
     ser.baudrate=9600
     ser.flush()
 
-
     # now threading1 runs regardless of user input
     threading1 = threading.Thread(target=temperature_reading)
     threading1.daemon = True
     threading1.start()
 
-    # turn on LED
-    ser.write('66')
+    # if there is any additional sys.arg, then start time lapse automatically
+    if len(sys.argv) > 1:
+        time.sleep(5)
+        start_time_lapse(time_interval=5)
 
-    while True:
-        #print('type the distance whenever you want')
-        # python 2.7 raw_input
-        user_input = str(raw_input())
-        if user_input == 'tl':
-            start_time_lapse()
-        else:
-            send_arduino_commend(user_input)
+    # if run the code without arg, just do the traditional thing
+    else:
+        while True:
+            #print('type the distance whenever you want')
+            # python 2.7 raw_input
+            user_input = str(raw_input())
+            if user_input == 'tl':
+                start_time_lapse(time_interval=5)
+            else:
+                send_arduino_command(user_input)
+            print(user_input)
+
+
+
+
