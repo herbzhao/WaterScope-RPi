@@ -48,7 +48,7 @@ def start_time_lapse(time_interval=10):
     camera = PiCamera()
     camera.resolution = (3280,2464)
     print('start timelapse')
-    #camera.shutter_speed = 25000
+    #camera.shutter_speed = 1000
     #camera.exposure_mode = 'off'
 
     # time lapse settings in minutes 
@@ -63,11 +63,11 @@ def start_time_lapse(time_interval=10):
             ser.flush()
             send_arduino_command('66')
             print('LED on')
-            time.sleep(3)
+            time.sleep(10)
             # take photo
             camera.capture(filename, format = 'jpeg', bayer = True)
             print('image taken: image number: {}'.format(i))
-            time.sleep(3)
+            time.sleep(15)
             # turn off the LED by serial code
             ser.flush()
             send_arduino_command('-66')
@@ -113,7 +113,7 @@ with serial.Serial(arduino_port,9600) as ser: #change ACM number as found from l
             # python 2.7 raw_input
             user_input = str(raw_input())
             if user_input == 'tl':
-                start_time_lapse(time_interval=5)
+                start_time_lapse(time_interval=20/60)
             else:
                 send_arduino_command(user_input)
             print(user_input)
