@@ -79,7 +79,9 @@ def start_time_lapse(time_interval=10):
 # code starts here
 
 # Save the temperature log to a file with datetime
-starting_time = str(datetime.datetime.now())
+starting_time = datetime.datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
+# make a directory in case previously didnt exist
+os.mkdir('/home/pi/WaterScope-RPi/water_test/timelapse')
 os.mkdir('/home/pi/WaterScope-RPi/water_test/timelapse/{}'.format(starting_time))
 
 # Find Arduino serial port first
