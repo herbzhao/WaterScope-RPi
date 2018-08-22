@@ -1,12 +1,3 @@
-sudo cp /etc/network/interfaces_wifi /etc/network/interfaces
-
-#services
-sudo systemctl stop dnsmasq
-sleep 2
-sudo systemctl stop hostapd
-
-sleep 2
-sudo ifdown wlan0
-sleep 2
-sudo ifup wlan0
-
+sudo cp /etc/dhcpcd.conf_wifi /etc/dhcpcd.conf
+sudo cp /etc/dnsmasq.conf_wifi /etc/dnsmasq.conf
+sudo cp /etc/hostapd/hostapd.conf_wifi /etc/hostapd/hostapd.conf
