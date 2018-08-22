@@ -24,7 +24,6 @@ def temperature_reading():
     global ser
     global starting_time
     while True:
-<<<<<<< HEAD
         temperature_log = open('/home/pi/WaterScope-RPi/water_test/timelapse/{}/{}.txt'.format(starting_time, starting_time), 'a+')        
         
         # clear the inputs and read the two lines, now it doenst care about sync problem
@@ -33,22 +32,11 @@ def temperature_reading():
             serial_output = ser.readline()
             print(serial_output)
             temperature_log.writelines(serial_output)
-=======
-        #ser.flush()
-        serial_output = ser.readline()
-        print(serial_output)
-        time.sleep(10)
-        temperature_log = open('/home/pi/WaterScope-RPi/water_test/timelapse/{}/{}.txt'.format(starting_time, starting_time), 'a+')
-        temperature_log.writelines(serial_output)
->>>>>>> d676c65b9d6ddcaf0230a86beb81dcdc0f853c84
         temperature_log.close()
         time.sleep(10)
     
 def send_arduino_command(user_input):
-<<<<<<< HEAD
     # does not read ser yet
-=======
->>>>>>> d676c65b9d6ddcaf0230a86beb81dcdc0f853c84
     global ser
     ser.write(user_input)
     print('command: {}'.format(user_input))
@@ -64,11 +52,7 @@ def start_time_lapse(time_interval=10):
     #camera.exposure_mode = 'off'
 
     # time lapse settings in minutes 
-<<<<<<< HEAD
     #time_interval = 20/60
-=======
-    time_interval = 0.1
->>>>>>> d676c65b9d6ddcaf0230a86beb81dcdc0f853c84
     
     while True:
         for i in range(1000): 
@@ -117,7 +101,6 @@ with serial.Serial(arduino_port,9600) as ser: #change ACM number as found from l
     threading1.daemon = True
     threading1.start()
 
-<<<<<<< HEAD
     # if there is any additional sys.arg, then start time lapse automatically
     if len(sys.argv) > 1:
         time.sleep(5)
@@ -138,14 +121,3 @@ with serial.Serial(arduino_port,9600) as ser: #change ACM number as found from l
 
 
 
-=======
-    while True:
-        #print('type the distance whenever you want')
-        # python 2.7 raw_input
-        user_input = str(raw_input())
-        if user_input == 'tl':
-            start_time_lapse()
-        else:
-            send_arduino_command(user_input)
-	    print(user_input)
->>>>>>> d676c65b9d6ddcaf0230a86beb81dcdc0f853c84
