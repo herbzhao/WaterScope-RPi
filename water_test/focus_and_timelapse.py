@@ -8,7 +8,8 @@ import time
 import datetime
 import sys
 import os
-
+# read config from a txt file
+from read_config import initialise_config
 
 '''
 To run the code, use 
@@ -48,12 +49,17 @@ def start_time_lapse(time_interval=10):
     camera = PiCamera()
     camera.resolution = (3280,2464)
     print('start timelapse')
-    #camera.shutter_speed = 1000
-    #camera.exposure_mode = 'off'
 
-    # time lapse settings in minutes 
-    #time_interval = 20/60
-    
+    # read configs for consistent imaging
+    config = initialise_config()
+    config.read_config_file()
+    camera.awb_mode = config.awb_mode
+    camera.awb_gains = config.awb_gains
+    camera.iso = config.iso
+    camera.shutter_speed = config.shutter_speed
+    camera.saturation = config.saturation
+
+
     while True:
         for i in range(1000): 
             print('timelapse_{}th_cycle'.format(i))

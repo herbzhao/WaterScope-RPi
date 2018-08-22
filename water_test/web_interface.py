@@ -1,25 +1,13 @@
-# Web streaming example
-# Source code from the official PiCamera package
-# http://picamera.readthedocs.io/en/latest/recipes2.html#web-streaming
-
 import io
+import time
 import picamera
 import logging
 import socketserver
 from threading import Condition
 from http import server
 
-PAGE="""\
-<html>
-<head>
-<title>Raspberry Pi - Surveillance Camera</title>
-</head>
-<body>
-<center><h1>Raspberry Pi - Surveillance Camera</h1></center>
-<center><img src="stream.mjpg" width="640" height="480"></center>
-</body>
-</html>
-"""
+from read_config import initialise_config
+
 
 class StreamingOutput(object):
     def __init__(self):
@@ -81,14 +69,47 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
     allow_reuse_address = True
     daemon_threads = True
 
-with picamera.PiCamera(resolution='640x480', framerate=24) as camera:
+
+
+
+# https://picamera.readthedocs.io/en/release-1.12/fov.html
+
+PAGE="""\
+<html>
+<head>
+<title>picamera MJPEG streaming demo</title>
+</head>
+<body>
+<h1>PiCamera MJPEG Streaming Demo</h1>
+<img src="stream.mjpg" width="1640" height="1232" />
+</body>
+</html>
+"""
+
+
+with picamera.PiCamera() as camera:
+    # consistent imaging condition
+    config = initialise_config()
+    config.read_config_file()
+
+    camera.resolution = (1640, 1232)
+    camera.framerate = 24
+    camera.awb_mode = config.awb_mode
+    camera.awb_gains = config.awb_gains
+    camera.iso = config.iso
+    camera.shutter_speed = config.shutter_speed
+    camera.saturation = config.saturation
+
+
     output = StreamingOutput()
-    #Uncomment the next line to change your Pi's Camera rotation (in degrees)
-    #camera.rotation = 90
     camera.start_recording(output, format='mjpeg')
+    
+    
     try:
         address = ('', 8000)
         server = StreamingServer(address, StreamingHandler)
         server.serve_forever()
     finally:
         camera.stop_recording()
+
+
