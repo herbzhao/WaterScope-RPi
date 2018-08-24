@@ -27,6 +27,7 @@ class StreamingOutput(object):
         return self.buffer.write(buf)
 
 class StreamingHandler(server.BaseHTTPRequestHandler):
+    #Handler for the GET requests
     def do_GET(self):
         if self.path == '/':
             self.send_response(301)
@@ -39,7 +40,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.send_header('Content-Length', len(content))
             self.end_headers()
             self.wfile.write(content)
-        elif self.path == '/stream.mjpg':
+        elif self.path == '/stream':
             self.send_response(200)
             self.send_header('Age', 0)
             self.send_header('Cache-Control', 'no-cache, private')
@@ -51,10 +52,12 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
                     with output.condition:
                         output.condition.wait()
                         frame = output.frame
+                    # Send the html message
                     self.wfile.write(b'--FRAME\r\n')
                     self.send_header('Content-Type', 'image/jpeg')
                     self.send_header('Content-Length', len(frame))
                     self.end_headers()
+                    # Send the html message
                     self.wfile.write(frame)
                     self.wfile.write(b'\r\n')
             except Exception as e:
@@ -81,7 +84,7 @@ PAGE="""\
 </head>
 <body>
 <h1>PiCamera MJPEG Streaming Demo</h1>
-<img src="stream.mjpg" width="1640" height="1232" />
+<img src="stream" width="1640" height="1232" />
 </body>
 </html>
 """
@@ -107,7 +110,10 @@ with picamera.PiCamera() as camera:
     
     try:
         address = ('', 8000)
+        #Create a web server and define the handler to manage the
+	    #incoming request
         server = StreamingServer(address, StreamingHandler)
+        #Wait forever for incoming htto requests
         server.serve_forever()
     finally:
         camera.stop_recording()

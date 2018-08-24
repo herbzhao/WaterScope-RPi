@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<!-- saved from url=(0081)https://hackernoon.com/media/5cf276c6f3144cf52c80384f881f743c?postId=2701bd0373c9 -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>security3.py – Medium</title><meta name="twitter:widgets:csp" content="on"><meta name="robots" content="noindex"><!--<base target="_blank">--><base href="." target="_blank"><style>body {text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; font-family: "ff-tisa-web-pro", Georgia, Cambria, "Times New Roman", Times, serif; font-weight: 400; color: #333332; font-size: 18px; line-height: 1.4; margin: 0; background-color: white; overflow: hidden;}iframe {max-width: 100%;}</style></head><body><style>.gist .gist-file { margin-bottom: 0 !important; }.gist { text-rendering: auto; }</style><script src="./d742eae0ad68366f5f9d56eaf1de3e1b.js.download" charset="utf-8"></script><link rel="stylesheet" href="./gist-embed-51733eabd598f6dd7e02254bb5e3dc72.css"><div id="gist48054060" class="gist">
+    <div class="gist-file">
+      <div class="gist-data">
+        <div class="js-gist-file-update-container js-task-list-container file-box">
+  <div id="file-security3-py" class="file">
+    
+
+  <div itemprop="text" class="blob-wrapper data type-python">
+      <table class="highlight tab-size js-file-line-container" data-tab-size="8">
+      <tbody><tr>
+        <td id="file-security3-py-L1" class="blob-num js-line-number" data-line-number="1"></td>
+        <td id="file-security3-py-LC1" class="blob-code blob-code-inner js-file-line"><span class="pl-c"><span class="pl-c">#</span> capture frames from the camera</span></td>
+      </tr>
+      <tr>
+        <td id="file-security3-py-L2" class="blob-num js-line-number" data-line-number="2"></td>
+        <td id="file-security3-py-LC2" class="blob-code blob-code-inner js-file-line"><span class="pl-k">for</span> f <span class="pl-k">in</span> camera.capture_continuous(rawCapture, <span class="pl-v">format</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>bgr<span class="pl-pds">"</span></span>, <span class="pl-v">use_video_port</span><span class="pl-k">=</span><span class="pl-c1">True</span>):</td>
+      </tr>
+      <tr>
+        <td id="file-security3-py-L3" class="blob-num js-line-number" data-line-number="3"></td>
+        <td id="file-security3-py-LC3" class="blob-code blob-code-inner js-file-line">	<span class="pl-c"><span class="pl-c">#</span> grab the raw NumPy array representing the image and initialize</span></td>
+      </tr>
+      <tr>
+        <td id="file-security3-py-L4" class="blob-num js-line-number" data-line-number="4"></td>
+        <td id="file-security3-py-LC4" class="blob-code blob-code-inner js-file-line">	<span class="pl-c"><span class="pl-c">#</span> the timestamp and occupied/unoccupied text</span></td>
+      </tr>
+      <tr>
+        <td id="file-security3-py-L5" class="blob-num js-line-number" data-line-number="5"></td>
+        <td id="file-security3-py-LC5" class="blob-code blob-code-inner js-file-line">	frame <span class="pl-k">=</span> f.array</td>
+      </tr>
+      <tr>
+        <td id="file-security3-py-L6" class="blob-num js-line-number" data-line-number="6"></td>
+        <td id="file-security3-py-LC6" class="blob-code blob-code-inner js-file-line">	timestamp <span class="pl-k">=</span> datetime.datetime.now()</td>
+      </tr>
+      <tr>
+        <td id="file-security3-py-L7" class="blob-num js-line-number" data-line-number="7"></td>
+        <td id="file-security3-py-LC7" class="blob-code blob-code-inner js-file-line">	text <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">"</span>Unoccupied<span class="pl-pds">"</span></span></td>
+      </tr>
+      <tr>
+        <td id="file-security3-py-L8" class="blob-num js-line-number" data-line-number="8"></td>
+        <td id="file-security3-py-LC8" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="file-security3-py-L9" class="blob-num js-line-number" data-line-number="9"></td>
+        <td id="file-security3-py-LC9" class="blob-code blob-code-inner js-file-line">	<span class="pl-c"><span class="pl-c">#</span>#####################################################################</span></td>
+      </tr>
+      <tr>
+        <td id="file-security3-py-L10" class="blob-num js-line-number" data-line-number="10"></td>
+        <td id="file-security3-py-LC10" class="blob-code blob-code-inner js-file-line">	<span class="pl-c"><span class="pl-c">#</span> COMPUTER VISION</span></td>
+      </tr>
+      <tr>
+        <td id="file-security3-py-L11" class="blob-num js-line-number" data-line-number="11"></td>
+        <td id="file-security3-py-LC11" class="blob-code blob-code-inner js-file-line">	<span class="pl-c"><span class="pl-c">#</span>#####################################################################</span></td>
+      </tr>
+      <tr>
+        <td id="file-security3-py-L12" class="blob-num js-line-number" data-line-number="12"></td>
+        <td id="file-security3-py-LC12" class="blob-code blob-code-inner js-file-line">	<span class="pl-c"><span class="pl-c">#</span> resize the frame, convert it to grayscale, and blur it</span></td>
+      </tr>
+      <tr>
+        <td id="file-security3-py-L13" class="blob-num js-line-number" data-line-number="13"></td>
+        <td id="file-security3-py-LC13" class="blob-code blob-code-inner js-file-line">	gray <span class="pl-k">=</span> cv2.cvtColor(frame, cv2.<span class="pl-c1">COLOR_BGR2GRAY</span>)</td>
+      </tr>
+      <tr>
+        <td id="file-security3-py-L14" class="blob-num js-line-number" data-line-number="14"></td>
+        <td id="file-security3-py-LC14" class="blob-code blob-code-inner js-file-line">	gray <span class="pl-k">=</span> cv2.GaussianBlur(gray, <span class="pl-c1">tuple</span>(conf[<span class="pl-s"><span class="pl-pds">'</span>blur_size<span class="pl-pds">'</span></span>]), <span class="pl-c1">0</span>)</td>
+      </tr>
+      <tr>
+        <td id="file-security3-py-L15" class="blob-num js-line-number" data-line-number="15"></td>
+        <td id="file-security3-py-LC15" class="blob-code blob-code-inner js-file-line">	</td>
+      </tr>
+      <tr>
+        <td id="file-security3-py-L16" class="blob-num js-line-number" data-line-number="16"></td>
+        <td id="file-security3-py-LC16" class="blob-code blob-code-inner js-file-line">	<span class="pl-c"><span class="pl-c">#</span> if the average frame is None, initialize it</span></td>
+      </tr>
+      <tr>
+        <td id="file-security3-py-L17" class="blob-num js-line-number" data-line-number="17"></td>
+        <td id="file-security3-py-LC17" class="blob-code blob-code-inner js-file-line">	<span class="pl-k">if</span> avg <span class="pl-k">is</span> <span class="pl-c1">None</span>:</td>
+      </tr>
+      <tr>
+        <td id="file-security3-py-L18" class="blob-num js-line-number" data-line-number="18"></td>
+        <td id="file-security3-py-LC18" class="blob-code blob-code-inner js-file-line">		<span class="pl-c1">print</span> <span class="pl-s"><span class="pl-pds">"</span>[INFO] starting background model...<span class="pl-pds">"</span></span></td>
+      </tr>
+      <tr>
+        <td id="file-security3-py-L19" class="blob-num js-line-number" data-line-number="19"></td>
+        <td id="file-security3-py-LC19" class="blob-code blob-code-inner js-file-line">		avg <span class="pl-k">=</span> gray.copy().astype(<span class="pl-s"><span class="pl-pds">"</span>float<span class="pl-pds">"</span></span>)</td>
+      </tr>
+      <tr>
+        <td id="file-security3-py-L20" class="blob-num js-line-number" data-line-number="20"></td>
+        <td id="file-security3-py-LC20" class="blob-code blob-code-inner js-file-line">		rawCapture.truncate(<span class="pl-c1">0</span>)</td>
+      </tr>
+      <tr>
+        <td id="file-security3-py-L21" class="blob-num js-line-number" data-line-number="21"></td>
+        <td id="file-security3-py-LC21" class="blob-code blob-code-inner js-file-line">		<span class="pl-k">continue</span></td>
+      </tr>
+      <tr>
+        <td id="file-security3-py-L22" class="blob-num js-line-number" data-line-number="22"></td>
+        <td id="file-security3-py-LC22" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="file-security3-py-L23" class="blob-num js-line-number" data-line-number="23"></td>
+        <td id="file-security3-py-LC23" class="blob-code blob-code-inner js-file-line">	<span class="pl-c"><span class="pl-c">#</span> accumulate the weighted average between the current frame and</span></td>
+      </tr>
+      <tr>
+        <td id="file-security3-py-L24" class="blob-num js-line-number" data-line-number="24"></td>
+        <td id="file-security3-py-LC24" class="blob-code blob-code-inner js-file-line">	<span class="pl-c"><span class="pl-c">#</span> previous frames, then compute the difference between the current</span></td>
+      </tr>
+      <tr>
+        <td id="file-security3-py-L25" class="blob-num js-line-number" data-line-number="25"></td>
+        <td id="file-security3-py-LC25" class="blob-code blob-code-inner js-file-line">	<span class="pl-c"><span class="pl-c">#</span> frame and running average</span></td>
+      </tr>
+      <tr>
+        <td id="file-security3-py-L26" class="blob-num js-line-number" data-line-number="26"></td>
+        <td id="file-security3-py-LC26" class="blob-code blob-code-inner js-file-line">	frameDelta <span class="pl-k">=</span> cv2.absdiff(gray, cv2.convertScaleAbs(avg))</td>
+      </tr>
+      <tr>
+        <td id="file-security3-py-L27" class="blob-num js-line-number" data-line-number="27"></td>
+        <td id="file-security3-py-LC27" class="blob-code blob-code-inner js-file-line">	cv2.accumulateWeighted(gray, avg, <span class="pl-c1">0.5</span>)</td>
+      </tr>
+</tbody></table>
+
+
+  </div>
+
+  </div>
+</div>
+
+      </div>
+      <div class="gist-meta">
+        <a href="https://gist.github.com/erogol/d742eae0ad68366f5f9d56eaf1de3e1b/raw/fa5c8a0e7dc01914f78f1769b73230a312b63c5d/security3.py" style="float:right">view raw</a>
+        <a href="https://gist.github.com/erogol/d742eae0ad68366f5f9d56eaf1de3e1b#file-security3-py">security3.py</a>
+        hosted with ❤ by <a href="https://github.com/">GitHub</a>
+      </div>
+    </div>
+</div>
+<script>var height = -1; var delayMs = 200;function notifyResize(height) {height = height ? height : document.documentElement.offsetHeight; var resized = false; if (window.donkey && donkey.resize) {donkey.resize(height); resized = true;}if (parent && parent._resizeIframe) {var obj = {iframe: window.frameElement, height: height}; parent._resizeIframe(obj); resized = true;}if (window.location && window.location.hash === "#amp=1" && window.parent && window.parent.postMessage) {window.parent.postMessage({sentinel: "amp", type: "embed-size", height: height}, "*");}if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.resize) {window.webkit.messageHandlers.resize.postMessage(height); resized = true;}return resized;}function maybeResize() {if (document.documentElement.offsetHeight != height && notifyResize()) {height = document.documentElement.offsetHeight;}delayMs = Math.min(delayMs * 2, 1000000); setTimeout(maybeResize, delayMs);}maybeResize();</script><div id="weava-permanent-marker" date="1535061721704"></div><div id="weava-ui-wrapper"><div class="weava-drop-area-wrapper"><div class="weava-drop-area"></div>
+<div class="weava-drop-area-text">Drop here!</div></div></div></body></html>

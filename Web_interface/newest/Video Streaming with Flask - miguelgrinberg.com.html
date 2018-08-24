@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<!-- saved from url=(0063)https://blog.miguelgrinberg.com/post/video-streaming-with-flask -->
+<html class="gr__blog_miguelgrinberg_com"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <title>
+    
+        Video Streaming with Flask - miguelgrinberg.com
+    
+</title>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+	<meta name="description" content="miguelgrinberg.com">
+	<meta name="copyright" content="Copyright (c) 2012-2015 Miguel Grinberg">
+	<meta name="author" content="Miguel Grinberg">
+    
+    <meta name="keywords" content="python, programming, flask, streaming, webcam, video, raspberry pi">
+    
+
+    
+    <!-- Bootstrap -->
+    <link href="./Video Streaming with Flask - miguelgrinberg.com_files/bootstrap.min.css" rel="stylesheet">
+    <link href="./Video Streaming with Flask - miguelgrinberg.com_files/prettify.css" type="text/css" rel="stylesheet">
+    <link href="./Video Streaming with Flask - miguelgrinberg.com_files/colorbox.css" rel="stylesheet" type="text/css">
+    <link href="./Video Streaming with Flask - miguelgrinberg.com_files/style.css" rel="stylesheet" type="text/css">
+
+    <link rel="shortcut icon" href="https://blog.miguelgrinberg.com/static/favicon.ico">
+	<link rel="alternate" type="application/rss+xml" href="https://blog.miguelgrinberg.com/feed" title="miguelgrinberg.com RSS feed">
+
+  <script src="./Video Streaming with Flask - miguelgrinberg.com_files/secureAnonymousFramework"></script><script type="text/javascript" charset="utf-8" async="" src="./Video Streaming with Flask - miguelgrinberg.com_files/button.460b6e50c797f0f03177332228ca7d20.js.download"></script><style type="text/css">* html #li_ui_li_gen_1535061138967_0 a#li_ui_li_gen_1535061138967_0-link{height:1% !important;}#li_ui_li_gen_1535061138967_0{position:relative !important;overflow:visible !important;display:block !important;}#li_ui_li_gen_1535061138967_0 span{-webkit-box-sizing:content-box !important;-moz-box-sizing:content-box !important;box-sizing:content-box !important;}#li_ui_li_gen_1535061138967_0 a#li_ui_li_gen_1535061138967_0-link{border:0 !important;height:20px !important;text-decoration:none !important;padding:0 !important;margin:0 !important;display:inline-block !important;}#li_ui_li_gen_1535061138967_0 a#li_ui_li_gen_1535061138967_0-link:link, #li_ui_li_gen_1535061138967_0 a#li_ui_li_gen_1535061138967_0-link:visited, #li_ui_li_gen_1535061138967_0 a#li_ui_li_gen_1535061138967_0-link:hover, #li_ui_li_gen_1535061138967_0 a#li_ui_li_gen_1535061138967_0-link:active{border:0 !important;text-decoration:none !important;}#li_ui_li_gen_1535061138967_0 a#li_ui_li_gen_1535061138967_0-link:after{content:"." !important;display:block !important;clear:both !important;visibility:hidden !important;line-height:0 !important;height:0 !important;}#li_ui_li_gen_1535061138967_0 #li_ui_li_gen_1535061138967_0-logo{background-image:url(https://static.licdn.com/scds/common/u/images/apps/connect/sprites/sprite_connect_v14.png) !important;background-position:0px -593px !important;background-repeat:no-repeat !important;background-color:#0077b5 !important;background-size:initial !important;cursor:pointer !important;border:0 !important;border-right:1px solid #066094 !important;text-indent:-9999em !important;overflow:hidden !important;padding:0 !important;margin:0 !important;position:absolute !important;left:0px !important;top:0px !important;display:block !important;width:20px !important;height:20px !important;float:right !important;border-radius:2px !important;-webkit-border-radius:2px !important;border-top-right-radius:2px !important;border-bottom-right-radius:2px !important;-webkit-border-top-right-radius:2px !important;-webkit-border-bottom-right-radius:2px !important;}#li_ui_li_gen_1535061138967_0 #li_ui_li_gen_1535061138967_0-title{color:#fff !important;cursor:pointer !important;display:block !important;white-space:nowrap !important;float:left !important;margin-left:1px !important;vertical-align:top !important;overflow:hidden !important;text-align:center !important;height:18px !important;padding:0 4px 0 23px !important;border:1px solid #000 !important;border-top-color:#0077b5 !important;border-right-color:#0077b5 !important;border-bottom-color:#0077b5 !important;border-left-color:#0077b5 !important;text-shadow:0 -1px #005887 !important;line-height:20px !important;border-radius:2px !important;-webkit-border-radius:2px !important;border-top-right-radius:2px !important;border-bottom-right-radius:2px !important;-webkit-border-top-right-radius:2px !important;-webkit-border-bottom-right-radius:2px !important;background-color:#0077b5 !important;background-image:-webkit-gradient(linear, left top, left bottom, color-stop(0%,#0077b5), color-stop(100%,#0077b5)) !important; background-image: -webkit-linear-gradient(top, #0077b5 0%, #0077b5 100%) !important;}#li_ui_li_gen_1535061138967_0.hovered #li_ui_li_gen_1535061138967_0-title{border:1px solid #000 !important;border-top-color:#0369a0 !important;border-right-color:#0369a0 !important;border-bottom-color:#0369a0 !important;border-left-color:#0369a0 !important;background-color:#0369a0 !important;background-image:-webkit-gradient(linear, left top, left bottom, color-stop(0%,#0369a0), color-stop(100%,#0369a0)) !important; background-image: -webkit-linear-gradient(top, #0369a0 0%, #0369a0 100%) !important;}#li_ui_li_gen_1535061138967_0.clicked #li_ui_li_gen_1535061138967_0-title, #li_ui_li_gen_1535061138967_0.down #li_ui_li_gen_1535061138967_0-title{color:#fff !important;border:1px solid #000 !important;border-top-color:#066094 !important;border-right-color:#066094 !important;border-bottom-color:#066094 !important;border-left-color:#066094 !important;background-color:#066094 !important;background-image:-webkit-gradient(linear, left top, left bottom, color-stop(0%,#066094), color-stop(100%,#066094)) !important; background-image: -webkit-linear-gradient(top, #066094 0%, #066094 100%) !important;}.IN-shadowed #li_ui_li_gen_1535061138967_0 #li_ui_li_gen_1535061138967_0-title{}.IN-shadowed #li_ui_li_gen_1535061138967_0.hovered #li_ui_li_gen_1535061138967_0-title{}.IN-shadowed #li_ui_li_gen_1535061138967_0.clicked #li_ui_li_gen_1535061138967_0-title, .IN-shadowed #li_ui_li_gen_1535061138967_0.down #li_ui_li_gen_1535061138967_0-title{}#li_ui_li_gen_1535061138967_0 #li_ui_li_gen_1535061138967_0-title-text, #li_ui_li_gen_1535061138967_0 #li_ui_li_gen_1535061138967_0-title-text *{color:#fff !important;font-size:11px !important;font-family:Arial, sans-serif !important;font-weight:bold !important;font-style:normal !important;-webkit-font-smoothing:antialiased !important;display:inline-block !important;background:transparent none !important;vertical-align:top !important;height:18px !important;line-height:20px !important;float:none !important;}#li_ui_li_gen_1535061138967_0 #li_ui_li_gen_1535061138967_0-title-text strong{font-weight:bold !important;}#li_ui_li_gen_1535061138967_0 #li_ui_li_gen_1535061138967_0-title-text em{font-style:italic !important;}#li_ui_li_gen_1535061138967_0.hovered #li_ui_li_gen_1535061138967_0-title-text, #li_ui_li_gen_1535061138967_0.hovered #li_ui_li_gen_1535061138967_0-title-text *{color:#fff !important;}#li_ui_li_gen_1535061138967_0.clicked #li_ui_li_gen_1535061138967_0-title-text, #li_ui_li_gen_1535061138967_0.down #li_ui_li_gen_1535061138967_0-title-text, #li_ui_li_gen_1535061138967_0.clicked #li_ui_li_gen_1535061138967_0-title-text *, #li_ui_li_gen_1535061138967_0.down #li_ui_li_gen_1535061138967_0-title-text *{color:#fff !important;}#li_ui_li_gen_1535061138967_0 #li_ui_li_gen_1535061138967_0-title #li_ui_li_gen_1535061138967_0-mark{display:inline-block !important;width:0px !important;overflow:hidden !important;}.success #li_ui_li_gen_1535061138967_0 #li_ui_li_gen_1535061138967_0-title{color:#fff !important;border-top-color:#0077b5 !important;border-right-color:#0077b5 !important;border-bottom-color:#0077b5 !important;border-left-color:#0077b5 !important;background-color:#0077b5 !important;background-image:-webkit-gradient(linear, left top, left bottom, color-stop(0%,#0077b5), color-stop(100%,#0077b5)) !important; background-image: -webkit-linear-gradient(top, #0077b5 0%, #0077b5 100%) !important;}.success #li_ui_li_gen_1535061138967_0 #li_ui_li_gen_1535061138967_0-title-text, .success #li_ui_li_gen_1535061138967_0 #li_ui_li_gen_1535061138967_0-title-text *{color:#fff !important;}.IN-shadowed .success #li_ui_li_gen_1535061138967_0 #li_ui_li_gen_1535061138967_0-title{}.success #li_ui_li_gen_1535061138967_0.hovered #li_ui_li_gen_1535061138967_0-title{color:#fff !important;border-top-color:#0369a0 !important;border-right-color:#0369a0 !important;border-bottom-color:#0369a0 !important;border-left-color:#0369a0 !important;background-color:#0369a0 !important;background-image:-webkit-gradient(linear, left top, left bottom, color-stop(0%,#0369a0), color-stop(100%,#0369a0)) !important; background-image: -webkit-linear-gradient(top, #0369a0 0%, #0369a0 100%) !important;}.success #li_ui_li_gen_1535061138967_0.hovered #li_ui_li_gen_1535061138967_0-title-text, .success #li_ui_li_gen_1535061138967_0.hovered #li_ui_li_gen_1535061138967_0-title-text *{color:#fff !important;}.success #li_ui_li_gen_1535061138967_0.clicked #li_ui_li_gen_1535061138967_0-title, .success #li_ui_li_gen_1535061138967_0.down #li_ui_li_gen_1535061138967_0-title{color:#fff !important;border-top-color:#066094 !important;border-right-color:#066094 !important;border-bottom-color:#066094 !important;border-left-color:#066094 !important;background-color:#066094 !important;background-image:-webkit-gradient(linear, left top, left bottom, color-stop(0%,#066094), color-stop(100%,#066094)) !important; background-image: -webkit-linear-gradient(top, #066094 0%, #066094 100%) !important;}.success #li_ui_li_gen_1535061138967_0.clicked #li_ui_li_gen_1535061138967_0-title-text, .success #li_ui_li_gen_1535061138967_0.down #li_ui_li_gen_1535061138967_0-title-text, .success #li_ui_li_gen_1535061138967_0.clicked #li_ui_li_gen_1535061138967_0-title-text *, .success #li_ui_li_gen_1535061138967_0.down #li_ui_li_gen_1535061138967_0-title-text *{color:#fff !important;}.IN-shadowed .success #li_ui_li_gen_1535061138967_0.clicked #li_ui_li_gen_1535061138967_0-title, .IN-shadowed .success #li_ui_li_gen_1535061138967_0.down #li_ui_li_gen_1535061138967_0-title{}* html #li_ui_li_gen_1535061138973_1 a#li_ui_li_gen_1535061138973_1-link{height:1% !important;}#li_ui_li_gen_1535061138973_1{position:relative !important;overflow:visible !important;display:block !important;}#li_ui_li_gen_1535061138973_1 span{-webkit-box-sizing:content-box !important;-moz-box-sizing:content-box !important;box-sizing:content-box !important;}#li_ui_li_gen_1535061138973_1 a#li_ui_li_gen_1535061138973_1-link{border:0 !important;height:20px !important;text-decoration:none !important;padding:0 !important;margin:0 !important;display:inline-block !important;}#li_ui_li_gen_1535061138973_1 a#li_ui_li_gen_1535061138973_1-link:link, #li_ui_li_gen_1535061138973_1 a#li_ui_li_gen_1535061138973_1-link:visited, #li_ui_li_gen_1535061138973_1 a#li_ui_li_gen_1535061138973_1-link:hover, #li_ui_li_gen_1535061138973_1 a#li_ui_li_gen_1535061138973_1-link:active{border:0 !important;text-decoration:none !important;}#li_ui_li_gen_1535061138973_1 a#li_ui_li_gen_1535061138973_1-link:after{content:"." !important;display:block !important;clear:both !important;visibility:hidden !important;line-height:0 !important;height:0 !important;}#li_ui_li_gen_1535061138973_1 #li_ui_li_gen_1535061138973_1-logo{background-image:url(https://static.licdn.com/scds/common/u/images/apps/connect/sprites/sprite_connect_v14.png) !important;background-position:0px -593px !important;background-repeat:no-repeat !important;background-color:#0077b5 !important;background-size:initial !important;cursor:pointer !important;border:0 !important;border-right:1px solid #066094 !important;text-indent:-9999em !important;overflow:hidden !important;padding:0 !important;margin:0 !important;position:absolute !important;left:0px !important;top:0px !important;display:block !important;width:20px !important;height:20px !important;float:right !important;border-radius:2px !important;-webkit-border-radius:2px !important;border-top-right-radius:2px !important;border-bottom-right-radius:2px !important;-webkit-border-top-right-radius:2px !important;-webkit-border-bottom-right-radius:2px !important;}#li_ui_li_gen_1535061138973_1 #li_ui_li_gen_1535061138973_1-title{color:#fff !important;cursor:pointer !important;display:block !important;white-space:nowrap !important;float:left !important;margin-left:1px !important;vertical-align:top !important;overflow:hidden !important;text-align:center !important;height:18px !important;padding:0 4px 0 23px !important;border:1px solid #000 !important;border-top-color:#0077b5 !important;border-right-color:#0077b5 !important;border-bottom-color:#0077b5 !important;border-left-color:#0077b5 !important;text-shadow:0 -1px #005887 !important;line-height:20px !important;border-radius:2px !important;-webkit-border-radius:2px !important;border-top-right-radius:2px !important;border-bottom-right-radius:2px !important;-webkit-border-top-right-radius:2px !important;-webkit-border-bottom-right-radius:2px !important;background-color:#0077b5 !important;background-image:-webkit-gradient(linear, left top, left bottom, color-stop(0%,#0077b5), color-stop(100%,#0077b5)) !important; background-image: -webkit-linear-gradient(top, #0077b5 0%, #0077b5 100%) !important;}#li_ui_li_gen_1535061138973_1.hovered #li_ui_li_gen_1535061138973_1-title{border:1px solid #000 !important;border-top-color:#0369a0 !important;border-right-color:#0369a0 !important;border-bottom-color:#0369a0 !important;border-left-color:#0369a0 !important;background-color:#0369a0 !important;background-image:-webkit-gradient(linear, left top, left bottom, color-stop(0%,#0369a0), color-stop(100%,#0369a0)) !important; background-image: -webkit-linear-gradient(top, #0369a0 0%, #0369a0 100%) !important;}#li_ui_li_gen_1535061138973_1.clicked #li_ui_li_gen_1535061138973_1-title, #li_ui_li_gen_1535061138973_1.down #li_ui_li_gen_1535061138973_1-title{color:#fff !important;border:1px solid #000 !important;border-top-color:#066094 !important;border-right-color:#066094 !important;border-bottom-color:#066094 !important;border-left-color:#066094 !important;background-color:#066094 !important;background-image:-webkit-gradient(linear, left top, left bottom, color-stop(0%,#066094), color-stop(100%,#066094)) !important; background-image: -webkit-linear-gradient(top, #066094 0%, #066094 100%) !important;}.IN-shadowed #li_ui_li_gen_1535061138973_1 #li_ui_li_gen_1535061138973_1-title{}.IN-shadowed #li_ui_li_gen_1535061138973_1.hovered #li_ui_li_gen_1535061138973_1-title{}.IN-shadowed #li_ui_li_gen_1535061138973_1.clicked #li_ui_li_gen_1535061138973_1-title, .IN-shadowed #li_ui_li_gen_1535061138973_1.down #li_ui_li_gen_1535061138973_1-title{}#li_ui_li_gen_1535061138973_1 #li_ui_li_gen_1535061138973_1-title-text, #li_ui_li_gen_1535061138973_1 #li_ui_li_gen_1535061138973_1-title-text *{color:#fff !important;font-size:11px !important;font-family:Arial, sans-serif !important;font-weight:bold !important;font-style:normal !important;-webkit-font-smoothing:antialiased !important;display:inline-block !important;background:transparent none !important;vertical-align:top !important;height:18px !important;line-height:20px !important;float:none !important;}#li_ui_li_gen_1535061138973_1 #li_ui_li_gen_1535061138973_1-title-text strong{font-weight:bold !important;}#li_ui_li_gen_1535061138973_1 #li_ui_li_gen_1535061138973_1-title-text em{font-style:italic !important;}#li_ui_li_gen_1535061138973_1.hovered #li_ui_li_gen_1535061138973_1-title-text, #li_ui_li_gen_1535061138973_1.hovered #li_ui_li_gen_1535061138973_1-title-text *{color:#fff !important;}#li_ui_li_gen_1535061138973_1.clicked #li_ui_li_gen_1535061138973_1-title-text, #li_ui_li_gen_1535061138973_1.down #li_ui_li_gen_1535061138973_1-title-text, #li_ui_li_gen_1535061138973_1.clicked #li_ui_li_gen_1535061138973_1-title-text *, #li_ui_li_gen_1535061138973_1.down #li_ui_li_gen_1535061138973_1-title-text *{color:#fff !important;}#li_ui_li_gen_1535061138973_1 #li_ui_li_gen_1535061138973_1-title #li_ui_li_gen_1535061138973_1-mark{display:inline-block !important;width:0px !important;overflow:hidden !important;}.success #li_ui_li_gen_1535061138973_1 #li_ui_li_gen_1535061138973_1-title{color:#fff !important;border-top-color:#0077b5 !important;border-right-color:#0077b5 !important;border-bottom-color:#0077b5 !important;border-left-color:#0077b5 !important;background-color:#0077b5 !important;background-image:-webkit-gradient(linear, left top, left bottom, color-stop(0%,#0077b5), color-stop(100%,#0077b5)) !important; background-image: -webkit-linear-gradient(top, #0077b5 0%, #0077b5 100%) !important;}.success #li_ui_li_gen_1535061138973_1 #li_ui_li_gen_1535061138973_1-title-text, .success #li_ui_li_gen_1535061138973_1 #li_ui_li_gen_1535061138973_1-title-text *{color:#fff !important;}.IN-shadowed .success #li_ui_li_gen_1535061138973_1 #li_ui_li_gen_1535061138973_1-title{}.success #li_ui_li_gen_1535061138973_1.hovered #li_ui_li_gen_1535061138973_1-title{color:#fff !important;border-top-color:#0369a0 !important;border-right-color:#0369a0 !important;border-bottom-color:#0369a0 !important;border-left-color:#0369a0 !important;background-color:#0369a0 !important;background-image:-webkit-gradient(linear, left top, left bottom, color-stop(0%,#0369a0), color-stop(100%,#0369a0)) !important; background-image: -webkit-linear-gradient(top, #0369a0 0%, #0369a0 100%) !important;}.success #li_ui_li_gen_1535061138973_1.hovered #li_ui_li_gen_1535061138973_1-title-text, .success #li_ui_li_gen_1535061138973_1.hovered #li_ui_li_gen_1535061138973_1-title-text *{color:#fff !important;}.success #li_ui_li_gen_1535061138973_1.clicked #li_ui_li_gen_1535061138973_1-title, .success #li_ui_li_gen_1535061138973_1.down #li_ui_li_gen_1535061138973_1-title{color:#fff !important;border-top-color:#066094 !important;border-right-color:#066094 !important;border-bottom-color:#066094 !important;border-left-color:#066094 !important;background-color:#066094 !important;background-image:-webkit-gradient(linear, left top, left bottom, color-stop(0%,#066094), color-stop(100%,#066094)) !important; background-image: -webkit-linear-gradient(top, #066094 0%, #066094 100%) !important;}.success #li_ui_li_gen_1535061138973_1.clicked #li_ui_li_gen_1535061138973_1-title-text, .success #li_ui_li_gen_1535061138973_1.down #li_ui_li_gen_1535061138973_1-title-text, .success #li_ui_li_gen_1535061138973_1.clicked #li_ui_li_gen_1535061138973_1-title-text *, .success #li_ui_li_gen_1535061138973_1.down #li_ui_li_gen_1535061138973_1-title-text *{color:#fff !important;}.IN-shadowed .success #li_ui_li_gen_1535061138973_1.clicked #li_ui_li_gen_1535061138973_1-title, .IN-shadowed .success #li_ui_li_gen_1535061138973_1.down #li_ui_li_gen_1535061138973_1-title{}</style><style type="text/css">.fb_hidden{position:absolute;top:-10000px;z-index:10001}.fb_reposition{overflow:hidden;position:relative}.fb_invisible{display:none}.fb_reset{background:none;border:0;border-spacing:0;color:#000;cursor:auto;direction:ltr;font-family:"lucida grande", tahoma, verdana, arial, sans-serif;font-size:11px;font-style:normal;font-variant:normal;font-weight:normal;letter-spacing:normal;line-height:1;margin:0;overflow:visible;padding:0;text-align:left;text-decoration:none;text-indent:0;text-shadow:none;text-transform:none;visibility:visible;white-space:normal;word-spacing:normal}.fb_reset>div{overflow:hidden}.fb_link img{border:none}@keyframes fb_transform{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}.fb_animate{animation:fb_transform .3s forwards}
+.fb_dialog{background:rgba(82, 82, 82, .7);position:absolute;top:-10000px;z-index:10001}.fb_reset .fb_dialog_legacy{overflow:visible}.fb_dialog_advanced{padding:10px;border-radius:8px}.fb_dialog_content{background:#fff;color:#333}.fb_dialog_close_icon{background:url(https://static.xx.fbcdn.net/rsrc.php/v3/yq/r/IE9JII6Z1Ys.png) no-repeat scroll 0 0 transparent;cursor:pointer;display:block;height:15px;position:absolute;right:18px;top:17px;width:15px}.fb_dialog_mobile .fb_dialog_close_icon{top:5px;left:5px;right:auto}.fb_dialog_padding{background-color:transparent;position:absolute;width:1px;z-index:-1}.fb_dialog_close_icon:hover{background:url(https://static.xx.fbcdn.net/rsrc.php/v3/yq/r/IE9JII6Z1Ys.png) no-repeat scroll 0 -15px transparent}.fb_dialog_close_icon:active{background:url(https://static.xx.fbcdn.net/rsrc.php/v3/yq/r/IE9JII6Z1Ys.png) no-repeat scroll 0 -30px transparent}.fb_dialog_loader{background-color:#f5f6f7;border:1px solid #606060;font-size:24px;padding:20px}.fb_dialog_top_left,.fb_dialog_top_right,.fb_dialog_bottom_left,.fb_dialog_bottom_right{height:10px;width:10px;overflow:hidden;position:absolute}.fb_dialog_top_left{background:url(https://static.xx.fbcdn.net/rsrc.php/v3/ye/r/8YeTNIlTZjm.png) no-repeat 0 0;left:-10px;top:-10px}.fb_dialog_top_right{background:url(https://static.xx.fbcdn.net/rsrc.php/v3/ye/r/8YeTNIlTZjm.png) no-repeat 0 -10px;right:-10px;top:-10px}.fb_dialog_bottom_left{background:url(https://static.xx.fbcdn.net/rsrc.php/v3/ye/r/8YeTNIlTZjm.png) no-repeat 0 -20px;bottom:-10px;left:-10px}.fb_dialog_bottom_right{background:url(https://static.xx.fbcdn.net/rsrc.php/v3/ye/r/8YeTNIlTZjm.png) no-repeat 0 -30px;right:-10px;bottom:-10px}.fb_dialog_vert_left,.fb_dialog_vert_right,.fb_dialog_horiz_top,.fb_dialog_horiz_bottom{position:absolute;background:#525252;filter:alpha(opacity=70);opacity:.7}.fb_dialog_vert_left,.fb_dialog_vert_right{width:10px;height:100%}.fb_dialog_vert_left{margin-left:-10px}.fb_dialog_vert_right{right:0;margin-right:-10px}.fb_dialog_horiz_top,.fb_dialog_horiz_bottom{width:100%;height:10px}.fb_dialog_horiz_top{margin-top:-10px}.fb_dialog_horiz_bottom{bottom:0;margin-bottom:-10px}.fb_dialog_iframe{line-height:0}.fb_dialog_content .dialog_title{background:#6d84b4;border:1px solid #365899;color:#fff;font-size:14px;font-weight:bold;margin:0}.fb_dialog_content .dialog_title>span{background:url(https://static.xx.fbcdn.net/rsrc.php/v3/yd/r/Cou7n-nqK52.gif) no-repeat 5px 50%;float:left;padding:5px 0 7px 26px}body.fb_hidden{-webkit-transform:none;height:100%;margin:0;overflow:visible;position:absolute;top:-10000px;left:0;width:100%}.fb_dialog.fb_dialog_mobile.loading{background:url(https://static.xx.fbcdn.net/rsrc.php/v3/ya/r/3rhSv5V8j3o.gif) white no-repeat 50% 50%;min-height:100%;min-width:100%;overflow:hidden;position:absolute;top:0;z-index:10001}.fb_dialog.fb_dialog_mobile.loading.centered{width:auto;height:auto;min-height:initial;min-width:initial;background:none}.fb_dialog.fb_dialog_mobile.loading.centered #fb_dialog_loader_spinner{width:100%}.fb_dialog.fb_dialog_mobile.loading.centered .fb_dialog_content{background:none}.loading.centered #fb_dialog_loader_close{color:#fff;display:block;padding-top:20px;clear:both;font-size:18px}#fb-root #fb_dialog_ipad_overlay{background:rgba(0, 0, 0, .45);position:absolute;bottom:0;left:0;right:0;top:0;width:100%;min-height:100%;z-index:10000}#fb-root #fb_dialog_ipad_overlay.hidden{display:none}.fb_dialog.fb_dialog_mobile.loading iframe{visibility:hidden}.fb_dialog_mobile .fb_dialog_iframe{position:-webkit-sticky;top:0}.fb_dialog_content .dialog_header{-webkit-box-shadow:white 0 1px 1px -1px inset;background:-webkit-gradient(linear, 0% 0%, 0% 100%, from(#738ABA), to(#2C4987));border-bottom:1px solid;border-color:#1d4088;color:#fff;font:14px Helvetica, sans-serif;font-weight:bold;text-overflow:ellipsis;text-shadow:rgba(0, 30, 84, .296875) 0 -1px 0;vertical-align:middle;white-space:nowrap}.fb_dialog_content .dialog_header table{-webkit-font-smoothing:subpixel-antialiased;height:43px;width:100%}.fb_dialog_content .dialog_header td.header_left{font-size:12px;padding-left:5px;vertical-align:middle;width:60px}.fb_dialog_content .dialog_header td.header_right{font-size:12px;padding-right:5px;vertical-align:middle;width:60px}.fb_dialog_content .touchable_button{background:-webkit-gradient(linear, 0% 0%, 0% 100%, from(#4966A6), color-stop(.5, #355492), to(#2A4887));border:1px solid #29487d;-webkit-background-clip:padding-box;-webkit-border-radius:3px;-webkit-box-shadow:rgba(0, 0, 0, .117188) 0 1px 1px inset, rgba(255, 255, 255, .167969) 0 1px 0;display:inline-block;margin-top:3px;max-width:85px;line-height:18px;padding:4px 12px;position:relative}.fb_dialog_content .dialog_header .touchable_button input{border:none;background:none;color:#fff;font:12px Helvetica, sans-serif;font-weight:bold;margin:2px -12px;padding:2px 6px 3px 6px;text-shadow:rgba(0, 30, 84, .296875) 0 -1px 0}.fb_dialog_content .dialog_header .header_center{color:#fff;font-size:16px;font-weight:bold;line-height:18px;text-align:center;vertical-align:middle}.fb_dialog_content .dialog_content{background:url(https://static.xx.fbcdn.net/rsrc.php/v3/y9/r/jKEcVPZFk-2.gif) no-repeat 50% 50%;border:1px solid #555;border-bottom:0;border-top:0;height:150px}.fb_dialog_content .dialog_footer{background:#f5f6f7;border:1px solid #555;border-top-color:#ccc;height:40px}#fb_dialog_loader_close{float:left}.fb_dialog.fb_dialog_mobile .fb_dialog_close_button{text-shadow:rgba(0, 30, 84, .296875) 0 -1px 0}.fb_dialog.fb_dialog_mobile .fb_dialog_close_icon{visibility:hidden}#fb_dialog_loader_spinner{animation:rotateSpinner 1.2s linear infinite;background-color:transparent;background-image:url(https://static.xx.fbcdn.net/rsrc.php/v3/yD/r/t-wz8gw1xG1.png);background-repeat:no-repeat;background-position:50% 50%;height:24px;width:24px}@keyframes rotateSpinner{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+.fb_iframe_widget{display:inline-block;position:relative}.fb_iframe_widget span{display:inline-block;position:relative;text-align:justify}.fb_iframe_widget iframe{position:absolute}.fb_iframe_widget_fluid_desktop,.fb_iframe_widget_fluid_desktop span,.fb_iframe_widget_fluid_desktop iframe{max-width:100%}.fb_iframe_widget_fluid_desktop iframe{min-width:220px;position:relative}.fb_iframe_widget_lift{z-index:1}.fb_hide_iframes iframe{position:relative;left:-10000px}.fb_iframe_widget_loader{position:relative;display:inline-block}.fb_iframe_widget_fluid{display:inline}.fb_iframe_widget_fluid span{width:100%}.fb_iframe_widget_loader iframe{min-height:32px;z-index:2;zoom:1}.fb_iframe_widget_loader .FB_Loader{background:url(https://static.xx.fbcdn.net/rsrc.php/v3/y9/r/jKEcVPZFk-2.gif) no-repeat;height:32px;width:32px;margin-left:-16px;position:absolute;left:50%;z-index:4}
+.fb_customer_chat_bounce_in_v2{animation-duration:300ms;animation-name:fb_bounce_in_v2;transition-timing-function:ease-in}.fb_customer_chat_bounce_out_v2{animation-duration:300ms;animation-name:fb_bounce_out_v2;transition-timing-function:ease-in}.fb_customer_chat_bounce_in_v2_mobile_chat_started{animation-duration:300ms;animation-name:fb_bounce_in_v2_mobile_chat_started;transition-timing-function:ease-in}.fb_customer_chat_bounce_out_v2_mobile_chat_started{animation-duration:300ms;animation-name:fb_bounce_out_v2_mobile_chat_started;transition-timing-function:ease-in}.fb_customer_chat_bubble_pop_in{animation-duration:250ms;animation-name:fb_customer_chat_bubble_bounce_in_animation}.fb_customer_chat_bubble_animated_no_badge{box-shadow:0 3px 12px rgba(0, 0, 0, .15);transition:box-shadow 150ms linear}.fb_customer_chat_bubble_animated_no_badge:hover{box-shadow:0 5px 24px rgba(0, 0, 0, .3)}.fb_customer_chat_bubble_animated_with_badge{box-shadow:-5px 4px 14px rgba(0, 0, 0, .15);transition:box-shadow 150ms linear}.fb_customer_chat_bubble_animated_with_badge:hover{box-shadow:-5px 8px 24px rgba(0, 0, 0, .2)}.fb_invisible_flow{display:inherit;height:0;overflow-x:hidden;width:0}.fb_mobile_overlay_active{background-color:#fff;height:100%;overflow:hidden;position:fixed;visibility:hidden;width:100%}@keyframes fb_bounce_in_v2{0%{opacity:0;transform:scale(0, 0);transform-origin:bottom right}50%{transform:scale(1.03, 1.03);transform-origin:bottom right}100%{opacity:1;transform:scale(1, 1);transform-origin:bottom right}}@keyframes fb_bounce_in_v2_mobile_chat_started{0%{opacity:0;top:20px}100%{opacity:1;top:0}}@keyframes fb_bounce_out_v2{0%{opacity:1;transform:scale(1, 1);transform-origin:bottom right}100%{opacity:0;transform:scale(0, 0);transform-origin:bottom right}}@keyframes fb_bounce_out_v2_mobile_chat_started{0%{opacity:1;top:0}100%{opacity:0;top:20px}}@keyframes fb_customer_chat_bubble_bounce_in_animation{0%{bottom:6pt;opacity:0;transform:scale(0, 0);transform-origin:center}70%{bottom:18pt;opacity:1;transform:scale(1.2, 1.2)}100%{transform:scale(1, 1)}}</style></head>
+  <body data-gr-c-s-loaded="true" style="" cz-shortcut-listen="true">
+    
+    <!-- facebook sdk -->
+    <div id="fb-root" class=" fb_reset"><div style="position: absolute; top: -10000px; height: 0px; width: 0px;"><div><iframe name="fb_xdm_frame_https" frameborder="0" allowtransparency="true" allowfullscreen="true" scrolling="no" allow="encrypted-media" id="fb_xdm_frame_https" aria-hidden="true" title="Facebook Cross Domain Communication Frame" tabindex="-1" src="./Video Streaming with Flask - miguelgrinberg.com_files/QX17B8fU-Vm.html" style="border: none;"></iframe></div></div><div style="position: absolute; top: -10000px; height: 0px; width: 0px;"><div></div></div></div>
+    <script type="text/javascript" async="" src="./Video Streaming with Flask - miguelgrinberg.com_files/ga.js.download"></script><script type="text/javascript" async="" src="./Video Streaming with Flask - miguelgrinberg.com_files/recaptcha__en.js.download"></script><script src="./Video Streaming with Flask - miguelgrinberg.com_files/cb=gapi.loaded_1" async=""></script><script src="./Video Streaming with Flask - miguelgrinberg.com_files/cb=gapi(1).loaded_0" async=""></script><script id="twitter-wjs" src="./Video Streaming with Flask - miguelgrinberg.com_files/widgets.js.download"></script><script id="facebook-jssdk" src="./Video Streaming with Flask - miguelgrinberg.com_files/all.js.download"></script><script>(function(d, s, id) {
+      var js, fjs = d.getElementsByTagName(s)[0];
+      if (d.getElementById(id)) return;
+      js = d.createElement(s); js.id = id;
+      js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
+      fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));</script>
+    <!-- google plus sdk -->
+    <script src="./Video Streaming with Flask - miguelgrinberg.com_files/platform.js.download" async="" defer="" gapi_processed="true"></script>
+    <!-- twitter sdk -->
+    <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+    <!-- linkedin sdk -->
+    <script src="./Video Streaming with Flask - miguelgrinberg.com_files/in.js.download" type="text/javascript" defer=""></script>
+
+    
+    <nav class="navbar navbar-default" role="navigation">
+        <div class="container-fluid">
+            <div class="container">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="https://blog.miguelgrinberg.com/index">miguelgrinberg.com</a>
+                </div>
+                <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                    <ul class="nav navbar-nav">
+                        <li><a href="https://blog.miguelgrinberg.com/index">Home</a></li>
+                        <li><a href="https://courses.miguelgrinberg.com/">My Courses</a></li>
+                        <li><a href="https://blog.miguelgrinberg.com/post/about-me">About Me</a></li>
+                        <li><a href="https://blog.miguelgrinberg.com/post/about-this-blog">About This Blog</a></li>
+                        
+                    </ul>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li>
+                            <p class="navbar-text" style="margin-top: 10px; margin-bottom: 0px;">
+                                <a type="application/rss+xml" href="https://blog.miguelgrinberg.com/feed"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss.png" alt="RSS Feed" title="RSS Feed"></a>
+                                <a href="https://www.facebook.com/miguelgrinbergblog"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/facebook.png" alt="Facebook" title="Facebook"></a>
+                                <a href="https://plus.google.com/u/0/117786742456929977820"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/googleplus.png" alt="Google+" title="Google+"></a>
+                                <a href="http://www.linkedin.com/in/miguelgrinberg"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/linkedin.png" alt="LinkedIn" title="LinkedIn"></a>
+                                <a href="http://github.com/miguelgrinberg"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/github.png" alt="GitHub" title="GitHub"></a>
+                                <a href="https://twitter.com/miguelgrinberg"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/twitter.png" alt="Twitter" title="Twitter"></a>
+                            </p>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+    </nav>
+
+    
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8">
+                <div id="main">
+                    
+                    
+                    
+                    
+                    
+
+<div class="post">
+
+<p class="date"><span class="" data-timestamp="2014-10-20T04:02:03Z" data-format="format(&#39;LL&#39;)" data-refresh="0">October 20 2014</span></p>
+<h1 class="post-title"><a href="https://blog.miguelgrinberg.com/post/video-streaming-with-flask">Video Streaming with Flask</a></h1>
+<div class="posted">Posted by <span class="label label-danger"><a href="https://blog.miguelgrinberg.com/author/Miguel%20Grinberg">Miguel Grinberg</a></span> under <span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Python">Python</a></span>, <span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Flask">Flask</a></span>, <span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Programming">Programming</a></span>, <span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Raspberry%20Pi">Raspberry Pi</a></span>, <span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Video">Video</a></span>. </div>
+<div class="social-bar">
+    <table>
+        <tbody><tr>
+            <td><div class="social-box" style="padding-top: 8px;"><iframe id="twitter-widget-0" scrolling="no" frameborder="0" allowtransparency="true" class="twitter-share-button twitter-share-button-rendered twitter-tweet-button" style="position: static; visibility: visible; width: 60px; height: 20px;" title="Twitter Tweet Button" src="./Video Streaming with Flask - miguelgrinberg.com_files/tweet_button.5b37191c1b7fd23797a519962bf78683.en.html" data-url="http://blog.miguelgrinberg.com/post/video-streaming-with-flask"></iframe></div></td>
+            <td><div class="social-box" style="padding-left: 6px;"><div class="fb-like fb_iframe_widget" data-href="http://blog.miguelgrinberg.com/post/video-streaming-with-flask" data-send="false" data-layout="button" data-width="450" data-show-faces="false" data-font="verdana" fb-xfbml-state="rendered" fb-iframe-plugin-query="app_id=&amp;container_width=0&amp;font=verdana&amp;href=http%3A%2F%2Fblog.miguelgrinberg.com%2Fpost%2Fvideo-streaming-with-flask&amp;layout=button&amp;locale=en_US&amp;sdk=joey&amp;send=false&amp;show_faces=false&amp;width=450"><span style="vertical-align: bottom; width: 51px; height: 20px;"><iframe name="f16f0331f769db4" width="450px" height="1000px" frameborder="0" allowtransparency="true" allowfullscreen="true" scrolling="no" allow="encrypted-media" title="fb:like Facebook Social Plugin" src="./Video Streaming with Flask - miguelgrinberg.com_files/like.html" style="border: none; visibility: visible; width: 51px; height: 20px;" class=""></iframe></span></div></div></td>
+            <td><div class="social-box" style="padding-top: 8px;"><div id="___plusone_0" style="text-indent: 0px; margin: 0px; padding: 0px; background: transparent; border-style: none; float: none; line-height: normal; font-size: 1px; vertical-align: baseline; display: inline-block; width: 32px; height: 20px;"><iframe ng-non-bindable="" frameborder="0" hspace="0" marginheight="0" marginwidth="0" scrolling="no" style="position: static; top: 0px; width: 32px; margin: 0px; border-style: none; left: 0px; visibility: visible; height: 20px;" tabindex="0" vspace="0" width="100%" id="I0_1535061138137" name="I0_1535061138137" src="./Video Streaming with Flask - miguelgrinberg.com_files/fastbutton.html" data-gapiattached="true" title="G+"></iframe></div></div></td>
+            <td><div class="social-box" style="padding-top: 8px;"><span class="IN-widget" style="line-height: 1; vertical-align: baseline; display: inline-block; text-align: center;"><span style="padding: 0px !important; margin: 0px !important; text-indent: 0px !important; display: inline-block !important; vertical-align: baseline !important; font-size: 1px !important;"><span id="li_ui_li_gen_1535061138967_0"><a id="li_ui_li_gen_1535061138967_0-link" href="javascript:void(0);"><span id="li_ui_li_gen_1535061138967_0-logo">in</span><span id="li_ui_li_gen_1535061138967_0-title"><span id="li_ui_li_gen_1535061138967_0-mark"></span><span id="li_ui_li_gen_1535061138967_0-title-text">Share</span></span></a></span></span></span><script type="IN/Share+init" data-url="http://blog.miguelgrinberg.com/post/video-streaming-with-flask"></script></div></td>
+        </tr>
+    </tbody></table>
+</div>
+<div class="post_body"><p>I'm sure by now you know that I have released a <a href="http://flaskbook.com/">book and a couple of videos on Flask</a> in cooperation with O'Reilly Media. While the coverage of the Flask framework in these is fairly complete, there are a small number of features that for one reason or another did not get mentioned much, so I thought it would be a good idea to write articles about them here.</p>
+<p>This article is dedicated to <em>streaming</em>, an interesting feature that gives Flask applications the ability to provide large responses efficiently partitioned in small chunks, potentially over a long period of time. To illustrate the topic I'm going to show you how to build a live video streaming server!</p>
+<p><strong>NOTE</strong>: there is now a follow-up to this article, <a href="http://blog.miguelgrinberg.com/post/flask-video-streaming-revisited">Flask Video Streaming Revisited</a>, in which I describe some improvements to the streaming server introduced here.</p>
+<h2>What is Streaming?</h2>
+<p>Streaming is a technique in which the server provides the response to a request in chunks. I can think of a couple of reasons why this might be useful:</p>
+<ul>
+<li><strong>Very large responses</strong>. Having to assemble a response in memory only to return it to the client can be inefficient for very large responses. An alternative would be to write the response to disk and then return the file with <code>flask.send_file()</code>, but that adds I/O to the mix. Providing the response in small portions is a much better solution, assuming the data can be generated in chunks.</li>
+<li><strong>Real time data</strong>. For some applications a request may need to return data that comes from a real time source. A pretty good example of this is a real time video or audio feed. A lot of security cameras use this technique to stream video to web browsers.</li>
+</ul>
+<h2>Implementing Streaming With Flask</h2>
+<p>Flask provides native support for streaming responses through the use of <a href="http://legacy.python.org/dev/peps/pep-0255/">generator functions</a>. A generator is a special function that can be interrupted and resumed. Consider the following function:</p>
+<pre class="prettyprint"><code><span class="kwd">def</span><span class="pln"> gen</span><span class="pun">():</span><span class="pln">
+    </span><span class="kwd">yield</span><span class="pln"> </span><span class="lit">1</span><span class="pln">
+    </span><span class="kwd">yield</span><span class="pln"> </span><span class="lit">2</span><span class="pln">
+    </span><span class="kwd">yield</span><span class="pln"> </span><span class="lit">3</span></code></pre>
+<p>This is a function that runs in three steps, each returning a value. Describing how generator functions are implemented is outside the scope of this article, but if you are a bit curious the following shell session will give you an idea of how generators are used:</p>
+<pre class="prettyprint"><code><span class="pun">&gt;&gt;&gt;</span><span class="pln"> x </span><span class="pun">=</span><span class="pln"> gen</span><span class="pun">()</span><span class="pln">
+</span><span class="pun">&gt;&gt;&gt;</span><span class="pln"> x
+</span><span class="pun">&lt;</span><span class="pln">generator </span><span class="kwd">object</span><span class="pln"> gen at </span><span class="lit">0x7f06f3059c30</span><span class="pun">&gt;</span><span class="pln">
+</span><span class="pun">&gt;&gt;&gt;</span><span class="pln"> x</span><span class="pun">.</span><span class="kwd">next</span><span class="pun">()</span><span class="pln">
+</span><span class="lit">1</span><span class="pln">
+</span><span class="pun">&gt;&gt;&gt;</span><span class="pln"> x</span><span class="pun">.</span><span class="kwd">next</span><span class="pun">()</span><span class="pln">
+</span><span class="lit">2</span><span class="pln">
+</span><span class="pun">&gt;&gt;&gt;</span><span class="pln"> x</span><span class="pun">.</span><span class="kwd">next</span><span class="pun">()</span><span class="pln">
+</span><span class="lit">3</span><span class="pln">
+</span><span class="pun">&gt;&gt;&gt;</span><span class="pln"> x</span><span class="pun">.</span><span class="kwd">next</span><span class="pun">()</span><span class="pln">
+</span><span class="typ">Traceback</span><span class="pln"> </span><span class="pun">(</span><span class="pln">most recent call </span><span class="kwd">last</span><span class="pun">):</span><span class="pln">
+  </span><span class="typ">File</span><span class="pln"> </span><span class="str">"&lt;stdin&gt;"</span><span class="pun">,</span><span class="pln"> line </span><span class="lit">1</span><span class="pun">,</span><span class="pln"> </span><span class="kwd">in</span><span class="pln"> </span><span class="str">&lt;module&gt;</span><span class="pln">
+</span><span class="typ">StopIteration</span></code></pre>
+<p>You can see in this simple example that a generator function can return multiple results in sequence. Flask uses this characteristic of generator functions to implement streaming.</p>
+<p>The example below shows how using streaming it is possible to generate a large data table, without having to assemble the entire table in memory:</p>
+<pre class="prettyprint"><code><span class="kwd">from</span><span class="pln"> flask </span><span class="kwd">import</span><span class="pln"> </span><span class="typ">Response</span><span class="pun">,</span><span class="pln"> render_template
+</span><span class="kwd">from</span><span class="pln"> app</span><span class="pun">.</span><span class="pln">models </span><span class="kwd">import</span><span class="pln"> </span><span class="typ">Stock</span><span class="pln">
+
+</span><span class="kwd">def</span><span class="pln"> generate_stock_table</span><span class="pun">():</span><span class="pln">
+    </span><span class="kwd">yield</span><span class="pln"> render_template</span><span class="pun">(</span><span class="str">'stock_header.html'</span><span class="pun">)</span><span class="pln">
+    </span><span class="kwd">for</span><span class="pln"> stock </span><span class="kwd">in</span><span class="pln"> </span><span class="typ">Stock</span><span class="pun">.</span><span class="pln">query</span><span class="pun">.</span><span class="pln">all</span><span class="pun">():</span><span class="pln">
+        </span><span class="kwd">yield</span><span class="pln"> render_template</span><span class="pun">(</span><span class="str">'stock_row.html'</span><span class="pun">,</span><span class="pln"> stock</span><span class="pun">=</span><span class="pln">stock</span><span class="pun">)</span><span class="pln">
+    </span><span class="kwd">yield</span><span class="pln"> render_template</span><span class="pun">(</span><span class="str">'stock_footer.html'</span><span class="pun">)</span><span class="pln">
+
+</span><span class="lit">@app</span><span class="pun">.</span><span class="pln">route</span><span class="pun">(</span><span class="str">'/stock-table'</span><span class="pun">)</span><span class="pln">
+</span><span class="kwd">def</span><span class="pln"> stock_table</span><span class="pun">():</span><span class="pln">
+    </span><span class="kwd">return</span><span class="pln"> </span><span class="typ">Response</span><span class="pun">(</span><span class="pln">generate_stock_table</span><span class="pun">())</span></code></pre>
+<p>In this example you can see how Flask works with generator functions. A route that returns a streamed response needs to return a <code>Response</code> object that is initialized with the generator function. Flask then takes care of invoking the generator and sending all the partial results as chunks to the client.</p>
+<p>For this particular example if you assume <code>Stock.query.all()</code> returns the result of a database query as an iterable, then you can generate a potentially large table one row at a time, so regardless of the number of elements in the query the memory consumption in the Python process will not grow larger and larger due to having to assemble a large response string.</p>
+<h2>Multipart Responses</h2>
+<p>The table example above generates a traditional page in small portions, with all the parts concatenated into the final document. This is a good example of how to generate large responses, but something a little bit more exciting is to work with real time data.</p>
+<p>An interesting use of streaming is to have each chunk replace the previous one in the page, as this enables streams to "play" or animate in the browser window. With this technique you can have each chunk in the stream be an image, and that gives you a cool video feed that runs in the browser!</p>
+<p>The secret to implement in-place updates is to use a <em>multipart</em> response. Multipart responses consist of a header that includes one of the multipart content types, followed by the parts, separated by a <em>boundary</em> marker and each having its own part specific content type.</p>
+<p>There are several multipart content types for different needs. For the purpose of having a stream where each part replaces the previous part the <code>multipart/x-mixed-replace</code> content type must be used. To help you get an idea of how this looks, here is the structure of a multipart video stream:</p>
+<pre class="prettyprint"><code><span class="pln">HTTP</span><span class="pun">/</span><span class="lit">1.1</span><span class="pln"> </span><span class="lit">200</span><span class="pln"> OK
+</span><span class="typ">Content</span><span class="pun">-</span><span class="typ">Type</span><span class="pun">:</span><span class="pln"> multipart</span><span class="pun">/</span><span class="pln">x</span><span class="pun">-</span><span class="pln">mixed</span><span class="pun">-</span><span class="pln">replace</span><span class="pun">;</span><span class="pln"> boundary</span><span class="pun">=</span><span class="pln">frame
+
+</span><span class="pun">--</span><span class="pln">frame
+</span><span class="typ">Content</span><span class="pun">-</span><span class="typ">Type</span><span class="pun">:</span><span class="pln"> image</span><span class="pun">/</span><span class="pln">jpeg
+
+</span><span class="pun">&lt;</span><span class="pln">jpeg data here</span><span class="pun">&gt;</span><span class="pln">
+</span><span class="pun">--</span><span class="pln">frame
+</span><span class="typ">Content</span><span class="pun">-</span><span class="typ">Type</span><span class="pun">:</span><span class="pln"> image</span><span class="pun">/</span><span class="pln">jpeg
+
+</span><span class="pun">&lt;</span><span class="pln">jpeg data here</span><span class="pun">&gt;</span><span class="pln">
+</span><span class="pun">...</span></code></pre>
+<p>As you see above, the structure is pretty simple. The main <code>Content-Type</code> header is set to <code>multipart/x-mixed-replace</code> and a boundary string is defined. Then each part is included, prefixed by two dashes and the part boundary string in their own line. The parts have their own <code>Content-Type</code> header, and each part can optionally include a <code>Content-Length</code> header with the length in bytes of the part payload, but at least for images browsers are able to deal with the stream without the length.</p>
+<h2>Building a Live Video Streaming Server</h2>
+<p>There's been enough theory in this article, now it is time to build a complete application that streams live video to web browsers.</p>
+<p>There are many ways to stream video to browsers, and each method has its benefits and disadvantages. The method that works well with the streaming feature of Flask is to stream a sequence of independent JPEG pictures. This is called <a href="http://en.wikipedia.org/wiki/Motion_JPEG">Motion JPEG</a>, and is used by many IP security cameras. This method has low latency, but quality is not the best, since JPEG compression is not very efficient for motion video.</p>
+<p>Below you can see a surprisingly simple, yet complete web application that can serve a Motion JPEG stream:</p>
+<pre class="prettyprint"><code><span class="com">#!/usr/bin/env python</span><span class="pln">
+</span><span class="kwd">from</span><span class="pln"> flask </span><span class="kwd">import</span><span class="pln"> </span><span class="typ">Flask</span><span class="pun">,</span><span class="pln"> render_template</span><span class="pun">,</span><span class="pln"> </span><span class="typ">Response</span><span class="pln">
+</span><span class="kwd">from</span><span class="pln"> camera </span><span class="kwd">import</span><span class="pln"> </span><span class="typ">Camera</span><span class="pln">
+
+app </span><span class="pun">=</span><span class="pln"> </span><span class="typ">Flask</span><span class="pun">(</span><span class="pln">__name__</span><span class="pun">)</span><span class="pln">
+
+</span><span class="lit">@app</span><span class="pun">.</span><span class="pln">route</span><span class="pun">(</span><span class="str">'/'</span><span class="pun">)</span><span class="pln">
+</span><span class="kwd">def</span><span class="pln"> index</span><span class="pun">():</span><span class="pln">
+    </span><span class="kwd">return</span><span class="pln"> render_template</span><span class="pun">(</span><span class="str">'index.html'</span><span class="pun">)</span><span class="pln">
+
+</span><span class="kwd">def</span><span class="pln"> gen</span><span class="pun">(</span><span class="pln">camera</span><span class="pun">):</span><span class="pln">
+    </span><span class="kwd">while</span><span class="pln"> </span><span class="kwd">True</span><span class="pun">:</span><span class="pln">
+        frame </span><span class="pun">=</span><span class="pln"> camera</span><span class="pun">.</span><span class="pln">get_frame</span><span class="pun">()</span><span class="pln">
+        </span><span class="kwd">yield</span><span class="pln"> </span><span class="pun">(</span><span class="pln">b</span><span class="str">'--frame\r\n'</span><span class="pln">
+               b</span><span class="str">'Content-Type: image/jpeg\r\n\r\n'</span><span class="pln"> </span><span class="pun">+</span><span class="pln"> frame </span><span class="pun">+</span><span class="pln"> b</span><span class="str">'\r\n'</span><span class="pun">)</span><span class="pln">
+
+</span><span class="lit">@app</span><span class="pun">.</span><span class="pln">route</span><span class="pun">(</span><span class="str">'/video_feed'</span><span class="pun">)</span><span class="pln">
+</span><span class="kwd">def</span><span class="pln"> video_feed</span><span class="pun">():</span><span class="pln">
+    </span><span class="kwd">return</span><span class="pln"> </span><span class="typ">Response</span><span class="pun">(</span><span class="pln">gen</span><span class="pun">(</span><span class="typ">Camera</span><span class="pun">()),</span><span class="pln">
+                    mimetype</span><span class="pun">=</span><span class="str">'multipart/x-mixed-replace; boundary=frame'</span><span class="pun">)</span><span class="pln">
+
+</span><span class="kwd">if</span><span class="pln"> __name__ </span><span class="pun">==</span><span class="pln"> </span><span class="str">'__main__'</span><span class="pun">:</span><span class="pln">
+    app</span><span class="pun">.</span><span class="pln">run</span><span class="pun">(</span><span class="pln">host</span><span class="pun">=</span><span class="str">'0.0.0.0'</span><span class="pun">,</span><span class="pln"> debug</span><span class="pun">=</span><span class="kwd">True</span><span class="pun">)</span></code></pre>
+<p>This application imports a <code>Camera</code> class that is in charge of providing the sequence of frames. Putting the camera control portion in a separate module is a good idea in this case, this way the web application remains clean, simple and generic.</p>
+<p>The application has two routes. The <code>/</code> route serves the main page, which is defined in the <code>index.html</code> template. Below you can see the contents of this template file:</p>
+<pre class="prettyprint"><code><span class="tag">&lt;html&gt;</span><span class="pln">
+  </span><span class="tag">&lt;head&gt;</span><span class="pln">
+    </span><span class="tag">&lt;title&gt;</span><span class="pln">Video Streaming Demonstration</span><span class="tag">&lt;/title&gt;</span><span class="pln">
+  </span><span class="tag">&lt;/head&gt;</span><span class="pln">
+  </span><span class="tag">&lt;body&gt;</span><span class="pln">
+    </span><span class="tag">&lt;h1&gt;</span><span class="pln">Video Streaming Demonstration</span><span class="tag">&lt;/h1&gt;</span><span class="pln">
+    </span><span class="tag">&lt;img</span><span class="pln"> </span><span class="atn">src</span><span class="pun">=</span><span class="atv">"{{ url_for('video_feed') }}"</span><span class="tag">&gt;</span><span class="pln">
+  </span><span class="tag">&lt;/body&gt;</span><span class="pln">
+</span><span class="tag">&lt;/html&gt;</span></code></pre>
+<p>This is a simple HTML page with just a heading and an image tag. Note that the image tag's <code>src</code> attribute points to the second route of this application, and this is where the magic happens.</p>
+<p>The <code>/video_feed</code> route returns the streaming response. Because this stream returns the images that are to be displayed in the web page, the URL to this route is in the <code>src</code> attribute of the image tag. The browser will automatically keep the image element updated by displaying the stream of JPEG images in it, since multipart responses are supported in most/all browsers (let me know if you find a browser that doesn't like this).</p>
+<p>The generator function used in the <code>/video_feed</code> route is called <code>gen()</code>, and takes as an argument an instance of the <code>Camera</code> class. The <code>mimetype</code> argument is set as shown above, with the <code>multipart/x-mixed-replace</code> content type and a boundary set to the string <code>"frame"</code>.</p>
+<p>The <code>gen()</code> function enters a loop where it continuously returns frames from the camera as response chunks. The function asks the camera to provide a frame by calling the <code>camera.get_frame()</code> method, and then it yields with this frame formatted as a response chunk with a content type of <code>image/jpeg</code>, as shown above.</p>
+<h2>Obtaining Frames from a Video Camera</h2>
+<p>Now all that is left is to implement the <code>Camera</code> class, which will have to connect to the camera hardware and download live video frames from it. The nice thing about encapsulating the hardware dependent part of this application in a class is that this class can have different implementations for different people, but the rest of the application remains the same. You can think of this class as a device driver, which provides a uniform implementation regardless of the actual hardware device in use.</p>
+<p>The other advantage of having the <code>Camera</code> class separated from the rest of the application is that it is easy to fool the application into thinking there is a camera when in reality there is not, since the camera class can be implemented to emulate a camera without real hardware. In fact, while I was working on this application, the easiest way for me to test the streaming was to do that and not have to worry about the hardware until I had everything else running. Below you can see the simple emulated camera implementation that I used:</p>
+<pre class="prettyprint"><code><span class="kwd">from</span><span class="pln"> time </span><span class="kwd">import</span><span class="pln"> time
+
+</span><span class="kwd">class</span><span class="pln"> </span><span class="typ">Camera</span><span class="pun">(</span><span class="kwd">object</span><span class="pun">):</span><span class="pln">
+    </span><span class="kwd">def</span><span class="pln"> __init__</span><span class="pun">(</span><span class="kwd">self</span><span class="pun">):</span><span class="pln">
+        </span><span class="kwd">self</span><span class="pun">.</span><span class="pln">frames </span><span class="pun">=</span><span class="pln"> </span><span class="pun">[</span><span class="pln">open</span><span class="pun">(</span><span class="pln">f </span><span class="pun">+</span><span class="pln"> </span><span class="str">'.jpg'</span><span class="pun">,</span><span class="pln"> </span><span class="str">'rb'</span><span class="pun">).</span><span class="pln">read</span><span class="pun">()</span><span class="pln"> </span><span class="kwd">for</span><span class="pln"> f </span><span class="kwd">in</span><span class="pln"> </span><span class="pun">[</span><span class="str">'1'</span><span class="pun">,</span><span class="pln"> </span><span class="str">'2'</span><span class="pun">,</span><span class="pln"> </span><span class="str">'3'</span><span class="pun">]]</span><span class="pln">
+
+    </span><span class="kwd">def</span><span class="pln"> get_frame</span><span class="pun">(</span><span class="kwd">self</span><span class="pun">):</span><span class="pln">
+        </span><span class="kwd">return</span><span class="pln"> </span><span class="kwd">self</span><span class="pun">.</span><span class="pln">frames</span><span class="pun">[</span><span class="kwd">int</span><span class="pun">(</span><span class="pln">time</span><span class="pun">())</span><span class="pln"> </span><span class="pun">%</span><span class="pln"> </span><span class="lit">3</span><span class="pun">]</span></code></pre>
+<p>This implementation reads three images from disk called <code>1.jpg</code>, <code>2.jpg</code> and <code>3.jpg</code> and then returns them one after another repeatedly, at a rate of one frame per second. The <code>get_frame()</code> method uses the current time in seconds to determine which of the three frames to return at any given moment. Pretty simple, right?</p>
+<p>To run this emulated camera I needed to create the three frames. Using <a href="http://www.gimp.org/">gimp</a> I've made the following images:</p>
+<p><img alt="Frame 1" src="./Video Streaming with Flask - miguelgrinberg.com_files/video-streaming-1.jpg"> <img alt="Frame 2" src="./Video Streaming with Flask - miguelgrinberg.com_files/video-streaming-2.jpg"> <img alt="Frame 3" src="./Video Streaming with Flask - miguelgrinberg.com_files/video-streaming-3.jpg"></p>
+<p>Because the camera is emulated, this application runs on any environment, so you can run this right now! I have this application all ready to go on <a href="https://github.com/miguelgrinberg/flask-video-streaming">GitHub</a>. If you are familiar with <code>git</code> you can clone it with the following command:</p>
+<pre class="prettyprint"><code><span class="pln">$ git clone https</span><span class="pun">:</span><span class="com">//github.com/miguelgrinberg/flask-video-streaming.git</span></code></pre>
+<p>If you prefer to download it, then you can get a zip file <a href="https://github.com/miguelgrinberg/flask-video-streaming/archive/v1.zip">here</a>.</p>
+<p>Once you have the application installed, create a virtual environment and install Flask in it. Then you can run the application as follows:</p>
+<pre class="prettyprint"><code><span class="pln">$ python app</span><span class="pun">.</span><span class="pln">py</span></code></pre>
+<p>After you start the application enter <code>http://localhost:5000</code> in your web browser and you will see the emulated video stream playing the 1, 2 and 3 images over and over. Pretty cool, right?</p>
+<p>Once I had everything working I fired up my Raspberry Pi with its camera module and implemented a new <code>Camera</code> class that converts the Pi into a video streaming server, using the <code>picamera</code> package to control the hardware. I will not discuss this camera implementation here, but you can find it in the source code in file <code>camera_pi.py</code>.</p>
+<p>If you have a Raspberry Pi and a camera module you can edit <code>app.py</code> to import the <code>Camera</code> class from this module and then you will be able to live stream the Pi camera, like I'm doing in the following screenshot:</p>
+<p><img alt="Frame 1" src="./Video Streaming with Flask - miguelgrinberg.com_files/video-streaming-3.png"></p>
+<p>If you want to make this streaming application work with a different camera, then all you need to do is write another implementation of the <code>Camera</code> class. If you end up writing one I would appreciate it if you contribute it to my GitHub project.</p>
+<h2>Limitations of Streaming</h2>
+<p>When the Flask application serves regular requests the request cycle is short. The web worker receives the request, invokes the handler function and finally returns the response. Once the response is sent back to the client the worker is free and ready to take on another request.</p>
+<p>When a request that uses streaming is received, the worker remains attached to the client for the duration of the stream. When working with long, never ending streams such as a video stream from a camera, a worker will stay locked to the client until the client disconnects. This effectively means that unless specific measures are taken, the application can only serve as many clients as there are web workers. When working with the Flask application in debug mode that means just one, so you will not be able to connect a second browser window to watch the stream from two places at the same time.</p>
+<p>There are ways to overcome this important limitation. The best solution in my opinion is to use a coroutine based web server such as <a href="http://www.gevent.org/">gevent</a>, which Flask fully supports. With the use of coroutines gevent is able to handle multiple clients on a single worker thread, as gevent modifies the Python I/O functions to issue context switches as necessary.</p>
+<h2>Conclusion</h2>
+<p>In case you missed it above, the code that supports this article is this GitHub repository: <a href="https://github.com/miguelgrinberg/flask-video-streaming/tree/v1">https://github.com/miguelgrinberg/flask-video-streaming/tree/v1</a>. Here you can find a generic implementation of video streaming that does not require a camera, and also an implementation for the Raspberry Pi camera module. This <a href="http://blog.miguelgrinberg.com/post/flask-video-streaming-revisited">follow-up article</a> describes some improvements I made after this article was published originally.</p>
+<p>I hope this article shed some light on the topic of streaming. I concentrated on video streaming because that is an area I have some experience, but streaming has many more uses besides video. For example, this technique can be used to keep a connection between the client and the server alive for a long time, allowing the server to push new information the moment it becomes available. These days the Web Socket protocol is a more efficient way to achieve this, but Web Socket is fairly new and works only in modern browsers, while streaming will work on pretty much any browser you can think of.</p>
+<p>If you have any questions feel free to write them below. I plan to continue documenting more of the not well known Flask topics, so I hope you connect with me in some way to know when more articles are published. I hope to see you in the next one!</p>
+<p>Miguel</p></div>
+<div class="social-bar">
+    <table>
+        <tbody><tr>
+            <td><div class="social-box" style="padding-top: 8px;"><iframe id="twitter-widget-1" scrolling="no" frameborder="0" allowtransparency="true" class="twitter-share-button twitter-share-button-rendered twitter-tweet-button" style="position: static; visibility: visible; width: 60px; height: 20px;" title="Twitter Tweet Button" src="./Video Streaming with Flask - miguelgrinberg.com_files/tweet_button.5b37191c1b7fd23797a519962bf78683.en(1).html" data-url="http://blog.miguelgrinberg.com/post/video-streaming-with-flask"></iframe></div></td>
+            <td><div class="social-box" style="padding-left: 6px;"><div class="fb-like fb_iframe_widget" data-href="http://blog.miguelgrinberg.com/post/video-streaming-with-flask" data-send="false" data-layout="button" data-width="450" data-show-faces="false" data-font="verdana" fb-xfbml-state="rendered" fb-iframe-plugin-query="app_id=&amp;container_width=0&amp;font=verdana&amp;href=http%3A%2F%2Fblog.miguelgrinberg.com%2Fpost%2Fvideo-streaming-with-flask&amp;layout=button&amp;locale=en_US&amp;sdk=joey&amp;send=false&amp;show_faces=false&amp;width=450"><span style="vertical-align: bottom; width: 51px; height: 20px;"><iframe name="f1e185dd1cd9ad" width="450px" height="1000px" frameborder="0" allowtransparency="true" allowfullscreen="true" scrolling="no" allow="encrypted-media" title="fb:like Facebook Social Plugin" src="./Video Streaming with Flask - miguelgrinberg.com_files/like(1).html" style="border: none; visibility: visible; width: 51px; height: 20px;" class=""></iframe></span></div></div></td>
+            <td><div class="social-box" style="padding-top: 8px;"><div id="___plusone_1" style="text-indent: 0px; margin: 0px; padding: 0px; background: transparent; border-style: none; float: none; line-height: normal; font-size: 1px; vertical-align: baseline; display: inline-block; width: 32px; height: 20px;"><iframe ng-non-bindable="" frameborder="0" hspace="0" marginheight="0" marginwidth="0" scrolling="no" style="position: static; top: 0px; width: 32px; margin: 0px; border-style: none; left: 0px; visibility: visible; height: 20px;" tabindex="0" vspace="0" width="100%" id="I1_1535061138572" name="I1_1535061138572" src="./Video Streaming with Flask - miguelgrinberg.com_files/fastbutton(1).html" data-gapiattached="true" title="G+"></iframe></div></div></td>
+            <td><div class="social-box" style="padding-top: 8px;"><span class="IN-widget" style="line-height: 1; vertical-align: baseline; display: inline-block; text-align: center;"><span style="padding: 0px !important; margin: 0px !important; text-indent: 0px !important; display: inline-block !important; vertical-align: baseline !important; font-size: 1px !important;"><span id="li_ui_li_gen_1535061138973_1"><a id="li_ui_li_gen_1535061138973_1-link" href="javascript:void(0);"><span id="li_ui_li_gen_1535061138973_1-logo">in</span><span id="li_ui_li_gen_1535061138973_1-title"><span id="li_ui_li_gen_1535061138973_1-mark"></span><span id="li_ui_li_gen_1535061138973_1-title-text">Share</span></span></a></span></span></span><script type="IN/Share+init" data-url="http://blog.miguelgrinberg.com/post/video-streaming-with-flask"></script></div></td>
+        </tr>
+    </tbody></table>
+</div>
+
+
+<h4 style="text-align: right"><a name="comments"></a>340 comments</h4>
+
+
+
+<div class="comment">
+    <ul>
+        
+        <li>
+            <div class="comment-thumbnail"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/1d5069f331c84cac4537e1ed54698574"></div>
+            <div class="comment-body">
+                <p>
+                    <span class="label label-default">#1</span> <span class="label label-primary">pypy</span> said
+                    <span class="" data-timestamp="2014-10-21T02:48:28Z" data-format="fromNow(0)" data-refresh="0">4 years ago</span>
+                </p>
+                <div style="overflow: auto;">
+                    <p style="white-space: pre-wrap;">Great!!! </p>
+                </div>
+            </div>
+        </li>
+        
+        <li>
+            <div class="comment-thumbnail"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/f34b36e5ad86d34c0d87727aede8dc94"></div>
+            <div class="comment-body">
+                <p>
+                    <span class="label label-default">#2</span> <span class="label label-primary">dorian</span> said
+                    <span class="" data-timestamp="2014-10-23T12:15:04Z" data-format="fromNow(0)" data-refresh="0">4 years ago</span>
+                </p>
+                <div style="overflow: auto;">
+                    <p style="white-space: pre-wrap;">What would you suggest is the best open-source platform/script/server for streaming video ?</p>
+                </div>
+            </div>
+        </li>
+        
+        <li>
+            <div class="comment-thumbnail"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/729e26a2a2c7ff24a71958d4aa4e5f35.jpeg"></div>
+            <div class="comment-body">
+                <p>
+                    <span class="label label-default">#3</span> <span class="label label-danger">Miguel Grinberg</span> said
+                    <span class="" data-timestamp="2014-10-23T14:45:50Z" data-format="fromNow(0)" data-refresh="0">4 years ago</span>
+                </p>
+                <div style="overflow: auto;">
+                    <p style="white-space: pre-wrap;">@dorian: tough question to answer, as there are many factors that affect your decision. If you want to stream pre-recorded video then the problem gets simplified enormously, you can just use ffmpeg to encode your video as an HLS stream or other adaptive bitrate formats. These are nice because for each client the most appropriate quality/bitrate is served dynamically. For live video the adaptive bitrate formats have a few seconds of latency, so if the goal is to reduce latency at the cost of quality then a Motion-JPEG solution similar to what I present in this article is a good idea.</p>
+                </div>
+            </div>
+        </li>
+        
+        <li>
+            <div class="comment-thumbnail"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/f34b36e5ad86d34c0d87727aede8dc94"></div>
+            <div class="comment-body">
+                <p>
+                    <span class="label label-default">#4</span> <span class="label label-primary">dorian again</span> said
+                    <span class="" data-timestamp="2014-10-23T15:03:21Z" data-format="fromNow(0)" data-refresh="0">4 years ago</span>
+                </p>
+                <div style="overflow: auto;">
+                    <p style="white-space: pre-wrap;">@miguel: true with hls and just use nginx or whatever, but adaptive-streaming is also required for browsers/players that don't support HLS.</p>
+                </div>
+            </div>
+        </li>
+        
+        <li>
+            <div class="comment-thumbnail"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/729e26a2a2c7ff24a71958d4aa4e5f35.jpeg"></div>
+            <div class="comment-body">
+                <p>
+                    <span class="label label-default">#5</span> <span class="label label-danger">Miguel Grinberg</span> said
+                    <span class="" data-timestamp="2014-10-23T16:40:05Z" data-format="fromNow(0)" data-refresh="0">4 years ago</span>
+                </p>
+                <div style="overflow: auto;">
+                    <p style="white-space: pre-wrap;">@dorian: HLS and similar methods basically push most of the complexity to the client, so you can only stream to clients that understand how to work with adaptive bitrate streams. HLS is supported natively by the browsers in iOS and Android. On the desktop some browsers need a third-party Javascript library. Also HLS, backed by Apple, is not the only adaptive bitrate format, there are a few more from Microsoft, Adobe, and others.</p>
+                </div>
+            </div>
+        </li>
+        
+        <li>
+            <div class="comment-thumbnail"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/1432d95a54f748d0f607e8235c6e6280"></div>
+            <div class="comment-body">
+                <p>
+                    <span class="label label-default">#6</span> <span class="label label-primary">Jos M. Alonso</span> said
+                    <span class="" data-timestamp="2014-10-24T12:04:03Z" data-format="fromNow(0)" data-refresh="0">4 years ago</span>
+                </p>
+                <div style="overflow: auto;">
+                    <p style="white-space: pre-wrap;">Great Thanks, Miguel. I am already watching at work images sent by my Raspberry Pi from my home, only a problem:  the images are inverted.
+I would appreciate vey much a suggestion.
+Jose</p>
+                </div>
+            </div>
+        </li>
+        
+        <li>
+            <div class="comment-thumbnail"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/729e26a2a2c7ff24a71958d4aa4e5f35.jpeg"></div>
+            <div class="comment-body">
+                <p>
+                    <span class="label label-default">#7</span> <span class="label label-danger">Miguel Grinberg</span> said
+                    <span class="" data-timestamp="2014-10-24T14:45:24Z" data-format="fromNow(0)" data-refresh="0">4 years ago</span>
+                </p>
+                <div style="overflow: auto;">
+                    <p style="white-space: pre-wrap;">@Jos: look in "camera_pi.py", I have flip vertical and horizontal settings there. Just revert them and you will be fine.</p>
+                </div>
+            </div>
+        </li>
+        
+        <li>
+            <div class="comment-thumbnail"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/1432d95a54f748d0f607e8235c6e6280"></div>
+            <div class="comment-body">
+                <p>
+                    <span class="label label-default">#8</span> <span class="label label-primary">Jose M Alonso</span> said
+                    <span class="" data-timestamp="2014-10-27T16:28:08Z" data-format="fromNow(0)" data-refresh="0">4 years ago</span>
+                </p>
+                <div style="overflow: auto;">
+                    <p style="white-space: pre-wrap;">Thanks again. It works perfectly now! Let me ask you an additional  question. Could it be possible to control the access of browsers to the video streaming?</p>
+                </div>
+            </div>
+        </li>
+        
+        <li>
+            <div class="comment-thumbnail"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/729e26a2a2c7ff24a71958d4aa4e5f35.jpeg"></div>
+            <div class="comment-body">
+                <p>
+                    <span class="label label-default">#9</span> <span class="label label-danger">Miguel Grinberg</span> said
+                    <span class="" data-timestamp="2014-10-27T17:05:21Z" data-format="fromNow(0)" data-refresh="0">4 years ago</span>
+                </p>
+                <div style="overflow: auto;">
+                    <p style="white-space: pre-wrap;">@Jose: sure, you can apply standard authentication/authorization techniques to control access to the stream. See my tutorials in this blog for more information.</p>
+                </div>
+            </div>
+        </li>
+        
+        <li>
+            <div class="comment-thumbnail"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/e93e6b30e4c50ff07d2f5c9d624589c4"></div>
+            <div class="comment-body">
+                <p>
+                    <span class="label label-default">#10</span> <span class="label label-primary">cyber_lis</span> said
+                    <span class="" data-timestamp="2014-10-29T08:22:26Z" data-format="fromNow(0)" data-refresh="0">4 years ago</span>
+                </p>
+                <div style="overflow: auto;">
+                    <p style="white-space: pre-wrap;">Can you show example of streaming of pre-recorded video?</p>
+                </div>
+            </div>
+        </li>
+        
+        <li>
+            <div class="comment-thumbnail"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/729e26a2a2c7ff24a71958d4aa4e5f35.jpeg"></div>
+            <div class="comment-body">
+                <p>
+                    <span class="label label-default">#11</span> <span class="label label-danger">Miguel Grinberg</span> said
+                    <span class="" data-timestamp="2014-10-29T17:18:40Z" data-format="fromNow(0)" data-refresh="0">4 years ago</span>
+                </p>
+                <div style="overflow: auto;">
+                    <p style="white-space: pre-wrap;">@cyber_lis: to stream pre-recorded video you can just serve the video file as a regular file. You can encode it as mp4 with ffmpeg, for example, or if you want something more sophisticated you can encode a multi-resolution HLS stream. Either way you just need to serve the static files, you don't need Flask for that.</p>
+                </div>
+            </div>
+        </li>
+        
+        <li>
+            <div class="comment-thumbnail"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/0048452e61bbfd81be2278fef58990f3"></div>
+            <div class="comment-body">
+                <p>
+                    <span class="label label-default">#12</span> <span class="label label-primary">Thomas Sarmis</span> said
+                    <span class="" data-timestamp="2014-11-17T17:56:11Z" data-format="fromNow(0)" data-refresh="0">4 years ago</span>
+                </p>
+                <div style="overflow: auto;">
+                    <p style="white-space: pre-wrap;">I altered the app.run(host='0.0.0.0', port=80, debug=False) but still I am only capable of getting at most one stream at a time. Am I missing something here? - Shouldn't this change make more than one feed's possible? (I am running the app with sudo python app.py)</p>
+                </div>
+            </div>
+        </li>
+        
+        <li>
+            <div class="comment-thumbnail"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/729e26a2a2c7ff24a71958d4aa4e5f35.jpeg"></div>
+            <div class="comment-body">
+                <p>
+                    <span class="label label-default">#13</span> <span class="label label-danger">Miguel Grinberg</span> said
+                    <span class="" data-timestamp="2014-11-17T18:49:34Z" data-format="fromNow(0)" data-refresh="0">4 years ago</span>
+                </p>
+                <div style="overflow: auto;">
+                    <p style="white-space: pre-wrap;">@Thomas: this is explained in the section "Limitations of Streaming" above. If you have one worker then you can only serve one client at a time. You can run the application under Gunicorn for example, and specify a number of worker processes, or go with gevent as I suggest in the article.</p>
+                </div>
+            </div>
+        </li>
+        
+        <li>
+            <div class="comment-thumbnail"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/0048452e61bbfd81be2278fef58990f3"></div>
+            <div class="comment-body">
+                <p>
+                    <span class="label label-default">#14</span> <span class="label label-primary">Thomas</span> said
+                    <span class="" data-timestamp="2014-11-18T18:05:54Z" data-format="fromNow(0)" data-refresh="0">4 years ago</span>
+                </p>
+                <div style="overflow: auto;">
+                    <p style="white-space: pre-wrap;">@Miguel In the article it states that:
+"When working with the Flask application in debug mode that means just one, so you will not be able to connect a second browser window to watch the stream from two places at the same time."
+
+My understanding was that setting debug = False would allow for more worker threads and thus more connections. What am I missing here? 
+
+(I will also check the Gunicon/Gevent solutions, but I m unfamiliar with linux and python so I was looking to setup something simple first...)
+
+</p>
+                </div>
+            </div>
+        </li>
+        
+        <li>
+            <div class="comment-thumbnail"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/729e26a2a2c7ff24a71958d4aa4e5f35.jpeg"></div>
+            <div class="comment-body">
+                <p>
+                    <span class="label label-default">#15</span> <span class="label label-danger">Miguel Grinberg</span> said
+                    <span class="" data-timestamp="2014-11-20T00:44:03Z" data-format="fromNow(0)" data-refresh="0">4 years ago</span>
+                </p>
+                <div style="overflow: auto;">
+                    <p style="white-space: pre-wrap;">@Thomas: I meant "debug mode" as in "not production". When you run in production you have a web server with a few workers, or else gevent, which can handle multiple clients with a single worker. Werkzeug is not meant to be used for production, though there is an option to run it in multi-threaded mode that may allow it to handle multiple clients with streaming video. This is enabled by calling app.run(threaded=True).</p>
+                </div>
+            </div>
+        </li>
+        
+        <li>
+            <div class="comment-thumbnail"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/c1844787154d77e6cce08a21c2bd4555"></div>
+            <div class="comment-body">
+                <p>
+                    <span class="label label-default">#16</span> <span class="label label-primary">Thomas</span> said
+                    <span class="" data-timestamp="2014-11-20T20:10:59Z" data-format="fromNow(0)" data-refresh="0">4 years ago</span>
+                </p>
+                <div style="overflow: auto;">
+                    <p style="white-space: pre-wrap;">Yeah, I kinda guess that, from searching around yesterday - I also tried gevent/gunicorn, but I have run into two major problems
+(A) A single camera access thread must be used and then share the buffers to all clients
+(B) I am not sure that the worker per client approach is the best one in this case - I am thinking of something like single thread with multiple tcp connection and a for loop to try to send each image to every client and then move forward... 
+
+Anyway your post was extremely usefull in understanding flash and streaming...
+Thank you</p>
+                </div>
+            </div>
+        </li>
+        
+        <li>
+            <div class="comment-thumbnail"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/729e26a2a2c7ff24a71958d4aa4e5f35.jpeg"></div>
+            <div class="comment-body">
+                <p>
+                    <span class="label label-default">#17</span> <span class="label label-danger">Miguel Grinberg</span> said
+                    <span class="" data-timestamp="2014-11-21T06:27:53Z" data-format="fromNow(0)" data-refresh="0">4 years ago</span>
+                </p>
+                <div style="overflow: auto;">
+                    <p style="white-space: pre-wrap;">@Thomas: (A) The camera class creates a single background thread. See here: https://github.com/miguelgrinberg/flask-video-streaming/blob/master/camera_pi.py#L14.
+(B) That is what gevent more or less does through coroutines. You could build something custom that does what you describe, but then you are going to have trouble using Flask, which assumes a WSGI environment.</p>
+                </div>
+            </div>
+        </li>
+        
+        <li>
+            <div class="comment-thumbnail"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/0048452e61bbfd81be2278fef58990f3"></div>
+            <div class="comment-body">
+                <p>
+                    <span class="label label-default">#18</span> <span class="label label-primary">Thomas</span> said
+                    <span class="" data-timestamp="2014-11-21T15:31:00Z" data-format="fromNow(0)" data-refresh="0">4 years ago</span>
+                </p>
+                <div style="overflow: auto;">
+                    <p style="white-space: pre-wrap;">(A) You are right, I supposed that managed to misuse gevent and i got a camera resources error. In Flask (theaded=True) works fine
+(B) I am building a small baby monitor app and I am assuming no more that 2-6 clients. Since Flash works OK with that, I don't need production quality software for the initial version
+
+Thank you again...</p>
+                </div>
+            </div>
+        </li>
+        
+        <li>
+            <div class="comment-thumbnail"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/729e26a2a2c7ff24a71958d4aa4e5f35.jpeg"></div>
+            <div class="comment-body">
+                <p>
+                    <span class="label label-default">#19</span> <span class="label label-danger">Miguel Grinberg</span> said
+                    <span class="" data-timestamp="2014-11-23T00:28:40Z" data-format="fromNow(0)" data-refresh="0">4 years ago</span>
+                </p>
+                <div style="overflow: auto;">
+                    <p style="white-space: pre-wrap;">@Thomas: excellent, glad to know threaded=True works. I completely agree, by the way, if this is going to be a small server for your family I would also take the least pain route, I don't see any problems with using the threaded Werkzeug if it gets the job done.</p>
+                </div>
+            </div>
+        </li>
+        
+        <li>
+            <div class="comment-thumbnail"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/a1844bf284879869b78da7964b405a48"></div>
+            <div class="comment-body">
+                <p>
+                    <span class="label label-default">#20</span> <span class="label label-primary">Marcel Maré</span> said
+                    <span class="" data-timestamp="2014-12-07T19:34:28Z" data-format="fromNow(0)" data-refresh="0">4 years ago</span>
+                </p>
+                <div style="overflow: auto;">
+                    <p style="white-space: pre-wrap;">Thanks Miguel. This has been very helpful to me. I was surprised how well it works with the Pi camera. Especially since I've tried a lot of linuxy or javascript solutions, but they have much longer latency. 
+With the threaded=True is also works for multiple streams. Very nice. 
+I'd appreciate another tutorial expanding on Flask+gevent+streaming. 
+
+Thanks again!</p>
+                </div>
+            </div>
+        </li>
+        
+        <li>
+            <div class="comment-thumbnail"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/729e26a2a2c7ff24a71958d4aa4e5f35.jpeg"></div>
+            <div class="comment-body">
+                <p>
+                    <span class="label label-default">#21</span> <span class="label label-danger">Miguel Grinberg</span> said
+                    <span class="" data-timestamp="2014-12-08T17:30:08Z" data-format="fromNow(0)" data-refresh="0">4 years ago</span>
+                </p>
+                <div style="overflow: auto;">
+                    <p style="white-space: pre-wrap;">@Marcel: the drawback of this method versus others is video quality, which is inferior to other streaming methods that have longer latencies. To use gevent there are no code changes required, you just need to "pip install gevent" and launch the server as shown in the flask official documentation: http://flask.pocoo.org/docs/0.10/deploying/wsgi-standalone/#gevent.</p>
+                </div>
+            </div>
+        </li>
+        
+        <li>
+            <div class="comment-thumbnail"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/3d56face555bed51f9ecd38957998286"></div>
+            <div class="comment-body">
+                <p>
+                    <span class="label label-default">#22</span> <span class="label label-primary">Eduardo</span> said
+                    <span class="" data-timestamp="2014-12-18T12:40:39Z" data-format="fromNow(0)" data-refresh="0">4 years ago</span>
+                </p>
+                <div style="overflow: auto;">
+                    <p style="white-space: pre-wrap;">Hi Miguel,
+
+Thanks for this great article. I'd like to ask how about having the camera class reading from remote cameras. I want to read from remote cameras and serve their feeds through my streaming server like an CCTV application.
+
+Thanks very much</p>
+                </div>
+            </div>
+        </li>
+        
+        <li>
+            <div class="comment-thumbnail"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/cf23963beefe5f9fddb2d4f6cb0525be"></div>
+            <div class="comment-body">
+                <p>
+                    <span class="label label-default">#23</span> <span class="label label-primary">Log0</span> said
+                    <span class="" data-timestamp="2014-12-18T13:12:40Z" data-format="fromNow(0)" data-refresh="0">4 years ago</span>
+                </p>
+                <div style="overflow: auto;">
+                    <p style="white-space: pre-wrap;">Hi Miguel, what are the specifics that I'm missing to get this to work? Your jpeg works but using this implementation shows a "broken image" icon.
+
+I'm trying to make a real simple webcam video streaming (cv2.VideoCapture), but currently using just a simple video as a replacement for testing.
+
+class Camera(object):
+    def __init__(self):
+        self.video = cv2.VideoCapture('video.mp4')
+    
+    def __del__(self):
+        self.video.release()
+    
+    def get_frame(self):
+        success, image = self.video.read()
+        if not success:
+            print 'Failing'
+        image_bytes = image.tobytes()
+        return image_bytes
+
+Thanks.</p>
+                </div>
+            </div>
+        </li>
+        
+        <li>
+            <div class="comment-thumbnail"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/729e26a2a2c7ff24a71958d4aa4e5f35.jpeg"></div>
+            <div class="comment-body">
+                <p>
+                    <span class="label label-default">#24</span> <span class="label label-danger">Miguel Grinberg</span> said
+                    <span class="" data-timestamp="2014-12-19T06:56:01Z" data-format="fromNow(0)" data-refresh="0">4 years ago</span>
+                </p>
+                <div style="overflow: auto;">
+                    <p style="white-space: pre-wrap;">@Eduardo: you can write a camera class to get the video frames in any way, even by talking to a remote camera. But I'm not sure this is a good idea, you can also serve the HTML page with code that contacts the remote camera directly and save the extra trip to the Pi.</p>
+                </div>
+            </div>
+        </li>
+        
+        <li>
+            <div class="comment-thumbnail"><img src="./Video Streaming with Flask - miguelgrinberg.com_files/729e26a2a2c7ff24a71958d4aa4e5f35.jpeg"></div>
+            <div class="comment-body">
+                <p>
+                    <span class="label label-default">#25</span> <span class="label label-danger">Miguel Grinberg</span> said
+                    <span class="" data-timestamp="2014-12-19T06:57:43Z" data-format="fromNow(0)" data-refresh="0">4 years ago</span>
+                </p>
+                <div style="overflow: auto;">
+                    <p style="white-space: pre-wrap;">@Log0: you need to return jpeg images, that is the only format supported in a MJPEG stream. I suspect those bytes that you are returning are an uncompressed image buffer. You just need to turn that into a jpeg.</p>
+                </div>
+            </div>
+        </li>
+        
+    </ul>
+</div>
+
+<div class="page">
+<ul class="pager">
+  <li class="previous disabled">
+    <a href="https://blog.miguelgrinberg.com/post/video-streaming-with-flask#">««</a>
+  </li>
+  <li class="previous disabled">
+    <a href="https://blog.miguelgrinberg.com/post/video-streaming-with-flask#">«</a>
+  </li>
+  <li class="next">
+    <a href="https://blog.miguelgrinberg.com/post/video-streaming-with-flask/page/0#comments">»»</a>
+  </li>
+  <li class="next">
+    <a href="https://blog.miguelgrinberg.com/post/video-streaming-with-flask/page/2#comments">»</a>
+  </li>
+</ul>
+</div>
+
+<h3><a name="commentform"></a>Leave a Comment</h3>
+
+
+
+
+
+
+<form action="https://blog.miguelgrinberg.com/post/video-streaming-with-flask#commentform" method="post" class="form" role="form">
+  <input id="csrf_token" name="csrf_token" type="hidden" value="IjM2ZDdiODhkYTdlZTc4OTY1OWU4NjkzMDc0ZDJjZjViM2U4ZTNkMWMi.DmC-Dw.Ez4ky1X0r8-Q9_Z8HuhUJWlkYWI">
+  
+    
+
+
+
+
+
+
+<div class="form-group  required"><label class="control-label" for="name">Name</label>
+        
+          <input class="form-control" id="name" name="name" required="" type="text" value="" style="background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABHklEQVQ4EaVTO26DQBD1ohQWaS2lg9JybZ+AK7hNwx2oIoVf4UPQ0Lj1FdKktevIpel8AKNUkDcWMxpgSaIEaTVv3sx7uztiTdu2s/98DywOw3Dued4Who/M2aIx5lZV1aEsy0+qiwHELyi+Ytl0PQ69SxAxkWIA4RMRTdNsKE59juMcuZd6xIAFeZ6fGCdJ8kY4y7KAuTRNGd7jyEBXsdOPE3a0QGPsniOnnYMO67LgSQN9T41F2QGrQRRFCwyzoIF2qyBuKKbcOgPXdVeY9rMWgNsjf9ccYesJhk3f5dYT1HX9gR0LLQR30TnjkUEcx2uIuS4RnI+aj6sJR0AM8AaumPaM/rRehyWhXqbFAA9kh3/8/NvHxAYGAsZ/il8IalkCLBfNVAAAAABJRU5ErkJggg==&quot;); background-repeat: no-repeat; background-attachment: scroll; background-size: 16px 18px; background-position: 98% 50%;">
+        
+  </div>
+
+
+    
+
+
+
+
+<div class="form-group "><label class="control-label" for="url">URL</label>
+        
+          <input class="form-control" id="url" name="url" type="text" value="">
+        
+  </div>
+
+
+    
+
+
+
+
+
+
+<div class="form-group  required"><label class="control-label" for="email">Email</label>
+        
+          <input class="form-control" id="email" name="email" required="" type="text" value="">
+        
+  </div>
+
+
+    
+
+
+
+
+
+
+<div class="form-group  required"><label class="control-label" for="comment">Comment</label>
+        
+          <textarea class="form-control" id="comment" name="comment" required=""></textarea>
+        
+  </div>
+
+
+    
+
+
+
+
+<div class="form-group "><label class="control-label" for="captcha">Captcha</label>
+        
+          
+<script src="./Video Streaming with Flask - miguelgrinberg.com_files/api.js.download" async="" defer=""></script>
+<div class="g-recaptcha" data-sitekey="6Ld5Zs4SAAAAAOY0DOi4r18bgHlEaz41qAoRf__S"><div style="width: 304px; height: 78px;"><div><iframe src="./Video Streaming with Flask - miguelgrinberg.com_files/anchor.html" width="304" height="78" role="presentation" name="a-1ccojqr18yc0" frameborder="0" scrolling="no" sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-top-navigation allow-modals allow-popups-to-escape-sandbox"></iframe></div><textarea id="g-recaptcha-response" name="g-recaptcha-response" class="g-recaptcha-response" style="width: 250px; height: 40px; border: 1px solid #c1c1c1; margin: 10px 25px; padding: 0px; resize: none;  display: none; "></textarea></div></div>
+
+        
+  </div>
+
+
+    
+
+
+
+
+
+  
+
+  
+  
+
+
+    <input class="btn btn-default" id="submit" name="submit" type="submit" value="Submit">
+  
+
+
+
+
+    
+
+</form>
+
+
+</div>
+
+                </div>
+            </div>
+            <div class="col-md-4 sidebar-bg">
+                <div id="sidebar">
+                    
+                    
+                    
+                    <h1>Flask Web Development, 2nd Edition</h1>
+                    <p>If you want to learn modern web development techniques with Python and Flask, you may find the second edition of my <a href="https://www.amazon.com/gp/product/1491991739/ref=as_li_tl?ie=UTF8&amp;tag=thirdwish-20&amp;camp=1789&amp;creative=9325&amp;linkCode=as2&amp;creativeASIN=1491991739&amp;linkId=10f6689564c9c4cda68802397c58e906">O'Reilly book</a> useful:</p>
+                    <p></p><center><a href="https://www.amazon.com/gp/product/1491991739/ref=as_li_tl?ie=UTF8&amp;tag=thirdwish-20&amp;camp=1789&amp;creative=9325&amp;linkCode=as2&amp;creativeASIN=1491991739&amp;linkId=10f6689564c9c4cda68802397c58e906"><img style="border: 1px solid black;" src="./Video Streaming with Flask - miguelgrinberg.com_files/flask2e-book-cover-small.png"></a></center><p></p>
+                    
+                    <h1>About Miguel</h1>
+                    <img style="float: right; margin: 0px 8px 8px 0px; padding: 4px; border: 1px solid #ccc;" src="./Video Streaming with Flask - miguelgrinberg.com_files/miguel.jpg">
+                    <p>Welcome to my blog!</p>
+                    <p>I'm a software engineer, photographer and filmmaker in Portland, Oregon, USA.</p>
+                    <p>You can also find me on <a href="https://www.facebook.com/miguelgrinbergblog">Facebook</a>, <a href="https://plus.google.com/u/0/117786742456929977820">Google+</a>, <a href="http://www.linkedin.com/in/miguelgrinberg">LinkedIn</a>, <a href="https://github.com/miguelgrinberg">Github</a> and <a href="https://twitter.com/#!/miguelgrinberg">Twitter</a>.</p>
+                    <p>Thank you for visiting!</p>
+
+                    
+                    <h1>Categories</h1>
+<ul>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/AWS/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="AWS RSS Feed" label="AWS RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/AWS">AWS</a></span> (1)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/Arduino/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="Arduino RSS Feed" label="Arduino RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Arduino">Arduino</a></span> (7)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/Authentication/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="Authentication RSS Feed" label="Authentication RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Authentication">Authentication</a></span> (6)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/Blog/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="Blog RSS Feed" label="Blog RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Blog">Blog</a></span> (1)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/C++/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="C++ RSS Feed" label="C++ RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/C++">C++</a></span> (5)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/Cloud/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="Cloud RSS Feed" label="Cloud RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Cloud">Cloud</a></span> (6)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/Database/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="Database RSS Feed" label="Database RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Database">Database</a></span> (11)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/Docker/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="Docker RSS Feed" label="Docker RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Docker">Docker</a></span> (1)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/Filmmaking/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="Filmmaking RSS Feed" label="Filmmaking RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Filmmaking">Filmmaking</a></span> (6)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/Flask/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="Flask RSS Feed" label="Flask RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Flask">Flask</a></span> (78)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/Games/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="Games RSS Feed" label="Games RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Games">Games</a></span> (1)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/HTML5/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="HTML5 RSS Feed" label="HTML5 RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/HTML5">HTML5</a></span> (1)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/Heroku/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="Heroku RSS Feed" label="Heroku RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Heroku">Heroku</a></span> (1)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/JavaScript/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="JavaScript RSS Feed" label="JavaScript RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/JavaScript">JavaScript</a></span> (8)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/Microservices/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="Microservices RSS Feed" label="Microservices RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Microservices">Microservices</a></span> (2)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/Movie%20Reviews/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="Movie Reviews RSS Feed" label="Movie Reviews RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Movie%20Reviews">Movie Reviews</a></span> (5)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/Netflix/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="Netflix RSS Feed" label="Netflix RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Netflix">Netflix</a></span> (5)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/Node.js/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="Node.js RSS Feed" label="Node.js RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Node.js">Node.js</a></span> (1)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/OpenStack/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="OpenStack RSS Feed" label="OpenStack RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/OpenStack">OpenStack</a></span> (1)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/Personal/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="Personal RSS Feed" label="Personal RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Personal">Personal</a></span> (2)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/Photography/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="Photography RSS Feed" label="Photography RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Photography">Photography</a></span> (7)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/Product%20Reviews/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="Product Reviews RSS Feed" label="Product Reviews RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Product%20Reviews">Product Reviews</a></span> (2)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/Programming/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="Programming RSS Feed" label="Programming RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Programming">Programming</a></span> (95)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/Project%20Management/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="Project Management RSS Feed" label="Project Management RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Project%20Management">Project Management</a></span> (1)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/Python/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="Python RSS Feed" label="Python RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Python">Python</a></span> (90)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/REST/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="REST RSS Feed" label="REST RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/REST">REST</a></span> (6)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/Rackspace/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="Rackspace RSS Feed" label="Rackspace RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Rackspace">Rackspace</a></span> (1)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/Raspberry%20Pi/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="Raspberry Pi RSS Feed" label="Raspberry Pi RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Raspberry%20Pi">Raspberry Pi</a></span> (7)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/Robotics/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="Robotics RSS Feed" label="Robotics RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Robotics">Robotics</a></span> (6)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/Security/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="Security RSS Feed" label="Security RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Security">Security</a></span> (10)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/Video/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="Video RSS Feed" label="Video RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Video">Video</a></span> (5)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/Webcast/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="Webcast RSS Feed" label="Webcast RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Webcast">Webcast</a></span> (3)
+	</li>
+
+	<li>
+		<a href="https://blog.miguelgrinberg.com/category/Windows/feed">
+			<img src="./Video Streaming with Flask - miguelgrinberg.com_files/rss-small.png" title="Windows RSS Feed" label="Windows RSS Feed">
+		</a>
+		<span class="label label-primary"><a href="https://blog.miguelgrinberg.com/category/Windows">Windows</a></span> (1)
+	</li>
+
+</ul>
+                    
+                </div>
+            </div>
+        </div>
+        <div id="footer">
+            
+            <p>© 2012-<script type="text/javascript">document.write(new Date().getFullYear());</script>2018 by Miguel Grinberg. All rights reserved. <a href="mailto:webmaster%20_at_%20miguelgrinberg%20_dot_%20com">Questions?</a></p>
+        </div>
+    </div><iframe name="oauth2relay727765584" id="oauth2relay727765584" src="./Video Streaming with Flask - miguelgrinberg.com_files/postmessageRelay.html" tabindex="-1" aria-hidden="true" style="width: 1px; height: 1px; position: absolute; top: -100px;"></iframe>
+
+
+    
+    
+    <script src="./Video Streaming with Flask - miguelgrinberg.com_files/jquery.min.js.download"></script>
+    <script src="./Video Streaming with Flask - miguelgrinberg.com_files/bootstrap.min.js.download"></script>
+	<script type="text/javascript" src="./Video Streaming with Flask - miguelgrinberg.com_files/jquery.colorbox-min.js.download"></script>
+    <script type="text/javascript" src="./Video Streaming with Flask - miguelgrinberg.com_files/prettify.js.download"></script>
+    <script src="./Video Streaming with Flask - miguelgrinberg.com_files/moment-with-langs.min.js.download"></script>
+<script>
+function flask_moment_render(elem) {
+    $(elem).text(eval('moment("' + $(elem).data('timestamp') + '").' + $(elem).data('format') + ';'));
+    $(elem).removeClass('flask-moment');
+}
+function flask_moment_render_all() {
+    $('.flask-moment').each(function() {
+        flask_moment_render(this);
+        if ($(this).data('refresh')) {
+            (function(elem, interval) { setInterval(function() { flask_moment_render(elem) }, interval); })(this, $(this).data('refresh'));
+        }
+    })
+}
+$(document).ready(function() {
+    flask_moment_render_all();
+});
+</script>
+    
+    <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-4777284-15']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $(".gallery").colorbox({rel:".gallery",maxWidth:"95%",maxHeight:"95%",scalePhotos:true});
+            // add prettyprint class to all <pre><code></code></pre> blocks
+            var prettify = false;
+            $("pre code").parent().each(function() {
+                $(this).addClass('prettyprint');
+                prettify = true;
+            });
+            prettyPrint();
+        });
+    </script>
+
+
+  
+
+<iframe scrolling="no" frameborder="0" allowtransparency="true" src="./Video Streaming with Flask - miguelgrinberg.com_files/widget_iframe.5b37191c1b7fd23797a519962bf78683.html" title="Twitter settings iframe" style="display: none;"></iframe><div id="cboxOverlay" style="display: none;"></div><div id="colorbox" class="" role="dialog" tabindex="-1" style="display: none;"><div id="cboxWrapper"><div><div id="cboxTopLeft" style="float: left;"></div><div id="cboxTopCenter" style="float: left;"></div><div id="cboxTopRight" style="float: left;"></div></div><div style="clear: left;"><div id="cboxMiddleLeft" style="float: left;"></div><div id="cboxContent" style="float: left;"><div id="cboxTitle" style="float: left;"></div><div id="cboxCurrent" style="float: left;"></div><button type="button" id="cboxPrevious"></button><button type="button" id="cboxNext"></button><button id="cboxSlideshow"></button><div id="cboxLoadingOverlay" style="float: left;"></div><div id="cboxLoadingGraphic" style="float: left;"></div></div><div id="cboxMiddleRight" style="float: left;"></div></div><div style="clear: left;"><div id="cboxBottomLeft" style="float: left;"></div><div id="cboxBottomCenter" style="float: left;"></div><div id="cboxBottomRight" style="float: left;"></div></div></div><div style="position: absolute; width: 9999px; visibility: hidden; display: none; max-width: none;"></div></div><div id="weava-permanent-marker" date="1535061322620"></div><div style="background-color: #fff; border: 1px solid #ccc; box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.2); position: absolute; left: 0px; top: -10000px; transition: visibility 0s linear 0.3s, opacity 0.3s linear; opacity: 0; visibility: hidden; z-index: 2000000000;"><div style="width: 100%; height: 100%; position: fixed; top: 0px; left: 0px; z-index: 2000000000; background-color: #fff; opacity: 0.05;  filter: alpha(opacity=5)"></div><div class="g-recaptcha-bubble-arrow" style="border: 11px solid transparent; width: 0; height: 0; position: absolute; pointer-events: none; margin-top: -11px; z-index: 2000000000;"></div><div class="g-recaptcha-bubble-arrow" style="border: 10px solid transparent; width: 0; height: 0; position: absolute; pointer-events: none; margin-top: -10px; z-index: 2000000000;"></div><div style="z-index: 2000000000; position: relative;"><iframe title="recaptcha challenge" src="./Video Streaming with Flask - miguelgrinberg.com_files/bframe.html" name="c-1ccojqr18yc0" frameborder="0" scrolling="no" sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-top-navigation allow-modals allow-popups-to-escape-sandbox" style="width: 100%; height: 100%;"></iframe></div></div><iframe id="rufous-sandbox" scrolling="no" frameborder="0" allowtransparency="true" allowfullscreen="true" style="position: absolute; visibility: hidden; display: none; width: 0px; height: 0px; padding: 0px; border: none;" title="Twitter analytics iframe" src="./Video Streaming with Flask - miguelgrinberg.com_files/saved_resource.html"></iframe><div id="weava-ui-wrapper"><div class="weava-drop-area-wrapper"><div class="weava-drop-area"></div>
+<div class="weava-drop-area-text">Drop here!</div></div></div></body><span class="gr__tooltip"><span class="gr__tooltip-content"></span><i class="gr__tooltip-logo"></i><span class="gr__triangle"></span></span></html>

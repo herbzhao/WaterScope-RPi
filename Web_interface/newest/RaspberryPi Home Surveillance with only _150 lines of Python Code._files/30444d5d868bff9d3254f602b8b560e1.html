@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<!-- saved from url=(0081)https://hackernoon.com/media/30444d5d868bff9d3254f602b8b560e1?postId=2701bd0373c9 -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>security6.py – Medium</title><meta name="description" content="Clone with Git or checkout with SVN using the repository&#39;s web address."><meta name="twitter:widgets:csp" content="on"><meta name="robots" content="noindex"><!--<base target="_blank">--><base href="." target="_blank"><style>body {text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; font-family: "ff-tisa-web-pro", Georgia, Cambria, "Times New Roman", Times, serif; font-weight: 400; color: #333332; font-size: 18px; line-height: 1.4; margin: 0; background-color: white; overflow: hidden;}iframe {max-width: 100%;}</style></head><body><style>.gist .gist-file { margin-bottom: 0 !important; }.gist { text-rendering: auto; }</style><script src="./a0b10f7f82bc0b6f384b1c056a34685e.js.download" charset="utf-8"></script><link rel="stylesheet" href="./gist-embed-51733eabd598f6dd7e02254bb5e3dc72.css"><div id="gist48054807" class="gist">
+    <div class="gist-file">
+      <div class="gist-data">
+        <div class="js-gist-file-update-container js-task-list-container file-box">
+  <div id="file-security6-html" class="file">
+    
+
+  <div itemprop="text" class="blob-wrapper data type-html">
+      <table class="highlight tab-size js-file-line-container" data-tab-size="8">
+      <tbody><tr>
+        <td id="file-security6-html-L1" class="blob-num js-line-number" data-line-number="1"></td>
+        <td id="file-security6-html-LC1" class="blob-code blob-code-inner js-file-line">&lt;!<span class="pl-ent">doctype</span> <span class="pl-e">html</span>&gt;</td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L2" class="blob-num js-line-number" data-line-number="2"></td>
+        <td id="file-security6-html-LC2" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L3" class="blob-num js-line-number" data-line-number="3"></td>
+        <td id="file-security6-html-LC3" class="blob-code blob-code-inner js-file-line">&lt;<span class="pl-ent">html</span> <span class="pl-e">lang</span>=<span class="pl-s"><span class="pl-pds">"</span>en<span class="pl-pds">"</span></span>&gt;</td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L4" class="blob-num js-line-number" data-line-number="4"></td>
+        <td id="file-security6-html-LC4" class="blob-code blob-code-inner js-file-line">&lt;<span class="pl-ent">head</span>&gt;</td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L5" class="blob-num js-line-number" data-line-number="5"></td>
+        <td id="file-security6-html-LC5" class="blob-code blob-code-inner js-file-line">  &lt;<span class="pl-ent">meta</span> <span class="pl-e">charset</span>=<span class="pl-s"><span class="pl-pds">"</span>utf-8<span class="pl-pds">"</span></span>&gt;</td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L6" class="blob-num js-line-number" data-line-number="6"></td>
+        <td id="file-security6-html-LC6" class="blob-code blob-code-inner js-file-line">  <span class="pl-c"><span class="pl-c">&lt;!--</span> Be Mobile Friendly <span class="pl-c">--&gt;</span></span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L7" class="blob-num js-line-number" data-line-number="7"></td>
+        <td id="file-security6-html-LC7" class="blob-code blob-code-inner js-file-line">  &lt;<span class="pl-ent">meta</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>viewport<span class="pl-pds">"</span></span> <span class="pl-e">content</span>=<span class="pl-s"><span class="pl-pds">"</span>width=device-width,height=device-height initial-scale=1<span class="pl-pds">"</span></span>&gt;</td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L8" class="blob-num js-line-number" data-line-number="8"></td>
+        <td id="file-security6-html-LC8" class="blob-code blob-code-inner js-file-line">  &lt;<span class="pl-ent">title</span>&gt;TalkingRaspi&lt;/<span class="pl-ent">title</span>&gt;</td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L9" class="blob-num js-line-number" data-line-number="9"></td>
+        <td id="file-security6-html-LC9" class="blob-code blob-code-inner js-file-line">  &lt;<span class="pl-ent">meta</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>description<span class="pl-pds">"</span></span> <span class="pl-e">content</span>=<span class="pl-s"><span class="pl-pds">"</span>Talkingraspi interface<span class="pl-pds">"</span></span>&gt;</td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L10" class="blob-num js-line-number" data-line-number="10"></td>
+        <td id="file-security6-html-LC10" class="blob-code blob-code-inner js-file-line">  &lt;<span class="pl-ent">meta</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>author<span class="pl-pds">"</span></span> <span class="pl-e">content</span>=<span class="pl-s"><span class="pl-pds">"</span>Eren Golge<span class="pl-pds">"</span></span>&gt;</td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L11" class="blob-num js-line-number" data-line-number="11"></td>
+        <td id="file-security6-html-LC11" class="blob-code blob-code-inner js-file-line">  &lt;<span class="pl-ent">link</span> <span class="pl-e">rel</span>=<span class="pl-s"><span class="pl-pds">"</span>stylesheet<span class="pl-pds">"</span></span> <span class="pl-e">href</span>=<span class="pl-s"><span class="pl-pds">"</span>css/styles.css?v=1.0<span class="pl-pds">"</span></span>&gt;</td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L12" class="blob-num js-line-number" data-line-number="12"></td>
+        <td id="file-security6-html-LC12" class="blob-code blob-code-inner js-file-line">  &lt;<span class="pl-ent">script</span> <span class="pl-e">src</span>=<span class="pl-s"><span class="pl-pds">"</span>http://code.jquery.com/jquery-1.11.0.min.js<span class="pl-pds">"</span></span>&gt;<span class="pl-s1">&lt;</span>/<span class="pl-ent">script</span>&gt;</td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L13" class="blob-num js-line-number" data-line-number="13"></td>
+        <td id="file-security6-html-LC13" class="blob-code blob-code-inner js-file-line">  &lt;<span class="pl-ent">script</span>&gt;<span class="pl-s1"></span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L14" class="blob-num js-line-number" data-line-number="14"></td>
+        <td id="file-security6-html-LC14" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">    <span class="pl-c"><span class="pl-c">//</span> Sending start command to server</span></span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L15" class="blob-num js-line-number" data-line-number="15"></td>
+        <td id="file-security6-html-LC15" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">    <span class="pl-en">$</span>(<span class="pl-c1">document</span>).<span class="pl-en">ready</span>(<span class="pl-k">function</span>(){</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L16" class="blob-num js-line-number" data-line-number="16"></td>
+        <td id="file-security6-html-LC16" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">      <span class="pl-en">$</span>(<span class="pl-s"><span class="pl-pds">"</span>#start_button<span class="pl-pds">"</span></span>).<span class="pl-c1">click</span>(<span class="pl-k">function</span>(<span class="pl-smi">e</span>){</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L17" class="blob-num js-line-number" data-line-number="17"></td>
+        <td id="file-security6-html-LC17" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">          <span class="pl-smi">e</span>.<span class="pl-c1">preventDefault</span>();</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L18" class="blob-num js-line-number" data-line-number="18"></td>
+        <td id="file-security6-html-LC18" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">        <span class="pl-smi">$</span>.<span class="pl-en">ajax</span>({type<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>POST<span class="pl-pds">"</span></span>,</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L19" class="blob-num js-line-number" data-line-number="19"></td>
+        <td id="file-security6-html-LC19" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">                url<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>/start<span class="pl-pds">"</span></span>,</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L20" class="blob-num js-line-number" data-line-number="20"></td>
+        <td id="file-security6-html-LC20" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">                data<span class="pl-k">:</span> {},</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L21" class="blob-num js-line-number" data-line-number="21"></td>
+        <td id="file-security6-html-LC21" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">                <span class="pl-en">success</span><span class="pl-k">:</span><span class="pl-k">function</span>(<span class="pl-smi">result</span>){</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L22" class="blob-num js-line-number" data-line-number="22"></td>
+        <td id="file-security6-html-LC22" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">          <span class="pl-en">$</span>(<span class="pl-s"><span class="pl-pds">"</span>#start_button<span class="pl-pds">"</span></span>).<span class="pl-en">html</span>(result);</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L23" class="blob-num js-line-number" data-line-number="23"></td>
+        <td id="file-security6-html-LC23" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">        }});</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L24" class="blob-num js-line-number" data-line-number="24"></td>
+        <td id="file-security6-html-LC24" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">      });</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L25" class="blob-num js-line-number" data-line-number="25"></td>
+        <td id="file-security6-html-LC25" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">    });</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L26" class="blob-num js-line-number" data-line-number="26"></td>
+        <td id="file-security6-html-LC26" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">    </span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L27" class="blob-num js-line-number" data-line-number="27"></td>
+        <td id="file-security6-html-LC27" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">    <span class="pl-c"><span class="pl-c">//</span> Sending stop command to server</span></span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L28" class="blob-num js-line-number" data-line-number="28"></td>
+        <td id="file-security6-html-LC28" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">    <span class="pl-en">$</span>(<span class="pl-c1">document</span>).<span class="pl-en">ready</span>(<span class="pl-k">function</span>(){</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L29" class="blob-num js-line-number" data-line-number="29"></td>
+        <td id="file-security6-html-LC29" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">      <span class="pl-en">$</span>(<span class="pl-s"><span class="pl-pds">"</span>#stop_button<span class="pl-pds">"</span></span>).<span class="pl-c1">click</span>(<span class="pl-k">function</span>(<span class="pl-smi">e</span>){</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L30" class="blob-num js-line-number" data-line-number="30"></td>
+        <td id="file-security6-html-LC30" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">          <span class="pl-smi">e</span>.<span class="pl-c1">preventDefault</span>();</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L31" class="blob-num js-line-number" data-line-number="31"></td>
+        <td id="file-security6-html-LC31" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">        <span class="pl-smi">$</span>.<span class="pl-en">ajax</span>({type<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>POST<span class="pl-pds">"</span></span>,</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L32" class="blob-num js-line-number" data-line-number="32"></td>
+        <td id="file-security6-html-LC32" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">                url<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">"</span>/stop<span class="pl-pds">"</span></span>,</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L33" class="blob-num js-line-number" data-line-number="33"></td>
+        <td id="file-security6-html-LC33" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">                data<span class="pl-k">:</span> {},</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L34" class="blob-num js-line-number" data-line-number="34"></td>
+        <td id="file-security6-html-LC34" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">                <span class="pl-en">success</span><span class="pl-k">:</span><span class="pl-k">function</span>(<span class="pl-smi">result</span>){</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L35" class="blob-num js-line-number" data-line-number="35"></td>
+        <td id="file-security6-html-LC35" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">          <span class="pl-en">$</span>(<span class="pl-s"><span class="pl-pds">"</span>#stop_button<span class="pl-pds">"</span></span>).<span class="pl-en">html</span>(result);</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L36" class="blob-num js-line-number" data-line-number="36"></td>
+        <td id="file-security6-html-LC36" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">        }});</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L37" class="blob-num js-line-number" data-line-number="37"></td>
+        <td id="file-security6-html-LC37" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">      });</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L38" class="blob-num js-line-number" data-line-number="38"></td>
+        <td id="file-security6-html-LC38" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">      </span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L39" class="blob-num js-line-number" data-line-number="39"></td>
+        <td id="file-security6-html-LC39" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">      <span class="pl-c"><span class="pl-c">//</span> Checking system status</span></span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L40" class="blob-num js-line-number" data-line-number="40"></td>
+        <td id="file-security6-html-LC40" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">      (<span class="pl-k">function</span> <span class="pl-en">worker</span>() {</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L41" class="blob-num js-line-number" data-line-number="41"></td>
+        <td id="file-security6-html-LC41" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">         <span class="pl-smi">$</span>.<span class="pl-en">ajax</span>({</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L42" class="blob-num js-line-number" data-line-number="42"></td>
+        <td id="file-security6-html-LC42" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">           url<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>/status<span class="pl-pds">'</span></span>, </span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L43" class="blob-num js-line-number" data-line-number="43"></td>
+        <td id="file-security6-html-LC43" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">           <span class="pl-en">success</span><span class="pl-k">:</span> <span class="pl-k">function</span>(<span class="pl-smi">data</span>) {</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L44" class="blob-num js-line-number" data-line-number="44"></td>
+        <td id="file-security6-html-LC44" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">             <span class="pl-en">$</span>(<span class="pl-s"><span class="pl-pds">'</span>#status_bar<span class="pl-pds">'</span></span>).<span class="pl-en">html</span>(data);</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L45" class="blob-num js-line-number" data-line-number="45"></td>
+        <td id="file-security6-html-LC45" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">           },</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L46" class="blob-num js-line-number" data-line-number="46"></td>
+        <td id="file-security6-html-LC46" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">           <span class="pl-en">complete</span><span class="pl-k">:</span> <span class="pl-k">function</span>() {</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L47" class="blob-num js-line-number" data-line-number="47"></td>
+        <td id="file-security6-html-LC47" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">             <span class="pl-c"><span class="pl-c">//</span> Schedule the next request when the current one's complete</span></span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L48" class="blob-num js-line-number" data-line-number="48"></td>
+        <td id="file-security6-html-LC48" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">             <span class="pl-c1">setTimeout</span>(worker, <span class="pl-c1">5000</span>);</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L49" class="blob-num js-line-number" data-line-number="49"></td>
+        <td id="file-security6-html-LC49" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">           }</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L50" class="blob-num js-line-number" data-line-number="50"></td>
+        <td id="file-security6-html-LC50" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">         });</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L51" class="blob-num js-line-number" data-line-number="51"></td>
+        <td id="file-security6-html-LC51" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">      })();</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L52" class="blob-num js-line-number" data-line-number="52"></td>
+        <td id="file-security6-html-LC52" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">    });</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L53" class="blob-num js-line-number" data-line-number="53"></td>
+        <td id="file-security6-html-LC53" class="blob-code blob-code-inner js-file-line"><span class="pl-s1">    </span><span class="pl-s1">&lt;</span>/<span class="pl-ent">script</span>&gt;</td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L54" class="blob-num js-line-number" data-line-number="54"></td>
+        <td id="file-security6-html-LC54" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L55" class="blob-num js-line-number" data-line-number="55"></td>
+        <td id="file-security6-html-LC55" class="blob-code blob-code-inner js-file-line">  <span class="pl-c"><span class="pl-c">&lt;!--</span>[if lt IE 9]&gt;</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L56" class="blob-num js-line-number" data-line-number="56"></td>
+        <td id="file-security6-html-LC56" class="blob-code blob-code-inner js-file-line"><span class="pl-c">    &lt;script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js"&gt;&lt;/script&gt;</span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L57" class="blob-num js-line-number" data-line-number="57"></td>
+        <td id="file-security6-html-LC57" class="blob-code blob-code-inner js-file-line"><span class="pl-c">  &lt;![endif]<span class="pl-c">--&gt;</span></span></td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L58" class="blob-num js-line-number" data-line-number="58"></td>
+        <td id="file-security6-html-LC58" class="blob-code blob-code-inner js-file-line">&lt;/<span class="pl-ent">head</span>&gt;</td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L59" class="blob-num js-line-number" data-line-number="59"></td>
+        <td id="file-security6-html-LC59" class="blob-code blob-code-inner js-file-line">
+</td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L60" class="blob-num js-line-number" data-line-number="60"></td>
+        <td id="file-security6-html-LC60" class="blob-code blob-code-inner js-file-line">&lt;<span class="pl-ent">body</span>&gt;</td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L61" class="blob-num js-line-number" data-line-number="61"></td>
+        <td id="file-security6-html-LC61" class="blob-code blob-code-inner js-file-line">  &lt;<span class="pl-ent">script</span> <span class="pl-e">src</span>=<span class="pl-s"><span class="pl-pds">"</span>js/scripts.js<span class="pl-pds">"</span></span>&gt;<span class="pl-s1">&lt;</span>/<span class="pl-ent">script</span>&gt;</td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L62" class="blob-num js-line-number" data-line-number="62"></td>
+        <td id="file-security6-html-LC62" class="blob-code blob-code-inner js-file-line">  &lt;<span class="pl-ent">h1</span>&gt;Hi! This is Talkingraspi!&lt;/<span class="pl-ent">h1</span>&gt;</td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L63" class="blob-num js-line-number" data-line-number="63"></td>
+        <td id="file-security6-html-LC63" class="blob-code blob-code-inner js-file-line">  &lt;<span class="pl-ent">span</span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>status_bar<span class="pl-pds">"</span></span>&gt;&lt;/<span class="pl-ent">span</span>&gt;</td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L64" class="blob-num js-line-number" data-line-number="64"></td>
+        <td id="file-security6-html-LC64" class="blob-code blob-code-inner js-file-line">  &lt;/<span class="pl-ent"><span class="pl-ii">br</span></span>&gt;</td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L65" class="blob-num js-line-number" data-line-number="65"></td>
+        <td id="file-security6-html-LC65" class="blob-code blob-code-inner js-file-line">  &lt;/<span class="pl-ent"><span class="pl-ii">br</span></span>&gt;</td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L66" class="blob-num js-line-number" data-line-number="66"></td>
+        <td id="file-security6-html-LC66" class="blob-code blob-code-inner js-file-line">  &lt;<span class="pl-ent">button</span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>start_button<span class="pl-pds">"</span></span>&gt;Start Talkingraspi&lt;/<span class="pl-ent">button</span>&gt;</td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L67" class="blob-num js-line-number" data-line-number="67"></td>
+        <td id="file-security6-html-LC67" class="blob-code blob-code-inner js-file-line">  &lt;<span class="pl-ent">button</span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>stop_button<span class="pl-pds">"</span></span>&gt;Stop Talkingraspi&lt;/<span class="pl-ent">button</span>&gt;</td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L68" class="blob-num js-line-number" data-line-number="68"></td>
+        <td id="file-security6-html-LC68" class="blob-code blob-code-inner js-file-line">  &lt;<span class="pl-ent">script</span> <span class="pl-e">src</span>=<span class="pl-s"><span class="pl-pds">"</span>http://code.jquery.com/jquery-1.11.0.min.js<span class="pl-pds">"</span></span>&gt;<span class="pl-s1">&lt;</span>/<span class="pl-ent">script</span>&gt;</td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L69" class="blob-num js-line-number" data-line-number="69"></td>
+        <td id="file-security6-html-LC69" class="blob-code blob-code-inner js-file-line">&lt;/<span class="pl-ent">body</span>&gt;</td>
+      </tr>
+      <tr>
+        <td id="file-security6-html-L70" class="blob-num js-line-number" data-line-number="70"></td>
+        <td id="file-security6-html-LC70" class="blob-code blob-code-inner js-file-line">&lt;/<span class="pl-ent">html</span>&gt;</td>
+      </tr>
+</tbody></table>
+
+
+  </div>
+
+  </div>
+</div>
+
+      </div>
+      <div class="gist-meta">
+        <a href="https://gist.github.com/erogol/a0b10f7f82bc0b6f384b1c056a34685e/raw/2d12e9bef5c2818531869e630c6d06769d81a7ad/security6.html" style="float:right">view raw</a>
+        <a href="https://gist.github.com/erogol/a0b10f7f82bc0b6f384b1c056a34685e#file-security6-html">security6.html</a>
+        hosted with ❤ by <a href="https://github.com/">GitHub</a>
+      </div>
+    </div>
+</div>
+<script>var height = -1; var delayMs = 200;function notifyResize(height) {height = height ? height : document.documentElement.offsetHeight; var resized = false; if (window.donkey && donkey.resize) {donkey.resize(height); resized = true;}if (parent && parent._resizeIframe) {var obj = {iframe: window.frameElement, height: height}; parent._resizeIframe(obj); resized = true;}if (window.location && window.location.hash === "#amp=1" && window.parent && window.parent.postMessage) {window.parent.postMessage({sentinel: "amp", type: "embed-size", height: height}, "*");}if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.resize) {window.webkit.messageHandlers.resize.postMessage(height); resized = true;}return resized;}function maybeResize() {if (document.documentElement.offsetHeight != height && notifyResize()) {height = document.documentElement.offsetHeight;}delayMs = Math.min(delayMs * 2, 1000000); setTimeout(maybeResize, delayMs);}maybeResize();</script><div id="weava-permanent-marker" date="1535061736013"></div><div id="weava-ui-wrapper"><div class="weava-drop-area-wrapper"><div class="weava-drop-area"></div>
+<div class="weava-drop-area-text">Drop here!</div></div></div></body></html>
