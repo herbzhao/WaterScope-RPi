@@ -1,0 +1,15 @@
+# ISO Valid values are between 0 (auto) and 1600. 
+iso: 1600
+
+# When queried, the shutter_speed property returns the shutter speed of the camera in microseconds, or 0 which indicates that the speed will be automatically determined
+shutter_speed: 200000
+
+# color saturation of the camera as an integer between -100 and 100. 
+saturation: 50
+
+# Auto white balance: The red and blue values are returned Fraction instances. The values will be between 0.0 and 8.0.
+awb_mode: off
+
+# if not using auto, then you can change the awb_gains
+red_gain: 0.8
+blue_gain: 2.8
