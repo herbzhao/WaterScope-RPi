@@ -12,6 +12,8 @@ class initialise_config():
         self.awb_mode_re = re.compile('awb_mode:.*')
         self.red_gain_re = re.compile('red_gain:.*')
         self.blue_gain_re = re.compile('blue_gain:.*')
+        self.analog_gain_re = re.compile('analog_gain:.*')
+        self.digital_gain_re = re.compile('digital_gain:.*')
         self.iso_re = re.compile('iso:.*')
         self.shutter_speed_re = re.compile('shutter_speed:.*')
         self.saturation_re = re.compile('saturation:.*')
@@ -38,7 +40,9 @@ class initialise_config():
         config = {}
         self.config_content = {}
         for i,j in [
-            [self.awb_mode_re, 'awb_mode'],[self.red_gain_re, 'red_gain'], [self.blue_gain_re, 'blue_gain'], 
+            [self.awb_mode_re, 'awb_mode'],
+            [self.red_gain_re, 'red_gain'], [self.blue_gain_re, 'blue_gain'], 
+            [self.digital_gain_re, 'digital_gain'], [self.analog_gain_re, 'analog_gain'], 
             [self.iso_re, 'iso'],
             [self.shutter_speed_re, 'shutter_speed'],[self.saturation_re, 'saturation'],
             [self.sample_number_re, 'sample']]:
@@ -52,14 +56,13 @@ class initialise_config():
         self.awb_mode = str(self.config_content['awb_mode'])
         self.red_gain = float(self.config_content['red_gain'])
         self.blue_gain = float(self.config_content['blue_gain'])
+        self.analog_gain = float(self.config_content['analog_gain'])
+        self.digital_gain = float(self.config_content['digital_gain'])
         self.awb_gains = (self.red_gain, self.blue_gain)
-        print('awb_gains = {}'.format(self.awb_gains))
         self.iso = int(self.config_content['iso'])
-        print('iso',self.iso)
         self.shutter_speed = int(self.config_content['shutter_speed'])
-        print('shutter_speed', self.shutter_speed)
         self.saturation = int(self.config_content['saturation'])
-        print('saturation', self.saturation)
+        
         self.last_sample_number = self.config_content['sample']
         print('last_sample_number = ', self.last_sample_number)
 

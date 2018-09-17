@@ -10,6 +10,8 @@ import sys
 import os
 # read config from a txt file
 from read_config import initialise_config
+# Richard's fix gain
+from set_picamera_gain import set_analog_gain, set_digital_gain
 
 '''
 To run the code, use 
@@ -17,8 +19,13 @@ $ python focus_and_timelapse.py
 then type number for stage movement, 66/-66 for LED and tl for timelapse
 
 To run the code for timelapse in background direclty
-$ nohup python focus_and_timelapse.py tl &
+$ nohup python timelapse.py &
+
 '''
+
+# in minutes
+time_interval = 10/60
+
 
 
 def temperature_reading():
@@ -57,9 +64,17 @@ def start_time_lapse(time_interval=10):
     config.read_config_file()
     camera.awb_mode = config.awb_mode
     camera.awb_gains = config.awb_gains
-    camera.iso = config.iso
+
+    # Richard's library to set analog and digital gains
+    set_analog_gain(camera, config.analog_gain)
+    set_digital_gain(camera, config.digital_gain)
     camera.shutter_speed = config.shutter_speed
+    # camera.iso = config.iso
     camera.saturation = config.saturation
+    camera.led = False
+
+    print('analog: {}'.format(float(camera.analog_gain)))
+    print('digital: {}'.format(float(camera.digital_gain)))
 
 
     while True:
@@ -89,14 +104,13 @@ def start_time_lapse(time_interval=10):
 # Save the temperature log to a file with datetime
 starting_time = datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S')
 # make a directory in case previously didnt exist
-os.mkdir('/home/pi/WaterScope-RPi/water_test/timelapse')
 os.mkdir('/home/pi/WaterScope-RPi/water_test/timelapse/{}'.format(starting_time))
 
 # Find Arduino serial port first
 available_ports = list(serial.tools.list_ports.comports())
 
 for port in available_ports:
-    if 'Linux' in port[1]:
+    if 'Linux' in port[1] or 'Serial' in port[1]:
         arduino_port = port[0]
         print('Arduino port: '+ arduino_port)
 
@@ -112,27 +126,11 @@ with serial.Serial(arduino_port,9600) as ser: #change ACM number as found from l
     threading1.start()
 
     # if there is any additional sys.arg, then start time lapse automatically
-    if len(sys.argv) > 1:
-        time.sleep(5)
-        start_time_lapse(time_interval=5)
 
-    # if run the code without arg, just do the traditional thing
-    else:
-        while True:
-            #print('type the distance whenever you want')
-            # python 2.7 raw_input
-            user_input = str(raw_input())
-            if user_input == 'tl':
-                start_time_lapse(time_interval=20/60)
-            else:
-                send_arduino_command(user_input)
-            print(user_input)
+    time.sleep(5)
+    start_time_lapse(time_interval=time_interval)
 
 
-'''
-nohup focus_and_timelapse.py tl &
-
-'''
 
 
 
