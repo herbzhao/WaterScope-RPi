@@ -1,7 +1,7 @@
 from __future__ import division
 
 
-# import the necessary packages
+# import the necessary packages 
 from picamera.array import PiRGBArray
 import picamera
 import io
@@ -11,11 +11,14 @@ import numpy as np
 
 
 
-def variance_of_laplacian(image):
+def variance_of_laplacian(image, roi=[]):
     ''' focus detection ''' 
+    if roi == []:
+        roi = image
     # compute the Laplacian of the image and then return the focus
     # measure, which is simply the variance of the Laplacian
-    focus_value = cv2.Laplacian(image, cv2.CV_64F).var()
+
+    focus_value = cv2.Laplacian(roi, cv2.CV_64F).var()
     focus_text = 'f: {}'.format(focus_value)
     # CV font
     font = cv2.FONT_HERSHEY_SIMPLEX
@@ -24,21 +27,32 @@ def variance_of_laplacian(image):
         (int(image.shape[0]*0.2), int(image.shape[1]*0.1)), 
         font, 1,(255,255,255))
 
-
     return image
 
-def annotate_image(image):
+
+def define_ROI(image):
     # do some modification
-    image = cv2.Canny(image,100,100)
+    print(image.shape)
+    # the opencv size is (y,x)
+    image_y, image_x = image.shape[:2]
+
+    # a square from the centre of image
+    box_size = int(image_x*0.3)
+    roi_box = {
+        'x1': int(image_x/2-box_size/2), 'y1':int(image_y/2-box_size/2), 
+        'x2': int(image_x/2+box_size/2), 'y2':int(image_y/2+box_size/2)}
+    # draw the rectangle
+    cv2.rectangle(
+        image, 
+        pt1=(roi_box['x1'], roi_box['y1']),
+        pt2=(roi_box['x2'], roi_box['y2']), 
+        color=(255,0,0),
+        thickness=2)
     
-    # annotation doesnt return an image but draw directly on top
-    #cv2.line(image,(0,0),(511,511),(255,0,0),5)
-    # CV font
-    #font = cv2.FONT_HERSHEY_SIMPLEX
-    #cv2.putText(image,'OpenCV',(image.shape[0]/2,image.shape[1]/2), font, 4,(255,255,255))
+    # crop the image
+    roi = image[roi_box['y1']: roi_box['y2'], roi_box['x1']:roi_box['x2']]
 
-    return image
-
+    return image, roi
 
 
 def circle_detection(image):
@@ -62,16 +76,6 @@ def circle_detection(image):
             # draw the center of the circle
             cv2.circle(image,(i[0],i[1]),2,(0,0,255),3)
 
-
-    # for i in circles[0, :]:
-    #     if i[1] < 400:
-    #         cv2.draw_circles(circles, image) 
-    # # loop over the (x, y) coordinates and radius of the circles
-    # for (x, y, r) in circles:
-    #     # draw the circle in the output image, then draw a rectangle
-    #     # corresponding to the center of the circle
-    #     cv2.circle(image, (x, y), r, (0, 255, 0), 4)
-    #     cv2.rectangle(image, (x - 5, y - 5), (x + 5, y + 5), (0, 128, 255), -1)
  
     return image
 
@@ -137,7 +141,10 @@ with picamera.PiCamera() as camera:
         image = data
 
         # opencv Fun time
-        image = variance_of_laplacian(image)
+        #image = variance_of_laplacian(image)
+        image, roi = define_ROI(image)
+        # use the roi to calculate the sharpness
+        image = variance_of_laplacian(image, roi)
         #image = annotate_image(image)
         # image = face_detection(image)
         #image = circle_detection(image)
@@ -148,6 +155,11 @@ with picamera.PiCamera() as camera:
         cv2.moveWindow('stream', 0,0)  # Move it to (40,30)
         # show the frame
         cv2.imshow('stream', image)
+
+
         key = cv2.waitKey(1) & 0xFF
+        # if the `x` key was pressed, break from the loop
+        if key == ord("x"):
+            break
 
         

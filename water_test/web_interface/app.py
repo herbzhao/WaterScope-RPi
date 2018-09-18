@@ -7,12 +7,15 @@ import threading
 
 from flask import Flask, render_template, Response, redirect, request
 
-from serial_communication import connect_serial, send_arduino_command,  serial_read_once, serial_read_continuous
+from serial_communication import connect_serial, send_arduino_command,  serial_read_silent
 
 # Raspberry Pi camera module (requires picamera package)
+from camera_pi import Camera
+
 if len(sys.argv) > 1:
     if sys.argv[1] == 'opencv':
         from camera_pi_cv import Camera
+
 else:
     from camera_pi import Camera
 
@@ -48,10 +51,10 @@ def index():
     return render_template('index.html')
 
 # a help page
-@app.route('/h')
-@app.route('/help')
-def help_page():
-    return render_template('help.html', refresh_interval=2)
+@app.route('/zoom')
+def zoom():
+    """Video streaming home page."""
+    return render_template('index.html', stream_class = 'stream_zoom')
 
 
 def gen(camera):
@@ -101,19 +104,53 @@ def take_timelapse():
 
 
 # this template includes an auto-refresh to keep snapping :D
-@app.route('/serial/')
-@app.route('/ser/')
-def send_serial():
+@app.route('/timelapse_waterscope/')
+@app.route('/tl_ws/')
+def take_timelapse_waterscope():
+    # initialise the serial port
     try:
         ser
     except NameError:
+        global ser
         ser = connect_serial()
-        # somehow need to read once for the arduino to work
-        # serial_read_once(ser)
+        # somehow need to read arduino to work
         # if you want to read serial continously
-        threading1 = threading.Thread(target=serial_read_continuous, args=[ser])
-        threading1.daemon = True
-        threading1.start()
+        threading0 = threading.Thread(target=serial_read_silent, args=[ser])
+        threading0.daemon = True
+        threading0.start()
+    
+    # default time lapse interval is 10 sec
+    # to use different value - http://10.0.0.1:5000:5000/timelapse/?t=2
+    refresh_interval = request.args.get('t', '10')
+    send_arduino_command(ser, '66')
+    # stablise the LED before taking images
+    time.sleep(1)
+    Camera.take_image()
+    time.sleep(0.1)
+    send_arduino_command(ser, '-66')
+    # start a thread
+    return render_template('index.html', refresh_interval=refresh_interval)
+
+
+
+
+# this template includes an auto-refresh to keep snapping :D
+@app.route('/serial/')
+@app.route('/ser/')
+def send_serial():
+    # initialise the serial port
+    try:
+        ser
+    except NameError:
+        global ser
+        ser = connect_serial()
+        # somehow need to read arduino to work
+        # if you want to read serial continously
+        threading0 = threading.Thread(target=serial_read_silent, args=[ser])
+        threading0.daemon = True
+        threading0.start()
+        # again, this is the arduino issue
+        time.sleep(2)
 
     general_serial_command = request.args.get('s', '')
     move_serial_command = request.args.get('m', '')

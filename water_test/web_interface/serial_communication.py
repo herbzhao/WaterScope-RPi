@@ -23,22 +23,24 @@ def send_arduino_command(ser, serial_command):
         print('arduino move {}'.format(distance))
         serial_command = distance
 
-    
-    ser.write(str(serial_command)+'\n'+'\r')
+    ser.write('{} \n\r'.format(str(serial_command)).encode())
 
-def serial_read_once(ser):
-    # only when serial is available to read
-    # if ser.in_waiting:
-    if ser.in_waiting:
-        serial_output = ser.readline()
-    # disable the print for now 
-        #print(serial_output)
-
-
-def serial_read_continuous(ser):
+def serial_read_silent(ser):
     while True:
     # only when serial is available to read
-        serial_read_once(ser)
+    # if ser.in_waiting:
+        if ser.in_waiting:
+            serial_output = ser.readline()
+
+
+def serial_read(ser):
+    while True:
+    # only when serial is available to read
+    # if ser.in_waiting:
+        if ser.in_waiting:
+            serial_output = ser.readline()
+            # disable the print for now 
+            print(serial_output)
 
 
 
@@ -73,7 +75,7 @@ if __name__ == '__main__':
     ser = connect_serial()
 
     # now threading1 runs regardless of user input
-    threading1 = threading.Thread(target=serial_read_continuous, args=[ser])
+    threading1 = threading.Thread(target=serial_read, args=[ser])
     threading1.daemon = True
     threading1.start()
 

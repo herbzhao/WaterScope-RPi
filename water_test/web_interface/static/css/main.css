@@ -1,5 +1,11 @@
 /* auto-resizing the streaming window */
 .stream {
-    max-width: 100%;
+    /* max-width: 100%; */
+    width: 100%;
     height: auto;
+    /* width: auto; */
+}
+
+.stream_zoom {
+    zoom: 150%;
 }

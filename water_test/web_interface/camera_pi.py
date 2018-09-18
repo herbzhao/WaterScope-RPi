@@ -18,10 +18,12 @@ from threading import Condition
 
 class Camera(BaseCamera):
 
+
     @classmethod
     def initialisation(cls):
-        cls.i = 0
-        cls.stream_resolution = (1648, 1232)
+        cls.image_seq = 0
+        cls.fps = 30
+        cls.stream_resolution = (1648,1232)
         cls.image_resolution = (3280,2464)
         cls.starting_time = datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S')
         os.mkdir('/home/pi/WaterScope-RPi/water_test/timelapse/{}'.format(cls.starting_time))
@@ -53,7 +55,7 @@ class Camera(BaseCamera):
             # need to stop the video channel first
             cls.camera.stop_recording()
             cls.camera.resolution = cls.image_resolution
-            filename = '/home/pi/WaterScope-RPi/water_test/timelapse/{}/timelapse_{:03d}.jpg'.format(Camera.starting_time, Camera.i)
+            filename = '/home/pi/WaterScope-RPi/water_test/timelapse/{}/timelapse_{:03d}.jpg'.format(Camera.starting_time, cls.image_seq)
             print('taking image')
             #cls.camera.capture(filename, format = 'jpeg', bayer = True)
             cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = True)
@@ -61,11 +63,13 @@ class Camera(BaseCamera):
             # reduce the resolution for video streaming
             cls.camera.resolution = cls.stream_resolution
             # resume the video channel
-            cls.camera.start_recording(cls.stream, format='mjpeg')
+            cls.camera.start_recording(cls.stream, format='mjpeg', quality = 100)
 
-            cls.i = cls.i + 1
+            cls.image_seq = cls.image_seq + 1
 
 
+
+    ''' sync above '''
     @staticmethod
     def frames(cls):
         # run this initialisation method
@@ -74,16 +78,15 @@ class Camera(BaseCamera):
         with picamera.PiCamera() as cls.camera:
             # let camera warm up
             time.sleep(0.1)
-            fps = 24
             cls.camera.resolution = cls.stream_resolution
 
-            cls.camera.framerate = fps
+            cls.camera.framerate = cls.fps
             # read configs
             cls.update_camera_setting()
 
             # streaming
             cls.stream = io.BytesIO()
-            cls.camera.start_recording(cls.stream, format='mjpeg')
+            cls.camera.start_recording(cls.stream, format='mjpeg', quality = 100)
 
             # image size
             image_size = cls.camera.resolution[0]*cls.camera.resolution[1]*3
@@ -94,7 +97,7 @@ class Camera(BaseCamera):
                 cls.stream.truncate()
                 # to stream, read the new frame
                 # it has to generate frames faster than displaying the frames, otherwise some random bug will occur
-                time.sleep(1/fps*0.2)
+                time.sleep(1/cls.fps*0.2)
                 # yield the result to be read
                 frame = cls.stream.getvalue()
                 ''' ensure the size of package is right''' 
