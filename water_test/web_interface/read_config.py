@@ -64,7 +64,6 @@ class initialise_config():
         self.saturation = int(self.config_content['saturation'])
         
         self.last_sample_number = self.config_content['sample']
-        print('last_sample_number = ', self.last_sample_number)
 
         self.config_file.close()
 

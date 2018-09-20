@@ -15,8 +15,11 @@ from read_config import initialise_config
 # Richard's fix gain
 from set_picamera_gain import set_analog_gain, set_digital_gain
 
+# serial connection
+from serial_communication import serial_controller_class
 
 from threading import Condition
+import threading
 
 
 
@@ -52,93 +55,82 @@ class Camera(BaseCamera):
     ''' be careful about the cls.camera.start_recording, use 'bgr' format!! '''
     @classmethod
     def take_image(cls):
-            # when taking photos, increase the resolution and everything
-            # need to stop the video channel first
-            cls.camera.stop_recording()
-            cls.camera.resolution = cls.image_resolution
-            filename = '/home/pi/WaterScope-RPi/water_test/timelapse/{}/timelapse_{:03d}.jpg'.format(Camera.starting_time, cls.image_seq)
-            print('taking image')
-            #cls.camera.capture(filename, format = 'jpeg', bayer = True)
-            cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = True)
+        # when taking photos, increase the resolution and everything
+        # need to stop the video channel first
+        cls.camera.stop_recording()
+        cls.camera.resolution = cls.image_resolution
+        filename = '/home/pi/WaterScope-RPi/water_test/timelapse/{}/timelapse_{:03d}.jpg'.format(Camera.starting_time, cls.image_seq)
+        print('taking image')
+        #cls.camera.capture(filename, format = 'jpeg', bayer = True)
+        cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = True)
 
-            # reduce the resolution for video streaming
-            cls.camera.resolution = cls.stream_resolution
-            # resume the video channel
-            cls.camera.start_recording(cls.stream, format='bgr')
+        # reduce the resolution for video streaming
+        cls.camera.resolution = cls.stream_resolution
+        # resume the video channel
+        cls.camera.start_recording(cls.stream, format='bgr')
 
-            cls.image_seq = cls.image_seq + 1
+        cls.image_seq = cls.image_seq + 1
 
 
     ''' sync above '''
+    @classmethod
+    def init_cv(cls):
+        cls.ROI = []
+        cls.cv_libraries = [
+            cls.define_ROI,
+            #cv_stream.edge_detection,
+            cls.variance_of_laplacian, 
+        ]
+
+
     # openCV functions
     @classmethod
-    def variance_of_laplacian(cls, image, ROI=[]):
+    def variance_of_laplacian(cls):
         ''' focus detection ''' 
-        if ROI == []:
-            ROI = image
+        if cls.ROI == []:
+            cls.ROI = cls.image
         # compute the Laplacian of the image and then return the focus
         # measure, which is simply the variance of the Laplacian
-        focus_value = cv2.Laplacian(ROI, cv2.CV_64F).var()
-        focus_text = 'f: {}'.format(focus_value)
+        cls.focus_value = cv2.Laplacian(cls.ROI, cv2.CV_64F).var()
+        focus_text = 'f: {}'.format(cls.focus_value)
         # CV font
         font = cv2.FONT_HERSHEY_SIMPLEX
         cv2.putText(
-            image,focus_text,
-            (int(image.shape[0]*0.2), int(image.shape[1]*0.1)), 
+            cls.image,focus_text,
+            (int(cls.image.shape[0]*0.2), int(cls.image.shape[1]*0.1)), 
             font, 1,(255,255,255))
 
-        return image
-
 
     @classmethod
-    def edge_detection(cls, image):
+    def edge_detection(cls):
         # do some modification
-        image = cv2.Canny(image,100,100)
-        return image
-
-    
-    
-    @classmethod
-    def face_detection(cls, image):
-        # eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
-        # gray scale image for faster calculation?
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        face_cascade = cv2.CascadeClassifier('data/haarcascades/haarcascade_frontalface_default.xml')
-        faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-        #time.sleep(0.2)
-
-        for (x,y,w,h) in faces:
-            cv2.rectangle(image,(x,y),(x+w,y+h),(255,0,0),2)
-            roi_gray = gray[y:y+h, x:x+w]
-            roi_color = image[y:y+h, x:x+w]
-        #     eyes = eye_cascade.detectMultiScale(roi_gray)
-        # for (ex,ey,ew,eh) in eyes:
-        #     cv2.rectangle(roi_color,(ex,ey),(ex+ew,ey+eh),(0,255,0),2)
-        return image
+        cls.image = cv2.Canny(cls.image,100,100)
 
     @classmethod
-    def define_ROI(cls, image):
+    def define_ROI(cls):
         # do some modification
         # the opencv size is (y,x)
-        image_y, image_x = image.shape[:2]
+        image_y, image_x = cls.image.shape[:2]
 
         # a square from the centre of image
-        box_size = int(image_x*0.2)
+        box_size = int(image_x*0.1)
         roi_box = {
             'x1': int(image_x/2-box_size/2), 'y1':int(image_y/2-box_size/2), 
             'x2': int(image_x/2+box_size/2), 'y2':int(image_y/2+box_size/2)}
+        
+        # the rectangle affects the laplacian, draw it outside the ROI
         # draw the rectangle
+
         cv2.rectangle(
-            image, 
-            pt1=(roi_box['x1'], roi_box['y1']),
-            pt2=(roi_box['x2'], roi_box['y2']), 
-            color=(255,0,0),
+            cls.image, 
+            pt1=(roi_box['x1']-5, roi_box['y1']-5),
+            pt2=(roi_box['x2']+5, roi_box['y2']+5), 
+            color=(0,0,255),
             thickness=2)
         
         # crop the image
-        ROI = image[roi_box['y1']: roi_box['y2'], roi_box['x1']:roi_box['x2']]
+        cls.ROI = cls.image[roi_box['y1']: roi_box['y2'], roi_box['x1']:roi_box['x2']]
 
-        return image, ROI
 
     @classmethod
     def thresholding(cls, image):
@@ -152,12 +144,152 @@ class Camera(BaseCamera):
         image = thresh5
         return image
 
+    @classmethod
+    def init_focusing(cls):
+        # numpy array to store everything
+        cls.motor_moving_time = 2
+        cls.step = 0
+        cls.focus_value = 0
+        cls.focus_values = np.array([])
+        cls.z_values = np.array([])
+        
+        # a plan for mapping
+        cls.define_steps_plan()
 
+        ''' arduino '''
+        # connect to serial
+        #global ser
+        cls.serial_controller = serial_controller_class()
+        cls.serial_controller.serial_read_threading()
+        # turn on the light
+        cls.serial_controller.send_arduino_command('66')
+        time.sleep(1)
+
+
+    @classmethod
+    def define_steps_plan(cls):
+        cls.steps_plan = []
+        # first move up to the end stop and go back to centre
+        cls.steps_plan += [-8000, 4000]
+
+        # first plan: 2000
+        cls.steps_plan += [0]
+        cls.steps_plan += [500]*4
+        cls.steps_plan += [-4*500]
+        cls.steps_plan += [-500]*4
+        cls.steps_plan.append('phase 1 complete')
+
+
+        # first plan: 2000
+        cls.steps_plan += [200]*3
+        cls.steps_plan += [-3*200]
+        cls.steps_plan += [-200]*3
+        cls.steps_plan.append('phase 1 complete')
+
+        # finer plan : 800
+        cls.steps_plan += [100]*3
+        cls.steps_plan += [-3*100]
+        cls.steps_plan += [-100]*3
+        cls.steps_plan.append('phase 2 complete')
+
+        # finest plan: 400
+        cls.steps_plan += [50]*3
+        cls.steps_plan += [-3*50]
+        cls.steps_plan += [-50]*3
+        cls.steps_plan.append('phase 3 complete')
+
+
+        # finest plan: 200
+        cls.steps_plan += [25]*3
+        cls.steps_plan += [-3*25]
+        cls.steps_plan += [-25]*3
+        cls.steps_plan.append('phase 4 complete')
+        cls.steps_plan.append('auto-focusing complete')
     
+    @classmethod
+    def retrieve_mapping_step(cls):
+        cls.step = cls.steps_plan[0]
+        cls.steps_plan = cls.steps_plan[1:]
+
+    @classmethod
+    def wait_for_motor_movement(cls):
+        ''' in the future can be something smarter '''
+        # change the waiting time based on step size
+        if abs(cls.step) >= 500:
+            cls.motor_moving_time = abs(cls.step)/100
+        elif abs(cls.step) <= 100:
+            cls.motor_moving_time = 2
+        else:
+            cls.motor_moving_time = abs(cls.step)/50
+
+        print('waiting for {} seconds'.format(cls.motor_moving_time))
+        time.sleep(cls.motor_moving_time)
+        print('waiting finished')
+
+    @classmethod
+    def auto_focus(cls):
+        while True:
+            try: 
+                # wait for the imaging system to boot up
+                cls.image
+
+                # start to change step when the system is boot up (focus value is non 0)
+                # when there are more planned steps, retrieve one by one and measure the focus
+                cls.retrieve_mapping_step()
+                # otherwise we just continue with mapping
+                if type(cls.step) is not str:   
+                    pass
+            
+                # a string is sent when each phase finished.
+                # then we update the steps by going to local optimal
+                elif type(cls.step) is str:
+                    if cls.step != 'auto-focusing complete':
+                        z_max_focus = cls.z_values[np.argmax(cls.focus_values)]
+                        print('now moving to the local maxima: focus:{} , z: {}'.format(max(cls.focus_values), z_max_focus))
+                        cls.step = z_max_focus - cls.z_values[-1]
+                
+                    elif cls.step == 'auto-focusing complete':
+                        print('focus done! the optimal focus value is {}'.format(cls.focus_value))
+                        break 
+
+                # move
+                print('Z move: {}'.format(cls.step))
+                cls.serial_controller.send_arduino_command('move {}'.format(cls.step))
+                cls.wait_for_motor_movement()
+
+                # record the new position - initialisation
+                if len(cls.z_values) == 0:
+                    cls.z_values = np.append(cls.z_values, 0)
+                else:
+                    cls.z_values = np.append(cls.z_values, cls.z_values[-1]+cls.step)
+                
+                # record the new focus value at new z_value
+                # the focus_value is calculated in the main thread
+                cls.focus_values = np.append(cls.focus_values, cls.focus_value)
+
+                print('current position: {}'.format(cls.z_values[-1]))
+                print('focus: {}'.format(cls.focus_values[-1]))
+                print('')
+
+            # wait for the imaging system to boot up
+            except AttributeError:
+                time.sleep(2)
+
+    @classmethod
+    def auto_focus_thread(cls):
+        cls.init_focusing()
+        # threading for auto focusing    
+        threading_af = threading.Thread(target=cls.auto_focus)
+        threading_af.daemon = True
+        threading_af.start()
+    
+
     @staticmethod
     def frames(cls):
         # run this initialisation method
         cls.initialisation()
+        cls.init_cv()
+        cls.stream_type = 'opencv'
 
         with picamera.PiCamera() as cls.camera:
             # let camera warm up
@@ -191,19 +323,14 @@ class Camera(BaseCamera):
                     # convert the stream string into np.arrry
                     ncols, nrows = cls.camera.resolution
                     data = np.fromstring(frame, dtype=np.uint8).reshape(nrows, ncols, 3)
-                    image = data
+                    cls.image = data
                     
 
-                    ''' free to do any modification of array'''
-                    # image = cls.edge_detection(image)
-                    # image = cls.thresholding(image)
-                    image, ROI = cls.define_ROI(image)
-                    image = cls.variance_of_laplacian(image, ROI)
-                    #image = cls.annotate_image(image)
-                    # image = cls.variance_of_laplacian(image)
-                    #image = cls.face_detection(image)
+                    # place to run some filters, calculations
+                    for library in cls.cv_libraries:
+                        library()
 
                     # encode the frame into jpg for displaying in html
-                    image = cv2.imencode('.jpg', image)[1].tostring()
+                    cls.image = cv2.imencode('.jpg', cls.image)[1].tostring()
                     # yield the result to be read
-                    yield image
+                    yield cls.image

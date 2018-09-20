@@ -17,25 +17,29 @@
 
 
   <div class="d-flex justify-content-center my-2">
-    <a href="/" target="_parent"><button class="btn btn-primary btn-lg mx-1">Default page</button></a>
-    <a href="/zoom" target="_blank"><button class="btn btn-warning btn-lg mx-1">Zoom in</button></a>
-    <a href="/config" target="_parent"><button class="btn btn-info btn-lg mx-1">Config</button></a>
-    <a href="/snap" target="_parent"><button class="btn btn-success btn-lg mx-1">Snap</button></a>
-    <a href="/ser/?s=66" target="_parent"><button class="btn btn-outline-dark btn-lg mx-1">Light on</button></a>
-    <a href="/ser/?s=-66" target="_parent"><button class="btn btn-Dark btn-lg mx-1">Light off</button></a>
-  </div>
+    <a href="/" target="_parent"><button class="btn btn-primary  mx-1">Restart</button></a>
+    <a href="/stop" target="_parent"><button class="btn btn-danger  mx-1">Stop stream</button></a>
+    <a href="/zoom" target="_blank"><button class="btn btn-warning  mx-1">Zoom in</button></a>
+    <a href="/config" target="_parent"><button class="btn btn-info  mx-1">Config</button></a>
+    <a href="/snap" target="_parent"><button class="btn btn-success  mx-1">Snap</button></a>
+    <a href="/swap_stream" target="_parent"><button class="btn btn-outline-danger  mx-1">Toggle camera</button></a>
   </div>
 
   <div class="d-flex justify-content-center">
-    <form class="form-inline">
-      <input type="text" name="t" value="{{refresh_interval}}" placeholder="Interval in seconds" class="form-control mx-3">
-      <button type="submit" formaction="/timelapse/" class="btn btn-outline-success">Start timelapse</button>
-      <button type="submit" formaction="/timelapse_waterscope/" class="btn btn-outline-primary">WaterScope timelapse</button>
-    </form>
-
+    <a href="/autofocus" target="_parent"><button class="btn btn-outline-success mx-1">Autofocus</button></a>
+    <a href="/ser/?s=66" target="_parent"><button class="btn btn-outline-dark  mx-1">Light on</button></a>
+    <a href="/ser/?s=-66" target="_parent"><button class="btn btn-Dark  mx-1">Light off</button></a>
     <form action="/ser/" class="form-inline mx-3">
-      <input type="text" name="m" value="{{move_serial_command}}" placeholder="Move how much?" class="form-control mx-3">
+      <input type="text" name="m" value="{{move_serial_command}}" placeholder="Step?" class="form-control mx-3 col-5">
       <button type="submit" class="btn btn-outline-danger">Move!</button>
+    </form>
+  </div>
+
+  <div class="d-flex justify-content-center">
+    <form class="form-inline mx-3">
+      <input type="text" name="t" value="{{refresh_interval}}" placeholder="Seconds?" class="form-control mx-3 col-3">
+      <button type="submit" formaction="/timelapse/" class="btn btn-outline-success mx-1">Start timelapse</button>
+      <button type="submit" formaction="/timelapse_waterscope/" class="btn btn-outline-primary mx-1">WaterScope timelapse</button>
     </form>
   </div>
 
@@ -43,8 +47,8 @@
     <img class="{{stream_class or 'stream' }}" src="{{ url_for('video_feed') }}" width="1640" height="1232">
   </div>
 
-  
-<!-- 
+
+  <!-- 
   <div style="text-align:center;width:480px;">
     <button onclick="moveup()">UP</button><br><br>
     <button onclick="moveleft()">LEFT</button>

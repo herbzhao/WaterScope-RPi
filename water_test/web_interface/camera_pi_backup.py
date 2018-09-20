@@ -45,6 +45,9 @@ class Camera(BaseCamera):
         cls.camera.saturation = config.saturation
         cls.camera.led = False
 
+        print('analog: {}'.format(float(cls.camera.analog_gain)))
+        print('digital: {}'.format(float(cls.camera.digital_gain)))
+
     
     @classmethod
     def take_image(cls):
@@ -65,12 +68,12 @@ class Camera(BaseCamera):
             cls.image_seq = cls.image_seq + 1
 
 
+
     ''' sync above '''
     @staticmethod
     def frames(cls):
         # run this initialisation method
         cls.initialisation()
-        cls.stream_type = 'pi'
 
         with picamera.PiCamera() as cls.camera:
             # let camera warm up
@@ -102,4 +105,6 @@ class Camera(BaseCamera):
                     pass
                 else:
                     yield frame
+
+
 
