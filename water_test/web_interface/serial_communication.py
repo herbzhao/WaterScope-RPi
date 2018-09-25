@@ -14,38 +14,39 @@ from read_config import initialise_config
 
 class serial_controller_class():
     def __init__(self):
-        self.connect_serial()
+        self.starting_time = time.time()
 
-    def connect_serial(self):
+    def time_logger(self):
+        self.time_elapsed = '{:.1f}'.format(time.time() - self.starting_time)
 
+
+    def connect_serial(self, port_names=['Serial', 'serial', 'SERIAL'], baudrate=9600, ):
+        ''' automatically detect the Ardunio port and connect '''
         # Find Arduino serial port first
         available_ports = list(serial.tools.list_ports.comports())
-
         for port in available_ports:
-            print(port[0])
-            print(port[1])
-            if 'Linux' in port[1] or 'Serial' in port[1]:
-                arduino_port = port[0]
-                print('Arduino port: '+ arduino_port)
+            for name in port_names:
+                if name in port[1]:
+                    serial_port = port[0]
+                    print('Serial port: '+ serial_port)
 
-        #arduino_port = '/dev/ttyUSB0'
-        print('Initialisation of the stage. \n Waiting for the temperature reading to show up. \n Then you can type the command \n')
-        #with serial.Serial(arduino_port,9600) as ser: #change ACM number as found from ls /dev/tty/ACM*
-        self.ser = serial.Serial(arduino_port, 9600)
-        self.ser.baudrate=9600
-        self.ser.flush()
+        # TODO: not sure whether this will cause problem, the with statement
+        with serial.Serial() as self.ser:
+            self.ser.port = serial_port
+            self.ser.baudrate = baudrate
+            # TODO: check the meaning of the time out
+            self.ser.timeout = 1
+            self.ser.flush()
 
-    def send_arduino_command(self, serial_command):
-        # does not read ser yet
-        #print('command: {}'.format(serial_command))
+    def send_arduino_command(self):
+        ''' purly sending the serial information to arduino, the parsing is done in other methods '''
+        self.ser.write('{} \n\r'.format(str(self.serial_command)).encode())
 
+    def parsing_waterscope(self, serial_command):
+        self.serial_command = serial_command
         if 'move' in serial_command:
-        # parse the string
-            distance = serial_command.replace('move','').replace(' ','')
-            # print('arduino move {}'.format(distance))
-            serial_command = distance
-
-        self.ser.write('{} \n\r'.format(str(serial_command)).encode())
+            serial_command.
+        pass
 
 
     def serial_read(self):
@@ -53,35 +54,46 @@ class serial_controller_class():
         # only when serial is available to read
         # if ser.in_waiting:
             if self.ser.in_waiting:
-                serial_output = self.ser.readline()
-                # disable the print for now 
-                print(serial_output)
+                self.serial_output = self.ser.readline()
+                print(self.serial_output)
     
     def serial_read_quiet(self):
+        ''' read the serial output but not print it ''' 
+        while True:
+        # only when serial is available to read
+        # if ser.in_waiting:
+            if self.ser.in_waiting:
+                self.serial_output = self.ser.readline()
+
+    def serial_read_record(self):
+        ''' read the serial output and log in a file for further analysis ''' 
         while True:
         # only when serial is available to read
         # if ser.in_waiting:
             if self.ser.in_waiting:
                 serial_output = self.ser.readline()
 
-    
-    def serial_read_threading(self, quiet=True):
-        ''' used to start threading for '''
-        if quiet is True:
-            # now threading1 runs regardless of user input
-            self.threading1 = threading.Thread(target=self.serial_read_quiet)
-        else:
-            self.threading1 = threading.Thread(target=self.serial_read)
+                with open() as log_file:
+                    pass
 
-        self.threading1.daemon = True
-        self.threading1.start()
+    
+    def serial_read_threading(self, option='quite'):
+        ''' used to start threading for '''
+        if option == 'quiet':
+            # now threading1 runs regardless of user input
+            self.threading_ser_read = threading.Thread(target=self.serial_read_quiet)
+        elif option == 'logging':
+            self.threading_ser_read = threading.Thread(target=self.serial_read)
+        else:
+            self.threading_ser_read = threading.Thread(target=self.serial_read)
+
+        self.threading_ser_read.daemon = True
+        self.threading_ser_read.start()
         time.sleep(2)
 
 #############################################
 # code starts here
 if __name__ == '__main__':
-
-        
     serial_controller = serial_controller_class()
     serial_controller.serial_read_threading(quiet=False)
 
