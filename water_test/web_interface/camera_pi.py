@@ -60,41 +60,46 @@ class Camera(BaseCamera):
             cls.image_seq = cls.image_seq + 1
 
     
-    ''' sync above '''
+    # Change: ''' sync above '''
+    # Experimental: shall  we move the class variables out here?
     stream_type = 'pi'
+    camera = picamera.Picamera()
+    time.sleep(0.1)
+    stream = io.BytesIO()
+
     @staticmethod
     def frames(cls):
         # run this initialisation method
         cls.initialisation()
+        # Experimental: shall  we move the class variables out there?
+        # with picamera.PiCamera() as cls.camera:
+        #     cls.camera = picamera.PiCamera()
+        #     # let camera warm up
+        #     time.sleep(0.1)
+        cls.camera.resolution = cls.stream_resolution
+        cls.camera.framerate = cls.fps
+        # setting config
+        cls.update_camera_setting()
 
-        with picamera.PiCamera() as cls.camera:
-            # let camera warm up
-            time.sleep(0.1)
-            cls.camera.resolution = cls.stream_resolution
+        # streaming
+        # cls.stream = io.BytesIO()
+        cls.camera.start_recording(cls.stream, format='mjpeg', quality = 100)
 
-            cls.camera.framerate = cls.fps
-            # read configs
-            cls.update_camera_setting()
+        # image size
+        image_size = cls.camera.resolution[0]*cls.camera.resolution[1]*3
 
-            # streaming
-            cls.stream = io.BytesIO()
-            cls.camera.start_recording(cls.stream, format='mjpeg', quality = 100)
-
-            # image size
-            image_size = cls.camera.resolution[0]*cls.camera.resolution[1]*3
-
-            while True:
-                # reset stream for next frame
-                cls.stream.seek(0)
-                cls.stream.truncate()
-                # to stream, read the new frame
-                # it has to generate frames faster than displaying the frames, otherwise some random bug will occur
-                time.sleep(1/cls.fps*0.2)
-                # yield the result to be read
-                frame = cls.stream.getvalue()
-                ''' ensure the size of package is right''' 
-                if len(frame) == 0:
-                    pass
-                else:
-                    yield frame
+        while True:
+            # reset stream for next frame
+            cls.stream.seek(0)
+            cls.stream.truncate()
+            # to stream, read the new frame
+            # it has to generate frames faster than displaying the frames, otherwise some random bug will occur
+            time.sleep(1/cls.fps*0.2)
+            # yield the result to be read
+            frame = cls.stream.getvalue()
+            ''' ensure the size of package is right''' 
+            if len(frame) == 0:
+                pass
+            else:
+                yield frame
 

@@ -158,7 +158,7 @@ class Camera(BaseCamera):
         cls.serial_controller.send_arduino_command('66')
         time.sleep(1)
 
-
+    # TODO: move the lists to another file
     @classmethod
     def define_steps_plan(cls):
         cls.steps_plan = []
@@ -318,7 +318,6 @@ class Camera(BaseCamera):
                     ncols, nrows = cls.camera.resolution
                     data = np.fromstring(frame, dtype=np.uint8).reshape(nrows, ncols, 3)
                     cls.image = data
-                    
 
                     # place to run some filters, calculations
                     for library in cls.cv_libraries:

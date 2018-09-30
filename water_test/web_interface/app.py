@@ -108,7 +108,7 @@ def connect_serial():
         Camera.serial_controller
     except AttributeError:
         Camera.serial_controller = serial_controller_class()
-        # change: based on the arduino name
+        # Change: based on the arduino name
         Camera.serial_controller.serial_connect(port_names=['SERIAL'], baudrate=9600)
         Camera.serial_controller.serial_read_threading()
 
