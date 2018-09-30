@@ -6,18 +6,19 @@ import datetime
 import sys
 import os
 import picamera
+# DEBUG: is this neccessary?
+from threading import Condition
+import threading
 
 # custom library
 from base_camera import BaseCamera
-from read_config import initialise_config
+from  read_config import config
 # Richard's fix gain
 from set_picamera_gain import set_analog_gain, set_digital_gain
 
-from threading import Condition
-
 
 class Camera(BaseCamera):
-
+    
 
     @classmethod
     def initialisation(cls):
@@ -32,17 +33,13 @@ class Camera(BaseCamera):
     @classmethod
     def update_camera_setting(cls):
         # consistent imaging condition
-        config = initialise_config()
-        config.read_config_file()
-        cls.camera.awb_mode = config.awb_mode
-        cls.camera.awb_gains = config.awb_gains
-
+        cls.camera.awb_mode = config['awb_mode']
+        cls.camera.awb_gains = config['awb_gains']
         # Richard's library to set analog and digital gains
-        set_analog_gain(cls.camera, config.analog_gain)
-        set_digital_gain(cls.camera, config.digital_gain)
-        cls.camera.shutter_speed = config.shutter_speed
-        # cls.camera.iso = config.iso
-        cls.camera.saturation = config.saturation
+        set_analog_gain(cls.camera, config['analog_gain'])
+        set_digital_gain(cls.camera, config['digital_gain'])
+        cls.camera.shutter_speed = config['shutter_speed']
+        cls.camera.saturation = config['saturation']
         cls.camera.led = False
 
     
@@ -56,21 +53,19 @@ class Camera(BaseCamera):
             print('taking image')
             #cls.camera.capture(filename, format = 'jpeg', bayer = True)
             cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = True)
-
             # reduce the resolution for video streaming
             cls.camera.resolution = cls.stream_resolution
             # resume the video channel
             cls.camera.start_recording(cls.stream, format='mjpeg', quality = 100)
-
             cls.image_seq = cls.image_seq + 1
 
-
+    
     ''' sync above '''
+    stream_type = 'pi'
     @staticmethod
     def frames(cls):
         # run this initialisation method
         cls.initialisation()
-        cls.stream_type = 'pi'
 
         with picamera.PiCamera() as cls.camera:
             # let camera warm up

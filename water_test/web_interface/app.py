@@ -12,36 +12,6 @@ from serial_communication import serial_controller_class
 # Raspberry Pi camera module (requires picamera package)
 from camera_pi import Camera
 
-if len(sys.argv) > 1:
-    if sys.argv[1] == 'opencv':
-        from camera_pi_cv import Camera
-
-else:
-    from camera_pi import Camera
-
-
-''' usage:
-in browser - type
-
-to start preview 
-10.0.0.1:5000  
-
-to take a image
-10.0.0.1:5000/s
-
-to update the config
-10.0.0.1:5000/c
-
-to take timelapse (default 10 sec time interval)
-10.0.0.1:5000/tl
-
-to take timelapse with defined time interval
-10.0.0.1:5000/tl/?t=5
-
-to send serial command
-10.0.0.1:5000/serial/?s=66
-
-'''
 
 app = Flask(__name__)
 
@@ -88,57 +58,87 @@ def zoom():
     """ Zoom in the streaming window """
     return render_template('index.html', stream_class = 'stream_zoom')
 
+def swap_stream_method(option='swap'):
+    # DEBUG: why do I need the global Camera?
+    # global Camera
+    if option == 'swap':
+        Camera.stop_stream()
+        if Camera.stream_type == 'pi':
+            from camera_pi_cv import Camera
+        elif Camera.stream_type == 'opencv':
+            from camera_pi import Camera
+        Camera.start_stream()
+
+    elif option == 'opencv':
+        if Camera.stream_type == 'pi':
+            Camera.stop_stream()
+            from camera_pi_cv import Camera
+            Camera.start_stream()
+    
+    elif option == 'pi':
+        if Camera.stream_type == 'opencv':
+            Camera.stop_stream()
+            from camera_pi import Camera
+            Camera.start_stream()
+
+
+    # is this necessary?
+    # time.sleep(2)
+    
 
 @app.route('/swap_stream')
 def swap_stream():
     ''' swap between opencv and picamera for streaming'''
-    global Camera
-    Camera.stop_stream()
-    if Camera.stream_type == 'pi':
-        from camera_pi_cv import Camera
-    elif Camera.stream_type == 'opencv':
-        from camera_pi import Camera
-    Camera.start_stream()
-    time.sleep(2)
+    # DEBUG: why do I need the global Camera?
+    # global Camera
+    # Camera.stop_stream()
+    # if Camera.stream_type == 'pi':
+    #     from camera_pi_cv import Camera
+    # elif Camera.stream_type == 'opencv':
+    #     from camera_pi import Camera
+    # Camera.start_stream()
+    # time.sleep(2)
+    swap_stream_method()
     return redirect('/')
 
+
+def connect_serial():
+    # initialise the serial port if it does not exist yet.
+    try:
+        Camera.serial_controller
+    except AttributeError:
+        Camera.serial_controller = serial_controller_class()
+        # change: based on the arduino name
+        Camera.serial_controller.serial_connect(port_names=['SERIAL'], baudrate=9600)
+        Camera.serial_controller.serial_read_threading()
 
 @app.route('/serial/')
 @app.route('/ser/')
 def send_serial():
-    # initialise the serial port
-    try:
-        Camera.serial_controller
-    except AttributeError:
-        #global ser
-        Camera.serial_controller = serial_controller_class()
-        Camera.serial_controller.serial_read_threading()
+    connect_serial()
+    # split the command into two parts for type (LED_RGB) and value (r,g,b)
+    # the type is obtined from the dropdown
+    serial_command_type = request.args.get('type', '')
+    # the value is obtained from the input_form
+    serial_command_value = request.args.get('s', '')
 
-    general_serial_command = request.args.get('s', '')
-    move_serial_command = request.args.get('m', '')
-
-    Camera.serial_controller.send_arduino_command(str(general_serial_command))
-    Camera.serial_controller.send_arduino_command('move {}'.format(str(move_serial_command)))
+    serial_command = serial_command_type +  serial_command_value 
+    Camera.serial_controller.serial_write(serial_command, parser='waterscope')
     # start a thread
-    return render_template('index.html', general_serial_command = general_serial_command, move_serial_command = move_serial_command)
+    return render_template('index.html', 
+        serial_command_type = serial_command_type, 
+        serial_command_value=serial_command_value)
 
 
 @app.route('/autofocus')
 @app.route('/af')
 def auto_focus():
     # swap to opencv and then start the auto focusing
-    global Camera
-    if Camera.stream_type == 'pi':
-        Camera.stop_stream()
-        from camera_pi_cv import Camera
-        Camera.start_stream()
-        time.sleep(2)
 
+    connect_serial()
     # start auto focusing
     Camera.auto_focus_thread()
     return render_template('index.html')
-
-
 
 # take one image
 @app.route('/snap')
@@ -165,29 +165,19 @@ def take_timelapse():
 @app.route('/timelapse_waterscope/')
 @app.route('/tl_ws/')
 def take_timelapse_waterscope():
-    # initialise the serial port
-    try:
-        serial_controller
-    except NameError:
-        #global ser
-        serial_controller = serial_controller_class()
-        serial_controller.serial_read_threading()
-
+    connect_serial()
     # default time lapse interval is 10 sec
     # to use different value - http://10.0.0.1:5000:5000/timelapse/?t=2
     refresh_interval = request.args.get('t', '10')
-    serial_controller.send_arduino_command('66')
+    Camera.serial_controller.serial_write('led_off', parser='waterscope')
     # stablise the LED before taking images
     time.sleep(1)
     Camera.take_image()
     time.sleep(1)
-    serial_controller.send_arduino_command('-66')
+    Camera.serial_controller.serial_write('led_on', parser='waterscope')
+
     # start a thread
     return render_template('index.html', refresh_interval=refresh_interval)
-
-
-
-
 
 
 if __name__ == '__main__':

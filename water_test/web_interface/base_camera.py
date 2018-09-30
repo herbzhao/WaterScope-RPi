@@ -56,8 +56,8 @@ class BaseCamera(object):
     frame = None  # current frame is stored here by background thread
     last_access = 0  # time of last client access to the camera
     event = CameraEvent()
-    trigger = ''
 
+    
     def __init__(self):
         """Start the background camera thread if it isn't running yet."""
         if BaseCamera.thread is None:
@@ -85,7 +85,6 @@ class BaseCamera(object):
     def frames(cls):
         """"Generator that returns frames from the camera."""
         raise RuntimeError('Must be implemented by subclasses.')
-    
 
 
     @classmethod

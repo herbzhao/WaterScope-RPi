@@ -6,21 +6,20 @@ import datetime
 import sys
 import os
 import picamera
-import cv2
-import numpy as np
-
-# custom library
-from base_camera import BaseCamera
-from read_config import initialise_config
-# Richard's fix gain
-from set_picamera_gain import set_analog_gain, set_digital_gain
-
-# serial connection
-from serial_communication import serial_controller_class
-
+# DEBUG: is this neccessary?
 from threading import Condition
 import threading
 
+# custom library
+from base_camera import BaseCamera
+from  read_config import config
+# Richard's fix gain
+from set_picamera_gain import set_analog_gain, set_digital_gain
+
+# opencv specific import
+import cv2
+import numpy as np
+from serial_communication import serial_controller_class
 
 
 class Camera(BaseCamera):
@@ -38,21 +37,17 @@ class Camera(BaseCamera):
     @classmethod
     def update_camera_setting(cls):
         # consistent imaging condition
-        config = initialise_config()
-        config.read_config_file()
-        cls.camera.awb_mode = config.awb_mode
-        cls.camera.awb_gains = config.awb_gains
-
+        cls.camera.awb_mode = config['awb_mode']
+        cls.camera.awb_gains = config['awb_gains']
         # Richard's library to set analog and digital gains
-        set_analog_gain(cls.camera, config.analog_gain)
-        set_digital_gain(cls.camera, config.digital_gain)
-        cls.camera.shutter_speed = config.shutter_speed
-        # cls.camera.iso = config.iso
-        cls.camera.saturation = config.saturation
+        set_analog_gain(cls.camera, config['analog_gain'])
+        set_digital_gain(cls.camera, config['digital_gain'])
+        cls.camera.shutter_speed = config['shutter_speed']
+        cls.camera.saturation = config['saturation']
         cls.camera.led = False
-    
 
-    ''' be careful about the cls.camera.start_recording, use 'bgr' format!! '''
+
+    ''' CAUTION: be careful about the cls.camera.start_recording, use 'bgr' format!! '''
     @classmethod
     def take_image(cls):
         # when taking photos, increase the resolution and everything
@@ -63,12 +58,10 @@ class Camera(BaseCamera):
         print('taking image')
         #cls.camera.capture(filename, format = 'jpeg', bayer = True)
         cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = True)
-
         # reduce the resolution for video streaming
         cls.camera.resolution = cls.stream_resolution
         # resume the video channel
         cls.camera.start_recording(cls.stream, format='bgr')
-
         cls.image_seq = cls.image_seq + 1
 
 
@@ -145,7 +138,7 @@ class Camera(BaseCamera):
         return image
 
     @classmethod
-    def init_focusing(cls):
+    def initialise_focusing(cls):
         # numpy array to store everything
         cls.motor_moving_time = 2
         cls.step = 0
@@ -232,6 +225,10 @@ class Camera(BaseCamera):
             try: 
                 # wait for the imaging system to boot up
                 cls.image
+            # DEBUG: check if this will cause any problem that we move the except uphere
+            except AttributeError:
+                # wait for the imaging system to boot up
+                time.sleep(2)
 
                 # start to change step when the system is boot up (focus value is non 0)
                 # when there are more planned steps, retrieve one by one and measure the focus
@@ -271,26 +268,23 @@ class Camera(BaseCamera):
                 print('focus: {}'.format(cls.focus_values[-1]))
                 print('')
 
-            # wait for the imaging system to boot up
-            except AttributeError:
-                time.sleep(2)
+
 
     @classmethod
     def auto_focus_thread(cls):
-        cls.init_focusing()
+        cls.initialise_focusing()
         # threading for auto focusing    
         threading_af = threading.Thread(target=cls.auto_focus)
         threading_af.daemon = True
         threading_af.start()
     
-
+    stream_type = 'opencv'
     @staticmethod
     def frames(cls):
         # run this initialisation method
         cls.initialisation()
         cls.init_cv()
-        cls.stream_type = 'opencv'
-
+        
         with picamera.PiCamera() as cls.camera:
             # let camera warm up
             time.sleep(0.1)
