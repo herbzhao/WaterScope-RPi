@@ -37,7 +37,8 @@ class cv_stream_class():
         self.camera.saturation = config.saturation
         self.camera.led = False
 
-        ''' sync above '''
+        # Change: sync above 
+        # Warning: needs to syncrhoise with the camera_pi.py
         # openCV functions
 
     def streaming(self):    
@@ -71,7 +72,7 @@ class cv_stream_class():
                     stream.seek(0)
                     stream.truncate()
                     # this delay has to be faster than generating
-                    time.sleep(1/fps*0.2)
+                    time.sleep(1/fps*0.1)
 
                     # return current frame, which is just a string
                     frame = stream.getvalue()
@@ -91,8 +92,6 @@ class cv_stream_class():
                 # place to run some filters, calculations
                 for library in self.cv_libraries:
                     library()
-
-                
 
                 # show the frame
                 cv2.imshow('stream', self.image)

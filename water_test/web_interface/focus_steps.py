@@ -1,6 +1,9 @@
 coarse_steps_plan = []
 # first move up to the end stop and go back to centre
+# TODO: read the plan's led_off and on to turn on and off
+coarse_steps_plan.append('led_off')
 coarse_steps_plan += [-8000, 4000]
+coarse_steps_plan.append('led_on')
 
 # first plan: 2000
 coarse_steps_plan += [0]

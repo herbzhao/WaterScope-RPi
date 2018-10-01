@@ -29,56 +29,60 @@ class Camera(BaseCamera):
 
 
     @classmethod
-    def update_camera_setting(cls):
+    def update_camera_setting(cls, camera):
         with open('config.yaml') as config_file:
             config = yaml.load(config_file)
             # consistent imaging condition
-            cls.camera.awb_mode = config['awb_mode']
-            cls.camera.awb_gains = (config['red_gain'], config['blue_gain'])
+            camera.awb_mode = config['awb_mode']
+            camera.awb_gains = (config['red_gain'], config['blue_gain'])
             # Richard's library to set analog and digital gains
-            set_analog_gain(cls.camera, config['analog_gain'])
-            set_digital_gain(cls.camera, config['digital_gain'])
-            cls.camera.shutter_speed = config['shutter_speed']
-            cls.camera.saturation = config['saturation']
-            cls.camera.led = False
+            set_analog_gain(camera, config['analog_gain'])
+            set_digital_gain(camera, config['digital_gain'])
+            camera.shutter_speed = config['shutter_speed']
+            camera.saturation = config['saturation']
+            camera.led = False
 
     
     @classmethod
-    def take_image(cls):
+    def take_image(cls, camera):
         # when taking photos, increase the resolution and everything
         # need to stop the video channel first
-        cls.camera.stop_recording()
-        cls.camera.resolution = cls.image_resolution
+        camera.stop_recording()
+        camera.resolution = cls.image_resolution
         filename = '/home/pi/WaterScope-RPi/water_test/timelapse/{}/timelapse_{:03d}.jpg'.format(Camera.starting_time, cls.image_seq)
         print('taking image')
-        #cls.camera.capture(filename, format = 'jpeg', bayer = True)
-        cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = True)
+        #camera.capture(filename, format = 'jpeg', bayer = True)
+        camera.capture(filename, format = 'jpeg', quality=100, bayer = True)
         # reduce the resolution for video streaming
-        cls.camera.resolution = cls.stream_resolution
-        # Warning: be careful about the cls.camera.start_recording. 'bgr' for opencv and 'mjpeg' for picamera
+        camera.resolution = cls.stream_resolution
+        # Warning: be careful about the camera.start_recording. 'bgr' for opencv and 'mjpeg' for picamera
         # resume the video channel
-        cls.camera.start_recording(cls.stream, format='mjpeg', quality = 100)
-        # cls.camera.start_recording(cls.stream, format='bgr')
+        camera.start_recording(cls.stream, format='mjpeg', quality = 100)
+        # camera.start_recording(cls.stream, format='bgr')
         cls.image_seq = cls.image_seq + 1
 
     
-    # Change:  Sync bove 
+    # Change:  Sync above 
     @staticmethod
     def frames(cls):
         # run this initialisation method
         cls.initialisation()
         cls.stream_type = 'pi'
         with picamera.PiCamera() as cls.camera:
-            # let camera warm up
+            time.sleep(0.1)
+            cls.stream = io.BytesIO()
+            #     # let camera warm up
             time.sleep(0.1)
             cls.camera.resolution = cls.stream_resolution
             cls.camera.framerate = cls.fps
             # setting config
-            cls.update_camera_setting()
+            cls.update_camera_setting(cls.camera)
 
             # streaming
-            cls.stream = io.BytesIO()
+            # cls.stream = io.BytesIO()
             cls.camera.start_recording(cls.stream, format='mjpeg', quality = 100)
+
+
             while True:
                 # reset stream for next frame
                 cls.stream.seek(0)

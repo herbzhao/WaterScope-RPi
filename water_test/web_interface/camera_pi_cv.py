@@ -7,12 +7,12 @@ import sys
 import os
 import picamera
 # DEBUG: is this neccessary?
-from threading import Condition
+# from threading import Condition
 import threading
+import yaml
 
 # custom library
 from base_camera import BaseCamera
-from  read_config import config
 # Richard's fix gain
 from set_picamera_gain import set_analog_gain, set_digital_gain
 
@@ -23,7 +23,6 @@ from serial_communication import serial_controller_class
 
 
 class Camera(BaseCamera):
-
     @classmethod
     def initialisation(cls):
         cls.image_seq = 0
@@ -36,18 +35,19 @@ class Camera(BaseCamera):
 
     @classmethod
     def update_camera_setting(cls):
-        # consistent imaging condition
-        cls.camera.awb_mode = config['awb_mode']
-        cls.camera.awb_gains = config['awb_gains']
-        # Richard's library to set analog and digital gains
-        set_analog_gain(cls.camera, config['analog_gain'])
-        set_digital_gain(cls.camera, config['digital_gain'])
-        cls.camera.shutter_speed = config['shutter_speed']
-        cls.camera.saturation = config['saturation']
-        cls.camera.led = False
+        with open('config.yaml') as config_file:
+            config = yaml.load(config_file)
+            # consistent imaging condition
+            cls.camera.awb_mode = config['awb_mode']
+            cls.camera.awb_gains = (config['red_gain'], config['blue_gain'])
+            # Richard's library to set analog and digital gains
+            set_analog_gain(cls.camera, config['analog_gain'])
+            set_digital_gain(cls.camera, config['digital_gain'])
+            cls.camera.shutter_speed = config['shutter_speed']
+            cls.camera.saturation = config['saturation']
+            cls.camera.led = False
 
 
-    ''' CAUTION: be careful about the cls.camera.start_recording, use 'bgr' format!! '''
     @classmethod
     def take_image(cls):
         # when taking photos, increase the resolution and everything
@@ -60,14 +60,17 @@ class Camera(BaseCamera):
         cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = True)
         # reduce the resolution for video streaming
         cls.camera.resolution = cls.stream_resolution
+        # Warning: be careful about the cls.camera.start_recording. 'bgr' for opencv and 'mjpeg' for picamera
         # resume the video channel
+        # cls.camera.start_recording(cls.stream, format='mjpeg', quality = 100)
         cls.camera.start_recording(cls.stream, format='bgr')
         cls.image_seq = cls.image_seq + 1
 
 
-    ''' sync above '''
+    # Change:  Sync above 
     @classmethod
     def init_cv(cls):
+        ''' which functions to use during the opencv stream''' 
         cls.ROI = []
         cls.cv_libraries = [
             cls.define_ROI,

@@ -39,11 +39,19 @@ def video_feed():
     return Response(gen(Camera()),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
+
 @app.route('/stop')
 def stop():
     """Stop the camera."""
     Camera.stop_stream()
     return render_template('index.html')
+
+
+@app.route('/zoom')
+def zoom():
+    """ Zoom in the streaming window """
+    return render_template('index.html', stream_class = 'stream_zoom')
+
 
 # auto-refresh to update the config
 @app.route('/c')
@@ -53,14 +61,11 @@ def read_config():
     return render_template('index.html', refresh_interval=2)
 
 
-@app.route('/zoom')
-def zoom():
-    """ Zoom in the streaming window """
-    return render_template('index.html', stream_class = 'stream_zoom')
+
 
 def swap_stream_method(option='swap'):
     # DEBUG: why do I need the global Camera?
-    # global Camera
+    global Camera
     if option == 'swap':
         Camera.stop_stream()
         if Camera.stream_type == 'pi':
@@ -89,16 +94,7 @@ def swap_stream_method(option='swap'):
 @app.route('/swap_stream')
 def swap_stream():
     ''' swap between opencv and picamera for streaming'''
-    # DEBUG: why do I need the global Camera?
-    # global Camera
-    # Camera.stop_stream()
-    # if Camera.stream_type == 'pi':
-    #     from camera_pi_cv import Camera
-    # elif Camera.stream_type == 'opencv':
-    #     from camera_pi import Camera
-    # Camera.start_stream()
-    # time.sleep(2)
-    swap_stream_method()
+    swap_stream_method(option='swap')
     return redirect('/')
 
 
@@ -121,20 +117,21 @@ def send_serial():
     serial_command_type = request.args.get('type', '')
     # the value is obtained from the input_form
     serial_command_value = request.args.get('s', '')
-
-    serial_command = serial_command_type +  serial_command_value 
+    # TODO: test the serial command and then simplify the template
+    serial_command = serial_command_type +  '(' + serial_command_value + ')'
     Camera.serial_controller.serial_write(serial_command, parser='waterscope')
-    # start a thread
+ 
     return render_template('index.html', 
         serial_command_type = serial_command_type, 
         serial_command_value=serial_command_value)
 
 
+# TODO: have a fine focus and coarse focus
 @app.route('/autofocus')
 @app.route('/af')
 def auto_focus():
     # swap to opencv and then start the auto focusing
-
+    swap_stream_method(option='opencv')
     connect_serial()
     # start auto focusing
     Camera.auto_focus_thread()
@@ -182,5 +179,3 @@ def take_timelapse_waterscope():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', threaded=True, debug=True)
-
-
