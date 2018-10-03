@@ -25,8 +25,6 @@ class Camera(BaseCamera):
         cls.stream_resolution = (1648,1232)
         cls.image_resolution = (3280,2464)
         cls.starting_time = datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S')
-        os.mkdir('/home/pi/WaterScope-RPi/water_test/timelapse/{}'.format(cls.starting_time))
-
 
     @classmethod
     def update_camera_setting(cls):
@@ -42,17 +40,26 @@ class Camera(BaseCamera):
             cls.camera.saturation = config['saturation']
             cls.camera.led = False
 
-    
+    # TODO: a zoom function with picamera https://picamera.readthedocs.io/en/release-1.13/api_camera.html
+    def zoom(cls):
+        pass
+
     @classmethod
     def take_image(cls):
         # when taking photos, increase the resolution and everything
         # need to stop the video channel first
         cls.camera.stop_recording()
         cls.camera.resolution = cls.image_resolution
-        filename = '/home/pi/WaterScope-RPi/water_test/timelapse/{}/timelapse_{:03d}.jpg'.format(Camera.starting_time, cls.image_seq)
+        # folder_path = '/home/pi/WaterScope-RPi/water_test/timelapse/{}'.format(cls.starting_time)
+        # TODO: move this to a USB drive
+        folder_path = 'timelapse_data/{}'.format(cls.starting_time)
+        if not os.path.exists(folder_path):
+            os.mkdir(folder_path)
+        filename = folder_path+'/{:04d}.jpg'.format(cls.image_seq)
         print('taking image')
         #cls.camera.capture(filename, format = 'jpeg', bayer = True)
-        cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = True)
+        # Change: remove bayer = Ture if dont care
+        cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = False)
         # reduce the resolution for video streaming
         cls.camera.resolution = cls.stream_resolution
         # Warning: be careful about the cls.camera.start_recording. 'bgr' for opencv and 'mjpeg' for picamera

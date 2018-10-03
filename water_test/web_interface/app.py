@@ -58,7 +58,7 @@ def zoom():
 @app.route('/config')
 def read_config():
     Camera.update_camera_setting()
-    return render_template('index.html', refresh_interval=2)
+    return render_template('index.html', refresh_interval=1)
 
 
 
@@ -105,7 +105,7 @@ def connect_serial():
     except AttributeError:
         Camera.serial_controller = serial_controller_class()
         # Change: based on the arduino name
-        Camera.serial_controller.serial_connect(port_names=['SERIAL'], baudrate=9600)
+        Camera.serial_controller.serial_connect(port_names=['SERIAL', 'Serial'], baudrate=9600)
         Camera.serial_controller.serial_read_threading()
 
 @app.route('/serial/')
