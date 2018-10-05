@@ -28,7 +28,7 @@ class Camera(BaseCamera):
 
     @classmethod
     def update_camera_setting(cls):
-        with open('config.yaml') as config_file:
+        with open('config_picamera.yaml') as config_file:
             config = yaml.load(config_file)
             # consistent imaging condition
             cls.camera.awb_mode = config['awb_mode']
@@ -51,7 +51,6 @@ class Camera(BaseCamera):
         cls.camera.stop_recording()
         cls.camera.resolution = cls.image_resolution
         # folder_path = '/home/pi/WaterScope-RPi/water_test/timelapse/{}'.format(cls.starting_time)
-        # TODO: move this to a USB drive
         folder_path = 'timelapse_data/{}'.format(cls.starting_time)
         if not os.path.exists(folder_path):
             os.mkdir(folder_path)

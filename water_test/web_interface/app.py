@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 from importlib import import_module
-import os
 import time
-import sys
-import threading
 
-from flask import Flask, render_template, Response, redirect, request
+from flask import Flask, render_template, Response, redirect, request, jsonify
+import yaml
+import numpy as np
 
 from serial_communication import serial_controller_class
 
@@ -19,6 +18,7 @@ app = Flask(__name__)
 def index():
     """Video streaming home page."""
     Camera.start_stream()
+    initialse_serial_connection()
     return render_template('index.html')
 
 
@@ -62,7 +62,6 @@ def read_config():
 
 
 
-
 def swap_stream_method(option='swap'):
     # DEBUG: why do I need the global Camera?
     global Camera
@@ -86,11 +85,6 @@ def swap_stream_method(option='swap'):
             from camera_pi import Camera
             Camera.start_stream()
 
-
-    # is this necessary?
-    # time.sleep(2)
-    
-
 @app.route('/swap_stream')
 def swap_stream():
     ''' swap between opencv and picamera for streaming'''
@@ -98,32 +92,70 @@ def swap_stream():
     return redirect('/')
 
 
-def connect_serial():
-    # initialise the serial port if it does not exist yet.
+def initialse_serial_connection():
+    ''' all the arduino connection is done via this function''' 
     try:
-        Camera.serial_controller
+        #print(' serial connections already exist')
+        Camera.serial_controllers
     except AttributeError:
-        Camera.serial_controller = serial_controller_class()
-        # Change: based on the arduino name
-        Camera.serial_controller.serial_connect(port_names=['SERIAL', 'Serial'], baudrate=9600)
-        Camera.serial_controller.serial_read_threading()
-
+        with open('config_serial.yaml') as config_serial_file:
+            serial_controllers_config = yaml.load(config_serial_file)
+        # Warning: depends on what boards are connected
+        serial_controllers_names = ['ferg']
+        # initialise the serial port if it does not exist yet.
+        #print('initialising the serial connections')
+        Camera.serial_controllers = {}
+        for name in serial_controllers_names:
+            Camera.serial_controllers[name] = serial_controller_class()
+            Camera.serial_controllers[name].serial_connect(
+                port_names=serial_controllers_config[name]['port_names'], 
+                baudrate=serial_controllers_config[name]['baudrate'])
+            Camera.serial_controllers[name].serial_read_threading(options=serial_controllers_config[name]['serial_read_options'])
+    
+    
+''' general serial command url'''
 @app.route('/serial/')
 @app.route('/ser/')
 def send_serial():
-    connect_serial()
+    initialse_serial_connection()
+    # choose the arduino board and parser - ferg, waterscope, para
+    serial_board = request.args.get('board', 'parabolic')
     # split the command into two parts for type (LED_RGB) and value (r,g,b)
     # the type is obtined from the dropdown
     serial_command_type = request.args.get('type', '')
     # the value is obtained from the input_form
-    serial_command_value = request.args.get('s', '')
+    serial_command_value = request.args.get('value', '')
     # TODO: test the serial command and then simplify the template
     serial_command = serial_command_type +  '(' + serial_command_value + ')'
-    Camera.serial_controller.serial_write(serial_command, parser='waterscope')
- 
+    print(serial_command)
+    try:
+        Camera.serial_controllers[serial_board].serial_write(serial_command, parser = serial_board)
+    except KeyError:
+        print('cannot find this board')
+    
     return render_template('index.html', 
+        serial_board = serial_board, 
         serial_command_type = serial_command_type, 
         serial_command_value=serial_command_value)
+
+
+''' The feed for serial_command output ''' 
+@app.route('/serial_monitor_parabolic')
+def ferg_serial_monitor():
+    try:
+        Camera.all_serial_outputs
+    except AttributeError:
+        Camera.all_serial_outputs = []
+    try:
+        Camera.all_serial_outputs.append(Camera.serial_controllers['ferg'].serial_output)
+        if len(Camera.all_serial_outputs) < 5:
+            recent_serial_outputs = Camera.all_serial_outputs
+        else:
+            recent_serial_outputs = Camera.all_serial_outputs[-5:]
+        return jsonify(recent_serial_outputs)
+
+    except KeyError:
+        return 'Ferg arduino not connected'
 
 
 # TODO: have a fine focus and coarse focus
@@ -132,7 +164,7 @@ def send_serial():
 def auto_focus():
     # swap to opencv and then start the auto focusing
     swap_stream_method(option='opencv')
-    connect_serial()
+    initialse_serial_connection()
     # start auto focusing
     Camera.auto_focus_thread()
     return render_template('index.html')
@@ -162,16 +194,16 @@ def take_timelapse():
 @app.route('/timelapse_waterscope/')
 @app.route('/tl_ws/')
 def take_timelapse_waterscope():
-    connect_serial()
     # default time lapse interval is 10 sec
     # to use different value - http://10.0.0.1:5000:5000/timelapse/?t=2
     refresh_interval = request.args.get('t', '10')
-    Camera.serial_controller.serial_write('led_off', parser='waterscope')
+    initialse_serial_connection()
+    Camera.serial_controllers['waterscope'].serial_write('led_off', parser='waterscope')
     # stablise the LED before taking images
     time.sleep(1)
     Camera.take_image()
     time.sleep(1)
-    Camera.serial_controller.serial_write('led_on', parser='waterscope')
+    Camera.serial_controllers['waterscope'].serial_write('led_on', parser='waterscope')
 
     # start a thread
     return render_template('index.html', refresh_interval=refresh_interval)

@@ -4,6 +4,8 @@
   <title>Video Streaming Demonstration</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+  <script type=text/javascript src="{{url_for('static', filename='javascript/mousetrap.min.js') }}"></script>
+  <script type=text/javascript src="{{url_for('static', filename='javascript/main.js') }}"></script>
 </head>
 
 <!-- TODO: implement a serial window and a serial print window with ajax? -->
@@ -30,8 +32,8 @@
 
   <div class="d-flex justify-content-center">
     <a href="/autofocus" target="_parent"><button class="btn btn-outline-success mx-1">Autofocus</button></a>
-    <a href="/ser/?s=66" target="_parent"><button class="btn btn-outline-dark  mx-1">Light on</button></a>
-    <a href="/ser/?s=-66" target="_parent"><button class="btn btn-Dark  mx-1">Light off</button></a>
+    <a href="/ser/?value=66" target="_parent"><button class="btn btn-outline-dark  mx-1">Light on</button></a>
+    <a href="/ser/?value=-66" target="_parent"><button class="btn btn-Dark  mx-1">Light off</button></a>
     <!-- #TODO: change this to a dropdown with move, change led colour, and the box for value -->
     <form action="/ser/" class="form-inline mx-3">
       <input type="text" name="m" value="{{serial_command_value}}" placeholder="Step?" class="form-control mx-3 col-5">
@@ -47,9 +49,13 @@
     </form>
   </div>
 
+
+
+
   <div>
     <img class="{{stream_class or 'stream' }}" src="{{ url_for('video_feed') }}" width="1640" height="1232">
   </div>
+
 
 
   <!-- 
@@ -65,5 +71,5 @@
 
 </body>
 
-
 </html>
+
