@@ -34,7 +34,7 @@ class Camera(BaseCamera):
 
     @classmethod
     def update_camera_setting(cls):
-        with open('config.yaml') as config_file:
+        with open('config_picamera.yaml') as config_file:
             config = yaml.load(config_file)
             # consistent imaging condition
             cls.camera.awb_mode = config['awb_mode']
@@ -46,7 +46,10 @@ class Camera(BaseCamera):
             cls.camera.saturation = config['saturation']
             cls.camera.led = False
 
-    
+    # TODO: a zoom function with picamera https://picamera.readthedocs.io/en/release-1.13/api_camera.html
+    def zoom(cls):
+        pass
+
     @classmethod
     def take_image(cls):
         # when taking photos, increase the resolution and everything
@@ -57,7 +60,7 @@ class Camera(BaseCamera):
         folder_path = 'timelapse_data/{}'.format(cls.starting_time)
         if not os.path.exists(folder_path):
             os.mkdir(folder_path)
-        filename = folder_path+'/{:03d}.jpg'.format(cls.image_seq)
+        filename = folder_path+'/{:04d}.jpg'.format(cls.image_seq)
         print('taking image')
         #cls.camera.capture(filename, format = 'jpeg', bayer = True)
         # Change: remove bayer = Ture if dont care
@@ -69,7 +72,6 @@ class Camera(BaseCamera):
         #cls.camera.start_recording(cls.stream, format='mjpeg', quality = 100)
         cls.camera.start_recording(cls.stream, format='bgr')
         cls.image_seq = cls.image_seq + 1
-
 
     # Change:  Sync above 
     @classmethod

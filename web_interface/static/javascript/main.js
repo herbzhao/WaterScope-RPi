@@ -1,50 +1,95 @@
-var direction_key;
+function restart_stream() {
+    window.location = "/"
+}
 
-// Move fergboard
-Mousetrap.bind('w', function () {
-    console.log('pressed w');
-    fetch('/ser/?type=jog&value=0,-1,0&board=ferg');
-});
-Mousetrap.bind('s', function () {
-    console.log('pressed s');
-    fetch('/ser/?type=jog&value=0,1,0&board=ferg');
-});
-Mousetrap.bind('a', function () {
-    console.log('pressed a');
-    fetch('/ser/?type=jog&value=-1,0,0&board=ferg');
-});
-Mousetrap.bind('d', function () {
-    console.log('pressed d');
-    fetch('/ser/?type=jog&value=1,0,0&board=ferg');
-});
-Mousetrap.bind('q', function () {
-    console.log('pressed q');
-    fetch('/ser/?type=jog&value=0,0,1&board=ferg');
-});
-Mousetrap.bind('e', function () {
-    console.log('pressed e');
-    fetch('/ser/?type=jog&value=0,0,-1&board=ferg');
-});
+function stop_stream() {
+    fetch("/stop");
+}
 
-// change fergboard speed
-Mousetrap.bind(']', function () {
-    fetch("/ser/?type=set_speed&value=increase&board=ferg");
-} );
-Mousetrap.bind('[', function () {
-    fetch("/ser/?type=set_speed&value=decrease&board=ferg");
-});
+// refresh the config every 200 seconds
+function update_config() {
+    // TODO: make it a toggle to stop the config
+    // clearInterval(config_loop);
+    config_loop = setInterval(function () {
+        fetch("/config");
+        console.log("updating config")
+    }, 200);
+}
 
-Mousetrap.bind('esc', function () {
-    location.href = "/";
-}, 'keyup');
 
-// key combination to turn on/off LED
-// TODO: incorporate waterscope as well?
-Mousetrap.bind('o n', function () {
+function swap_stream() {
+    window.location = "/swap_stream";
+    // window.location = "/";
+}
+
+
+function auto_focus() {
+    window.location = "/auto_focus";
+    // window.location = "/";
+}
+
+
+function snap() {
+    fetch("/snap");
+    console.log("taking image")
+}
+
+function start_timelapse() {
+    // TODO: make it a toggle to stop the timelapse
+    // clearInterval(timelapse_loop);
+    let timelapse_delay = document.getElementById("timelapse_delay_form").value * 1000;
+    timelapse_delay = parseFloat(timelapse_delay);
+    console.log(timelapse_delay)
+    // a safety precaution
+    if (timelapse_delay < 1.5){
+        timelapse_delay = 1.5
+    }
+    // first take one image then start the loop
+    snap();
+    timelapse_loop = setInterval(function () {
+        snap();
+    }, timelapse_delay);
+}
+
+
+function timelapse() {
+    fetch("/snap");
+}
+
+
+function led_on() {
+    console.log('led_on');
     fetch("/ser/?value=led_on&board=parabolic");
-    fetch("/ser/?value=led_on&board=waterscope");
-});
-Mousetrap.bind('o f f', function () {
+    // fetch("/ser/?value=led_on&board=waterscope");
+}
+
+function led_off() {
+    console.log('led_off');
     fetch("/ser/?value=led_off&board=parabolic");
-    fetch("/ser/?value=led_off&board=waterscope");
-});
+    // fetch("/ser/?value=led_on&board=waterscope");
+}
+
+
+function stop_cooling() {
+    console.log('stop_cooling');
+    fetch("/ser/?value=stop&board=parabolic");
+    // fetch("/ser/?value=led_on&board=waterscope");
+}
+
+function start_cooling() {
+    console.log('start_cooling');
+    fetch("/ser/?value=start&board=parabolic");
+    // fetch("/ser/?value=led_on&board=waterscope");
+}
+
+function prepare_cooling() {
+    console.log('prepare_cooling');
+    fetch("/ser/?value=prepare&board=parabolic");
+    // fetch("/ser/?value=led_on&board=waterscope");
+}
+
+function hold_temperature() {
+    console.log('hold_temperature');
+    fetch("/ser/?value=hold&board=parabolic");
+    // fetch("/ser/?value=led_on&board=waterscope");
+}

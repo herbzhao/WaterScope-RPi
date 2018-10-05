@@ -72,18 +72,21 @@ def swap_stream_method(option='swap'):
         elif Camera.stream_type == 'opencv':
             from camera_pi import Camera
         Camera.start_stream()
+        time.sleep(0.1)
 
     elif option == 'opencv':
         if Camera.stream_type == 'pi':
             Camera.stop_stream()
             from camera_pi_cv import Camera
             Camera.start_stream()
+            time.sleep(0.1)
     
     elif option == 'pi':
         if Camera.stream_type == 'opencv':
             Camera.stop_stream()
             from camera_pi import Camera
             Camera.start_stream()
+            time.sleep(0.1)
 
 @app.route('/swap_stream')
 def swap_stream():
@@ -101,7 +104,7 @@ def initialse_serial_connection():
         with open('config_serial.yaml') as config_serial_file:
             serial_controllers_config = yaml.load(config_serial_file)
         # Warning: depends on what boards are connected
-        serial_controllers_names = ['ferg']
+        serial_controllers_names = ['ferg','parabolic']
         # initialise the serial port if it does not exist yet.
         #print('initialising the serial connections')
         Camera.serial_controllers = {}

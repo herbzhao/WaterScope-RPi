@@ -34,7 +34,7 @@ class serial_controller_class():
         # TODO: check the meaning of the time out
         # self.ser.timeout = 0
         self.ser.open()
-        print('serial connection is ready for {}'.format(serial_port))
+        # print('serial connection is ready for {}'.format(serial_port))
         
 
     def serial_write(self, serial_command, parser):
@@ -48,7 +48,7 @@ class serial_controller_class():
         else:
             self.serial_command = serial_command
 
-        # print('serial_command to send: {}'.format(self.serial_command))
+        print('serial_command to send: {}'.format(self.serial_command))
         self.ser.write('{} \n\r'.format(str(self.serial_command)).encode())
 
     def parsing_command_waterscope(self, serial_command):
@@ -73,12 +73,12 @@ class serial_controller_class():
         try: 
             self.fergboard_speed 
         except AttributeError:
-            self.fergboard_speed = np.array([200, 200, 200])
+            self.fergboard_speed = np.array([600, 600, 600])
             # DEBUG: initialise the speed, seems to cause lag
             print('set initial speed')
             serial_command = 'STV ({}, {}, {})'.format(self.fergboard_speed[0], self.fergboard_speed[1], self.fergboard_speed[2])
             # initialise the serial_out so that motor can move 
-            self.serial_output = 'FIN'
+            self.fin_flag = ['FIN']
 
         # move(x, y, z)
         if 'move' in serial_command:
@@ -91,23 +91,26 @@ class serial_controller_class():
             elif 'decrease' in serial_command:
                 self.fergboard_speed -= 100
             # limit the speed  between 50 and 500
-            if self.fergboard_speed[0] > 500:
+            if self.fergboard_speed[0] > 600:
                 self.fergboard_speed = np.array([600,600,600])
-            elif self.fergboard_speed[0] < 50:
-                self.fergboard_speed = np.array([100,100,100])
+            elif self.fergboard_speed[0] < 200:
+                self.fergboard_speed = np.array([200,200,200])
             self.fergboard_speed = self.fergboard_speed.astype('int')
             serial_command = 'STV ({}, {}, {})'.format(self.fergboard_speed[0], self.fergboard_speed[1], self.fergboard_speed[2])
 
         # jog(x,y,z)
         elif 'jog' in serial_command:
-            serial_command = serial_command.replace('jog', 'JOG') 
-            # NOTE: discard the serial command if the motor is not finished moving yet. - no 'FIN'
-            # print('current output2 is length:  {}'.format(len(self.serial_output)))
-            # print('current output2 is:  {}'.format(self.serial_output))
-            if not 'FIN'  in self.serial_output:
-                 serial_command = ''
-            # erase the historical serial_output
-            self.serial_output = ''
+            # NOTE: the fin_flag is consumed each time the motor moves.
+            # NOTE: if the motor is not ready, the serial_command to send will be empty
+            if len(self.fin_flag) == 0:
+                serial_command = ''
+            else:
+                serial_command = serial_command.replace('jog', 'JOG') 
+                # each time the motor moves, consume one "FIN"
+                self.fin_flag.pop()
+
+        elif 'reset' in serial_command:
+            self.fin_flag = ['FIN']
 
         serial_command = serial_command.replace('(',' 1 ').replace(')','').replace(",", " ")
         return serial_command
@@ -125,7 +128,7 @@ class serial_controller_class():
             if self.stop_threading is True:
                 break
             else:
-                time.sleep(0)
+                # time.sleep(0)
             # only when serial is available to read
             # if ser.in_waiting:
                 if self.ser.in_waiting:
@@ -146,10 +149,12 @@ class serial_controller_class():
                             log_file.writelines(self.serial_output)
                     else:
                         print(self.serial_output)
-
+                    
+                    # a 'FIN' flag is used to indicate the motor movement is finished, this needs to be specified in Arduino
+                    if 'FIN' in self.serial_output:
+                        self.fin_flag.append('FIN')
 
                 
-
     def serial_read_threading(self, options=['quiet']):
         ''' used to start threading for reading the serial'''
         # now threading1 runs regardless of user input
