@@ -100,13 +100,12 @@ class serial_controller_class():
 
         # jog(x,y,z)
         elif 'jog' in serial_command:
-            # NOTE: the fin_flag is consumed each time the motor moves.
             # NOTE: if the motor is not ready, the serial_command to send will be empty
             if len(self.fin_flag) == 0:
                 serial_command = ''
+            # NOTE: the fin_flag is consumed each time the motor moves.
             else:
                 serial_command = serial_command.replace('jog', 'JOG') 
-                # each time the motor moves, consume one "FIN"
                 self.fin_flag.pop()
 
         elif 'reset' in serial_command:

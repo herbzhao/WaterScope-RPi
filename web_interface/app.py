@@ -104,7 +104,7 @@ def initialse_serial_connection():
         with open('config_serial.yaml') as config_serial_file:
             serial_controllers_config = yaml.load(config_serial_file)
         # Warning: depends on what boards are connected
-        serial_controllers_names = ['ferg','parabolic']
+        serial_controllers_names = ['ferg',]
         # initialise the serial port if it does not exist yet.
         #print('initialising the serial connections')
         Camera.serial_controllers = {}
