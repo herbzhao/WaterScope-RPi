@@ -24,6 +24,7 @@ class Camera(BaseCamera):
         cls.fps = 30
         cls.stream_resolution = (1648,1232)
         cls.image_resolution = (3280,2464)
+        cls.zoom =  [0,0,1,1]
         cls.starting_time = datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S')
 
     @classmethod
@@ -41,11 +42,47 @@ class Camera(BaseCamera):
             cls.camera.led = False
 
     # TODO: a zoom function with picamera https://picamera.readthedocs.io/en/release-1.13/api_camera.html
-    def zoom(cls):
-        pass
+    @classmethod
+    def zooming(cls, option='in'):
+        step = 0.1
+        if option == 'in':
+            cls.zoom = [cls.zoom[0]+step, cls.zoom[1]+step, cls.zoom[2]-step, cls.zoom[3]-step]
+        elif option == 'out':
+            cls.zoom = [cls.zoom[0]-step, cls.zoom[1]-step, cls.zoom[2]+step, cls.zoom[3]+step]
+        # limit the range
+        if cls.zoom[0] >=0.4:
+            cls.zoom = [0.4, 0.4, 0.6, 0.6]
+        elif cls.zoom[0]<1:
+            cls.zoom =  [0,0,1,1]
+
+        cls.camera.zoom = cls.zoom
+
+
+
+    @classmethod
+    def record_video(cls):
+        cls.camera.start_recording('capture_video_port.h264', splitter_port=2, resize=(320, 240))
+        cls.camera.wait_recording(30)
+        cls.camera.stop_recording(splitter_port=2)
+
+
 
     @classmethod
     def take_image(cls):
+        # folder_path = '/home/pi/WaterScope-RPi/water_test/timelapse/{}'.format(cls.starting_time)
+        folder_path = 'timelapse_data/{}'.format(cls.starting_time)
+        if not os.path.exists(folder_path):
+            os.mkdir(folder_path)
+        filename = folder_path+'/{:04d}.jpg'.format(cls.image_seq)
+        print('taking image')
+        #cls.camera.capture(filename, format = 'jpeg', bayer = True)
+        # Change: remove bayer = Ture if dont care
+        cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = False, use_video_port=True)
+        # reduce the resolution for video streaming
+        cls.image_seq = cls.image_seq + 1
+
+    @classmethod
+    def take_image_high_res(cls):
         # when taking photos, increase the resolution and everything
         # need to stop the video channel first
         cls.camera.stop_recording()

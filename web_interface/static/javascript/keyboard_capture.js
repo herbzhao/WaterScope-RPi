@@ -98,3 +98,14 @@ Mousetrap.bind('h o l d', function () {
 Mousetrap.bind('p r e p', function () {
     prepare_cooling();
 });
+
+// 
+Mousetrap.bind(['g'], function() {
+    snap();
+});
+
+
+Mousetrap.bind(['r'], function() {
+    console.log('reset the motor');
+    fetch("/ser/?value=reset&board=ferg");
+});
