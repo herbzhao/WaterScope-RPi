@@ -1,10 +1,12 @@
 <html>
 
 <head>
-  <title>Video Streaming Demonstration</title>
-    <!-- WARNING: CSS should be in head -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+  <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}"> -->
+  <meta charset="utf-8">
+  <link href='https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons' rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/vuetify.min.css') }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">  
 </head>
 
 <!-- TODO: implement a serial window and a serial print window with ajax? -->
@@ -17,32 +19,6 @@
     <h1>WaterScope web interface</h1>
   </div>
   <!-- <h1>Serial command: {{general_serial_command}}</h1> -->
-
-  <!-- NOTE: radio buttons -->
-  <div id='app'>
-  <input type="radio" id="one" value="One" v-model="picked">
-  <label for="one">One</label>
-  <br>
-  <input type="radio" id="two" value="Two" v-model="picked">
-  <label for="two">Two</label>
-  <br>
-  <span>Picked: [[picked]]</span>
-</div>
-
-<!--TEST: -->
-<div class="btn-group btn-group-toggle" data-toggle="buttons">
-  <label class="btn btn-secondary active">
-    <input type="radio" name="options" id="option1" v-model="picked"> Active
-  </label>
-  <label class="btn btn-secondary">
-    <input type="radio" name="options" id="option2"v-model="picked"> Radio
-  </label>
-  <label class="btn btn-secondary">
-    <input type="radio" name="options" id="option3" v-model="picked"> Radio
-  </label>
-</div>
-
-
 
   <div class="d-flex justify-content-center my-2">
     <a onclick="restart_stream()" target="_parent"><button class="btn btn-primary  mx-1">Restart stream</button></a>
@@ -88,26 +64,19 @@
   <div class = "realtime_plot" id="plotly_chart"></div>
 
 
-  <!-- 
-  <div style="text-align:center;width:480px;">
-    <button onclick="moveup()">UP</button><br><br>
-    <button onclick="moveleft()">LEFT</button>
-    <button onclick="moveright()">RIGHT</button><br><br>
-    <button onclick="movedown()">DOWN</button>
-  </div> -->
-
-  <!-- customised class for css auto-resizing -->
-
+  
 
 </body>
 <!-- WARNING: javascript should be outside the body -->
 <script type=text/javascript src="{{url_for('static', filename='javascript/mousetrap.min.js') }}"></script>
 <!-- development version, includes helpful console warnings -->
 <script type=text/javascript src="{{url_for('static', filename='javascript/vue.js') }}"></script>
+<script type=text/javascript src="{{url_for('static', filename='javascript/vuetify.js') }}"></script>
 <script type=text/javascript src="{{url_for('static', filename='javascript/axios.min.js') }}"></script>
 <script type=text/javascript src="{{url_for('static', filename='javascript/plotly.min.js') }}"></script>
 <script type=text/javascript src="{{url_for('static', filename='javascript/keyboard_control.js') }}"></script>
 <script type=text/javascript src="{{url_for('static', filename='javascript/plotting.js') }}"></script>
 <script type=text/javascript src="{{url_for('static', filename='javascript/main.js') }}"></script>
+
 </html>
 
