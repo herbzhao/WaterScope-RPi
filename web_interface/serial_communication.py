@@ -58,7 +58,7 @@ class serial_controller_class():
             serial_command = serial_command.replace('move', 'M')
         # LED_RGB(255,255,255)
         elif 'LED_RGB' in serial_command:
-            serial_command = serial_command.replace('LED RGB', 'C')
+            serial_command = serial_command.replace('LED_RGB', 'C')
         # set_temp(30)
         elif 'set_temp':
             serial_command = serial_command.replace('set_temp', 'T')
@@ -116,8 +116,34 @@ class serial_controller_class():
 
     def parsing_command_parabolic_flight(self, serial_command):
         ''' parsing the command from interface for parabolic flight arduino'''
-        serial_command = serial_command.replace(' ','').replace('(','').replace(')','')
+        # usage
+        #T_fin(20), T_start(20), T_prep(20)
+        #LED_RGB(255,255,255)
+        #led_on
+        
+        serial_command = serial_command.replace(' ','').replace('(','=').replace(')','')
         return serial_command
+
+
+    def serial_output_parse(self, options=[]):
+        ''' parsing the arduino output for logging. motor control purposes'''
+        if 'motor' in options:
+            # a 'FIN' flag is used to indicate the motor movement is finished, this needs to be specified in Arduino
+            if 'FIN' in self.serial_output:
+                self.fin_flag.append('FIN')
+
+        if 'temperature' in options:
+            # store temperature and time in a log dict
+            try:
+                self.log
+            except AttributeError:
+                self.log = {'temp':[], 'time':[]}
+            # extract time and temperature value
+            if ' *C' in self.serial_output:
+                self.log['temp'].append(float(self.serial_output.replace(' *C','')))
+            elif ' s' in self.serial_output:
+                self.log['time'].append(float(self.serial_output.replace(' s','')))
+
 
     def serial_read(self, options=['quiet']):
         self.stop_threading = False
@@ -128,12 +154,16 @@ class serial_controller_class():
                 break
             else:
                 # time.sleep(0)
-            # only when serial is available to read
-            # if ser.in_waiting:
+                # only when serial is available to read
                 if self.ser.in_waiting:
                     self.serial_output = self.ser.readline().decode()
+                    # parse the output directly for other purposes
+                    self.serial_output_parse(options = ['motor', 'temperature'])
+                    # decide whether to print the output or store in a txt file
                     if options[0] == 'quiet':
                         pass
+                    elif options[0] == 'normal':
+                        print(self.serial_output)
                     elif options[0] == 'logging':
                         print(self.serial_output)
                         # NOTE: the options[1] is the folder name
@@ -141,17 +171,14 @@ class serial_controller_class():
                         if len(options) == 1:
                             options.append(self.starting_time)
                         # create the folder for the first time.
-                        if not os.path.exists("timelapse/{}".format(options[1])):
-                            os.mkdir("timelapse/{}".format(options[1]))
-                        log_file_location = "timelapse/{}/temp_log.txt".format(options[1])
+                        if not os.path.exists("{}".format(options[1])):
+                            os.mkdir("{}".format(options[1]))
+                        log_file_location = "{}/temp_log.txt".format(options[1])
                         with open(log_file_location, 'a+') as log_file:
                             log_file.writelines(self.serial_output)
-                    else:
-                        print(self.serial_output)
+
                     
-                    # a 'FIN' flag is used to indicate the motor movement is finished, this needs to be specified in Arduino
-                    if 'FIN' in self.serial_output:
-                        self.fin_flag.append('FIN')
+
 
                 
     def serial_read_threading(self, options=['quiet']):

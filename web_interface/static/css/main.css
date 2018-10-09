@@ -6,6 +6,15 @@
     /* width: auto; */
 }
 
+/* auto-resizing the streaming window */
+.realtime_plot {
+    /* max-width: 100%; */
+    width: 100%;
+    height: auto;
+    /* width: auto; */
+}
+
+
 .stream_zoom {
     zoom: 150%;
 }

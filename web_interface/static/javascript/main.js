@@ -1,3 +1,14 @@
+Vue.options.delimiters = ["[[", "]]"];
+
+var app = new Vue({
+    el: '#app',
+    data: {
+      message: 'Hello Vue!',
+      picked: null
+    },
+  })
+
+
 function restart_stream() {
     window.location = "/"
 }

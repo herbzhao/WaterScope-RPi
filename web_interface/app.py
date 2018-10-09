@@ -11,15 +11,13 @@ from serial_communication import serial_controller_class
 # Raspberry Pi camera module (requires picamera package)
 from camera_pi import Camera
 
+# TEST: just temporary
+from output import output_class_builder 
+
 
 app = Flask(__name__)
 
-@app.route('/')
-def index():
-    """Video streaming home page."""
-    Camera.start_stream()
-    initialse_serial_connection()
-    return render_template('index.html')
+
 
 
 def gen(camera):
@@ -30,6 +28,62 @@ def gen(camera):
 
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
+
+def swap_stream_method(option='swap'):
+    # DEBUG: why do I need the global Camera?
+    global Camera
+    if option == 'swap':
+        Camera.stop_stream()
+        if Camera.stream_type == 'pi':
+            from camera_pi_cv import Camera
+        elif Camera.stream_type == 'opencv':
+            from camera_pi import Camera
+        Camera.start_stream()
+        time.sleep(0.1)
+
+    elif option == 'opencv':
+        if Camera.stream_type == 'pi':
+            Camera.stop_stream()
+            from camera_pi_cv import Camera
+            Camera.start_stream()
+            time.sleep(0.1)
+    
+    elif option == 'pi':
+        if Camera.stream_type == 'opencv':
+            Camera.stop_stream()
+            from camera_pi import Camera
+            Camera.start_stream()
+            time.sleep(0.1)
+
+
+def initialse_serial_connection():
+    ''' all the arduino connection is done via this function''' 
+    try:
+        #print(' serial connections already exist')
+        Camera.serial_controllers
+    except AttributeError:
+        with open('config_serial.yaml') as config_serial_file:
+            serial_controllers_config = yaml.load(config_serial_file)
+        # Warning: depends on what boards are connected
+        serial_controllers_names = ['ferg','parabolic']
+        # initialise the serial port if it does not exist yet.
+        #print('initialising the serial connections')
+        Camera.serial_controllers = {}
+        for name in serial_controllers_names:
+            Camera.serial_controllers[name] = serial_controller_class()
+            Camera.serial_controllers[name].serial_connect(
+                port_names=serial_controllers_config[name]['port_names'], 
+                baudrate=serial_controllers_config[name]['baudrate'])
+            Camera.serial_controllers[name].serial_read_threading(options=serial_controllers_config[name]['serial_read_options'])
+
+
+@app.route('/')
+def index():
+    """Video streaming home page."""
+    Camera.start_stream()
+    initialse_serial_connection()
+    return render_template('index.html')
 
 
 @app.route('/v')
@@ -60,34 +114,6 @@ def read_config():
     Camera.update_camera_setting()
     return render_template('index.html', refresh_interval=1)
 
-
-
-def swap_stream_method(option='swap'):
-    # DEBUG: why do I need the global Camera?
-    global Camera
-    if option == 'swap':
-        Camera.stop_stream()
-        if Camera.stream_type == 'pi':
-            from camera_pi_cv import Camera
-        elif Camera.stream_type == 'opencv':
-            from camera_pi import Camera
-        Camera.start_stream()
-        time.sleep(0.1)
-
-    elif option == 'opencv':
-        if Camera.stream_type == 'pi':
-            Camera.stop_stream()
-            from camera_pi_cv import Camera
-            Camera.start_stream()
-            time.sleep(0.1)
-    
-    elif option == 'pi':
-        if Camera.stream_type == 'opencv':
-            Camera.stop_stream()
-            from camera_pi import Camera
-            Camera.start_stream()
-            time.sleep(0.1)
-
 @app.route('/swap_stream')
 def swap_stream():
     ''' swap between opencv and picamera for streaming'''
@@ -95,27 +121,6 @@ def swap_stream():
     return redirect('/')
 
 
-def initialse_serial_connection():
-    ''' all the arduino connection is done via this function''' 
-    try:
-        #print(' serial connections already exist')
-        Camera.serial_controllers
-    except AttributeError:
-        with open('config_serial.yaml') as config_serial_file:
-            serial_controllers_config = yaml.load(config_serial_file)
-        # Warning: depends on what boards are connected
-        serial_controllers_names = ['ferg',]
-        # initialise the serial port if it does not exist yet.
-        #print('initialising the serial connections')
-        Camera.serial_controllers = {}
-        for name in serial_controllers_names:
-            Camera.serial_controllers[name] = serial_controller_class()
-            Camera.serial_controllers[name].serial_connect(
-                port_names=serial_controllers_config[name]['port_names'], 
-                baudrate=serial_controllers_config[name]['baudrate'])
-            Camera.serial_controllers[name].serial_read_threading(options=serial_controllers_config[name]['serial_read_options'])
-    
-    
 ''' general serial command url'''
 @app.route('/serial/')
 @app.route('/ser/')
@@ -129,7 +134,7 @@ def send_serial():
     # the value is obtained from the input_form
     serial_command_value = request.args.get('value', '')
     # TODO: test the serial command and then simplify the template
-    serial_command = serial_command_type +  '(' + serial_command_value + ')'
+    serial_command = serial_command_type +  serial_command_value +')'
     print(serial_command)
     try:
         Camera.serial_controllers[serial_board].serial_write(serial_command, parser = serial_board)
@@ -143,22 +148,18 @@ def send_serial():
 
 
 ''' The feed for serial_command output ''' 
-@app.route('/serial_monitor_parabolic')
-def ferg_serial_monitor():
+@app.route('/parabolic_serial_monitor')
+def parabolic_serial_monitor():
+    initialse_serial_connection()
     try:
-        Camera.all_serial_outputs
-    except AttributeError:
-        Camera.all_serial_outputs = []
-    try:
-        Camera.all_serial_outputs.append(Camera.serial_controllers['ferg'].serial_output)
-        if len(Camera.all_serial_outputs) < 5:
-            recent_serial_outputs = Camera.all_serial_outputs
-        else:
-            recent_serial_outputs = Camera.all_serial_outputs[-5:]
-        return jsonify(recent_serial_outputs)
+        time_value = Camera.serial_controllers['parabolic'].log['time'][-1]
+        temp_value = Camera.serial_controllers['parabolic'].log['temp'][-1]
+    except IndexError:
+        time_value = 0
+        temp_value = 0
+    # return jsonify({'time_value':time_value, 'temp_value':temp_value})
+    return jsonify({'x':time_value, 'y':temp_value})
 
-    except KeyError:
-        return 'Ferg arduino not connected'
 
 
 # TODO: have a fine focus and coarse focus

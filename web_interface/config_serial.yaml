@@ -5,7 +5,7 @@ ferg:
 parabolic:
   baudrate: 9600
   port_names: [SERIAL, Serial]
-  serial_read_options: [logging, heatmass_PID]
+  serial_read_options: [quiet, timelapse_data/PID]
 waterscope:
   baudrate: 9600
   port_names: [ws]

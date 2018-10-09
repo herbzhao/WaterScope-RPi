@@ -57,7 +57,7 @@ function direction_key_loop () {           //  create a loop function
         }
         direction_key = '';
         direction_key_loop();             //  ..  again which will trigger another 
-    }, 25)
+    }, 200)
  }
  
 direction_key_loop();   
