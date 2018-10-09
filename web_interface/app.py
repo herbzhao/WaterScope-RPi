@@ -35,21 +35,21 @@ def swap_stream_method(option='swap'):
     global Camera
     if option == 'swap':
         Camera.stop_stream()
-        if Camera.stream_type == 'pi':
+        if Camera.stream_type == 'pi' or Camera.stream_type =='PiCamera':
             from camera_pi_cv import Camera
-        elif Camera.stream_type == 'opencv':
+        elif Camera.stream_type == 'opencv' :
             from camera_pi import Camera
         Camera.start_stream()
         time.sleep(0.1)
 
-    elif option == 'opencv':
+    elif 'cv' in option or  'CV' in option:
         if Camera.stream_type == 'pi':
             Camera.stop_stream()
             from camera_pi_cv import Camera
             Camera.start_stream()
             time.sleep(0.1)
     
-    elif option == 'pi':
+    elif 'pi' in option or 'Pi' in option:
         if Camera.stream_type == 'opencv':
             Camera.stop_stream()
             from camera_pi import Camera
@@ -114,12 +114,18 @@ def read_config():
     Camera.update_camera_setting()
     return render_template('index.html', refresh_interval=1)
 
-@app.route('/swap_stream')
+@app.route('/swap_stream/')
 def swap_stream():
     ''' swap between opencv and picamera for streaming'''
-    swap_stream_method(option='swap')
+    stream_method = request.args.get('stream', '')
+    swap_stream_method(option=stream_method)
+
     return redirect('/')
 
+@app.route('/info')
+def info():
+    # a page to send all the current info to vue
+    return jsonify({'stream_method': Camera.stream_type})
 
 ''' general serial command url'''
 @app.route('/serial/')

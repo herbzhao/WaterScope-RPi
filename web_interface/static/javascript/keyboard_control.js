@@ -66,26 +66,37 @@ direction_key_loop();
 
 // change fergboard speed
 Mousetrap.bind(']', function () {
-    console.log('increase speed');
-    fetch("/ser/?type=set_speed&value=increase&board=ferg");
+    console.log('zoom in');
+    app.zoom = (app.zoom +0.1) || 2
+
 } );
 Mousetrap.bind('[', function () {
-    console.log('decrease speed');
-    fetch("/ser/?type=set_speed&value=decrease&board=ferg");
+    console.log('zoom out');
+    app.zoom = (app.zoom -0.1) || 1
 });
 
 Mousetrap.bind('esc', function () {
-    location.href = "/";
+    app.refresh()
 }, 'keyup');
 
 // key combination to turn on/off LED
 // TODO: incorporate waterscope as well?
 Mousetrap.bind('o n', function () {
-    led_on();
+    app.LED_on()
 });
 Mousetrap.bind('o f f', function () {
-    led_off();
+    app.LED_off()
 });
+Mousetrap.bind('l e d', function () {
+    if (app.LED_switch == null){
+        app.LED_switch = 'LED_on'
+    }
+    else if (app.LED_switch == 'LED_on'){
+        app.LED_switch = null
+    }
+    app.toggle_LED()
+});
+
 Mousetrap.bind('s t a r t', function () {
     start_cooling();
 });

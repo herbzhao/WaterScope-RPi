@@ -19,8 +19,10 @@ Plotly.newPlot(plotting_element_ID, data = [trace]);
 // https://hashnode.com/post/how-can-i-use-the-data-of-axioss-response-outside-cj2yddlhx003kcfk8h8czfo7k
 function getData() {
   axios.get(API_url).then(response => {
+
     x_value = response.data.x
     y_value = response.data.y
+    console.log(y_value)
     real_time_plotting(x_value, y_value)
   })
 }
@@ -56,4 +58,4 @@ function real_time_plotting(x_value, y_value) {
 // plot with intervals
 setInterval(function () {
   getData()
-}, 500);
+}, 100);
