@@ -41,25 +41,25 @@ var app = new Vue({
                 this.stop_recording()
             }
         },
-        config_update_switch: function(){
+        config_update_switch: function () {
             if (this.config_update_switch == "true") {
                 this.start_config_update()
             } else if (this.config_update_switch == null) {
                 this.stop_config_update()
             }
         },
-        timelapse_switch: function(){
-                // always stop the timelapse first
-                this.stop_timelapse()
-                if (this.timelapse_switch == 'waterscope_timelapse') {
-                    this.start_waterscope_timelapse()
-                } else if (this.timelapse_switch == 'timelapse') {
-                    this.start_timelapse()
-                } else if (this.timelapse_switch == null) {
-                    // do nothing
-                }
+        timelapse_switch: function () {
+            // always stop the timelapse first
+            this.stop_timelapse()
+            if (this.timelapse_switch == 'waterscope_timelapse') {
+                this.start_waterscope_timelapse()
+            } else if (this.timelapse_switch == 'timelapse') {
+                this.start_timelapse()
+            } else if (this.timelapse_switch == null) {
+                // do nothing
+            }
         },
-        stream_method: function(){
+        stream_method: function () {
             if (this.stream_method == 'PiCamera') {
                 this.start_PiCamera_stream()
             } else if (this.stream_method == 'OpenCV') {
@@ -72,17 +72,16 @@ var app = new Vue({
         },
     },
 
-    // DEBUG: why when vue is not running, plotly willl work
     mounted: function () {
         this.read_server_info()
     },
 
     methods: {
-        led_on: function(){
+        led_on: function () {
             console.log('turn on LED')
             axios.get("/ser/?value=led_on&board=parabolic");
         },
-        led_off: function(){
+        led_off: function () {
             console.log('turn off LED')
             axios.get("/ser/?value=led_off&board=parabolic")
         },
@@ -170,7 +169,7 @@ var app = new Vue({
         },
 
         send_serial_command: function () {
-            console.log('sending serial command')
+            console.log('sending serial command {0}'.format(this.serial_command))
             axios.get('/ser/?value={0}&board={1}'.format(this.serial_command, this.chosen_arduino_board))
         },
 
@@ -179,9 +178,7 @@ var app = new Vue({
             axios
                 .get('/settings/')
                 .then(response => {
-                    // string
                     this.stream_method = response.data.stream_method;
-                    // should be a list
                     this.available_arduino_boards = response.data.available_arduino_boards;
                     console.log(this.available_arduino_boards)
                 })
@@ -199,7 +196,6 @@ var app = new Vue({
             console.log('zoom out');
             this.zoom = (this.zoom - 0.5) || 1
         },
-
         refresh: function () {
             window.location = "/"
         },
@@ -219,24 +215,6 @@ var app = new Vue({
         take_image_high_res: function () {
             axios.get("/take_image/?option=high_res")
             console.log("taking image in high res")
-        },
-        peltier_control: function () {
-            if (this.peltier_control_command == 'stop') {
-                axios.get("/ser/?value=stop&board=parabolic");
-                console.log("Stop peltier cooling")
-            } else if (this.peltier_control_command == 'start') {
-                axios.get("/ser/?value=start&board=parabolic");
-                console.log("Cool from current temp to T_fin")
-            } else if (this.peltier_control_command == 'start') {
-                axios.get("/ser/?value=start&board=parabolic");
-                console.log("Restart the cooling process from T_start to T_fin")
-            } else if (this.peltier_control_command == 'prepare') {
-                axios.get("/ser/?value=prepare&board=parabolic");
-                console.log("Cool/heat to phase transition point")
-            } else if (this.peltier_control_command == 'hold') {
-                axios.get("/ser/?value=hold&board=parabolic");
-                console.log("Hold at current temperature")
-            }
         },
     }
 })

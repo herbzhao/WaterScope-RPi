@@ -25,6 +25,8 @@ class Camera(BaseCamera):
         cls.fps = 30
         cls.stream_resolution = (1648,1232)
         cls.image_resolution = (3280,2464)
+        # Change: 75 or 85 to see the streaming quality
+        cls.jpeg_quality = 75
         cls.starting_time = datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S')
 
     @classmethod
@@ -68,9 +70,13 @@ class Camera(BaseCamera):
             cls.camera.stop_recording(splitter_port=2)
             print('stop recording')
         else: 
-            cls.camera.start_recording('capture_video_port.h264', splitter_port=2, resize=(320, 240))
+            # https://picamera.readthedocs.io/en/release-1.10/api_camera.html#picamera.camera.PiCamera.start_recording
+            # CHange: whether h264 is better than mjpeg
+            cls.camera.start_recording('capture_video_port.h264', splitter_port=2, resize=None, quality=20)
+            # cls.camera.start_recording('capture_video_port.mjpeg', splitter_port=2, resize=None, quality=cls.jpeg_quality)
             print('start recording')
-            cls.camera.wait_recording(50)
+            # DEBUG: is this wait_recording needed
+            cls.camera.wait_recording(500, splitter_port=2)
             cls.camera.stop_recording(splitter_port=2)
 
     @classmethod
@@ -106,7 +112,7 @@ class Camera(BaseCamera):
         cls.camera.resolution = cls.stream_resolution
         # Warning: be careful about the cls.camera.start_recording. 'bgr' for opencv and 'mjpeg' for picamera
         # resume the video channel
-        cls.camera.start_recording(cls.stream, format='mjpeg', quality = 100)
+        cls.camera.start_recording(cls.stream, format='mjpeg', quality = cls.jpeg_quality)
         # cls.camera.start_recording(cls.stream, format='bgr')
         cls.image_seq = cls.image_seq + 1
 
@@ -127,7 +133,7 @@ class Camera(BaseCamera):
 
             # streaming
             cls.stream = io.BytesIO()
-            cls.camera.start_recording(cls.stream, format='mjpeg', quality = 100)
+            cls.camera.start_recording(cls.stream, format='mjpeg', quality = cls.jpeg_quality)
             while True:
                 # reset stream for next frame
                 cls.stream.seek(0)

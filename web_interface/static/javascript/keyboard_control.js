@@ -6,7 +6,7 @@ Mousetrap.bind('esc', function () {
 // change fergboard speed
 Mousetrap.bind(']', function () {
     app.zoom_in()
-} );
+});
 Mousetrap.bind('[', function () {
     app.zoom_out()
 });
@@ -15,30 +15,38 @@ Mousetrap.bind('[', function () {
 // key combination to turn on/off LED
 // TODO: incorporate waterscope as well?
 Mousetrap.bind('o n', function () {
-    app.LED_on()
+    app.LED_switch = 'true'
 });
 Mousetrap.bind('o f f', function () {
-    app.LED_off()
+    app.LED_switch = null
 });
 
 Mousetrap.bind('s t a r t', function () {
-    start_cooling();
+    app.chosen_arduino_board = 'parabolic'
+    app.serial_command = 'start'
+    app.send_serial_command()
 });
 Mousetrap.bind('s t o p', function () {
-    stop_cooling();
+    app.chosen_arduino_board = 'parabolic'
+    app.serial_command = 'stop'
+    app.send_serial_command()
 });
 Mousetrap.bind('h o l d', function () {
-    hold_temperature();
+    app.chosen_arduino_board = 'parabolic'
+    app.serial_command = 'hold'
+    app.send_serial_command()
 });
 Mousetrap.bind('p r e p', function () {
-    prepare_cooling();
+    app.chosen_arduino_board = 'parabolic'
+    app.serial_command = 'prepare'
+    app.send_serial_command()
 });
 
-// 
-Mousetrap.bind(['g'], function() {
+
+Mousetrap.bind(['g'], function () {
     app.take_image()
 });
-Mousetrap.bind(['h'], function() {
+Mousetrap.bind(['h'], function () {
     app.take_image_high_res()
 });
 
@@ -83,28 +91,24 @@ Mousetrap.bind('r', function () {
 });
 
 // some delay for the key input as it is too fast!
-function direction_key_loop () {           //  create a loop function
-    setTimeout(function () {    
+function direction_key_loop() { //  create a loop function
+    setTimeout(function () {
         if (direction_key == 'w') {
             fetch('/ser/?value=jog(0,-1,0)&board=fergboard');
         } else if (direction_key == 's') {
             fetch('/ser/?value=jog(0,1,0)&board=fergboard');
-        } else if (direction_key == 'a'){
+        } else if (direction_key == 'a') {
             fetch('/ser/?value=jog(-1,0,0)&board=fergboard');
-        }
-        else if (direction_key == 'd'){
+        } else if (direction_key == 'd') {
             fetch('/ser/?type=jog&value=jog(1,0,0)&board=fergboard');
-        }
-        else if (direction_key == 'q'){
+        } else if (direction_key == 'q') {
             fetch('/ser/?type=jog&value=jog(0,0,1)&board=fergboard');
-        }
-        else if (direction_key == 'e'){
+        } else if (direction_key == 'e') {
             fetch('/ser/?type=jog&value=jog(0,0,-1)&board=fergboard');
         }
         direction_key = '';
-        direction_key_loop();             //  ..  again which will trigger another 
-    }, 200)
- }
- 
-direction_key_loop();   
+        direction_key_loop(); //  ..  again which will trigger another 
+    }, 50)
+}
 
+direction_key_loop();

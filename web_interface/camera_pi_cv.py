@@ -30,6 +30,8 @@ class Camera(BaseCamera):
         cls.fps = 30
         cls.stream_resolution = (1648,1232)
         cls.image_resolution = (3280,2464)
+        # Change: 75 or 85 to see the streaming quality
+        cls.jpeg_quality = 75
         cls.starting_time = datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S')
 
     @classmethod
@@ -47,11 +49,57 @@ class Camera(BaseCamera):
             cls.camera.led = False
 
     # TODO: a zoom function with picamera https://picamera.readthedocs.io/en/release-1.13/api_camera.html
-    def zoom(cls):
-        pass
+    @classmethod
+    def change_zoom(cls, zoom_value=1):
+        zoom_value = float(zoom_value)
+        if zoom_value <1:
+            zoom_value = 1
+        # Richard's code for zooming !
+        fov = cls.camera.zoom
+        centre = np.array([fov[0] + fov[2]/2.0, fov[1] + fov[3]/2.0])
+        size = 1.0/zoom_value
+        # If the new zoom value would be invalid, move the centre to
+        # keep it within the camera's sensor (this is only relevant 
+        # when zooming out, if the FoV is not centred on (0.5, 0.5)
+        for i in range(2):
+            if np.abs(centre[i] - 0.5) + size/2 > 0.5:
+                centre[i] = 0.5 + (1.0 - size)/2 * np.sign(centre[i]-0.5)
+        print("setting zoom, centre {}, size {}".format(centre, size))
+        new_fov = (centre[0] - size/2, centre[1] - size/2, size, size)
+        cls.camera.zoom = new_fov
+
+
+    @classmethod
+    def record_video(cls, stop = False):
+        if stop is True:
+            cls.camera.stop_recording(splitter_port=2)
+            print('stop recording')
+        else: 
+            # https://picamera.readthedocs.io/en/release-1.10/api_camera.html#picamera.camera.PiCamera.start_recording
+            # CHange: whether h264 is better than mjpeg
+            cls.camera.start_recording('capture_video_port.h264', splitter_port=2, resize=None, quality=20)
+            # cls.camera.start_recording('capture_video_port.mjpeg', splitter_port=2, resize=None, quality=cls.jpeg_quality)
+            print('start recording')
+            # DEBUG: is this wait_recording needed
+            cls.camera.wait_recording(500, splitter_port=2)
+            cls.camera.stop_recording(splitter_port=2)
 
     @classmethod
     def take_image(cls):
+        # folder_path = '/home/pi/WaterScope-RPi/water_test/timelapse/{}'.format(cls.starting_time)
+        folder_path = 'timelapse_data/{}'.format(cls.starting_time)
+        if not os.path.exists(folder_path):
+            os.mkdir(folder_path)
+        filename = folder_path+'/{:04d}.jpg'.format(cls.image_seq)
+        print('taking image')
+        #cls.camera.capture(filename, format = 'jpeg', bayer = True)
+        # Change: remove bayer = Ture if dont care
+        cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = False, use_video_port=True)
+        # reduce the resolution for video streaming
+        cls.image_seq = cls.image_seq + 1
+
+    @classmethod
+    def take_image_high_res(cls):
         # when taking photos, increase the resolution and everything
         # need to stop the video channel first
         cls.camera.stop_recording()
@@ -64,14 +112,15 @@ class Camera(BaseCamera):
         print('taking image')
         #cls.camera.capture(filename, format = 'jpeg', bayer = True)
         # Change: remove bayer = Ture if dont care
-        cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = False)
+        cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = True)
         # reduce the resolution for video streaming
         cls.camera.resolution = cls.stream_resolution
         # Warning: be careful about the cls.camera.start_recording. 'bgr' for opencv and 'mjpeg' for picamera
         # resume the video channel
-        #cls.camera.start_recording(cls.stream, format='mjpeg', quality = 100)
+        # cls.camera.start_recording(cls.stream, format='mjpeg', quality = cls.jpeg_quality)
         cls.camera.start_recording(cls.stream, format='bgr')
         cls.image_seq = cls.image_seq + 1
+
 
     # Change:  Sync above 
     @classmethod
@@ -83,7 +132,6 @@ class Camera(BaseCamera):
             #cv_stream.edge_detection,
             cls.variance_of_laplacian, 
         ]
-
 
     # openCV functions
     @classmethod
