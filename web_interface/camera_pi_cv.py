@@ -287,7 +287,7 @@ class Camera(BaseCamera):
         threading_af.daemon = True
         threading_af.start()
     
-    stream_type = 'opencv'
+    stream_method = 'OpenCV'
     @staticmethod
     def frames(cls):
         # run this initialisation method

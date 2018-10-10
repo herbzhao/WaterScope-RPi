@@ -172,13 +172,13 @@ var app = new Vue({
         },
         start_PiCamera_stream: function () {
             console.log('changing streaming: {}'.format(this.stream_method))
-            window.location = '/settings/?stream=picamera'
+            window.location = '/settings/?stream_method=picamera'
             // axios.get('/swap_stream/?stream=picamera')
             // TODO: maybe we can refresh the jpg elements
         },
         start_OpenCV_stream: function () {
             console.log('changing streaming: {}'.format(this.stream_method))
-            window.location = '/settings/?stream=opencv'
+            window.location = '/settings/?stream_method=opencv'
             // axios.get('/swap_stream/?stream=opencv')
         },
 

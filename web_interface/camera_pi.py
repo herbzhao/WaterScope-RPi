@@ -110,7 +110,7 @@ class Camera(BaseCamera):
     def frames(cls):
         # run this initialisation method
         cls.initialisation()
-        cls.stream_type = 'pi'
+        cls.stream_method = 'PiCamera'
         with picamera.PiCamera() as cls.camera:
             # let camera warm up
             time.sleep(0.1)

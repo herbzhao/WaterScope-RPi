@@ -1,12 +1,15 @@
 ferg:
+  connect: True
   baudrate: 115200
   port_names: [Micro]
   serial_read_options: [quiet]
 parabolic:
+  connect: True
   baudrate: 9600
   port_names: [SERIAL, Serial]
   serial_read_options: [quiet, timelapse_data/PID]
 waterscope:
+  connect: False
   baudrate: 9600
   port_names: [ws]
   serial_read_options: [quiet]

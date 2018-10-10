@@ -33,28 +33,28 @@ def gen(camera):
 def swap_stream_method(option='swap'):
     # DEBUG: why do I need the global Camera?
     global Camera
-    if option == 'swap':
-        Camera.stop_stream()
-        if Camera.stream_type == 'pi' or Camera.stream_type =='PiCamera':
-            from camera_pi_cv import Camera
-        elif Camera.stream_type == 'opencv' :
-            from camera_pi import Camera
-        Camera.start_stream()
-        time.sleep(0.1)
-
-    elif 'cv' in option or  'CV' in option:
-        if Camera.stream_type == 'pi':
+    if option == 'OpenCV':
+        if Camera.stream_method == 'PiCamera':
             Camera.stop_stream()
             from camera_pi_cv import Camera
             Camera.start_stream()
             time.sleep(0.1)
     
-    elif 'pi' in option or 'Pi' in option:
-        if Camera.stream_type == 'opencv':
+    elif option == 'PiCamera':
+        if Camera.stream_method == 'OpenCV':
             Camera.stop_stream()
             from camera_pi import Camera
             Camera.start_stream()
             time.sleep(0.1)
+            
+    if option == 'swap':
+        Camera.stop_stream()
+        if Camera.stream_method =='PiCamera':
+            from camera_pi_cv import Camera
+        elif Camera.stream_method == 'opencv' :
+            from camera_pi import Camera
+        Camera.start_stream()
+        time.sleep(0.1)
 
 
 def initialse_serial_connection():
@@ -65,7 +65,9 @@ def initialse_serial_connection():
     except AttributeError:
         with open('config_serial.yaml') as config_serial_file:
             serial_controllers_config = yaml.load(config_serial_file)
+        
         # Warning: depends on what boards are connected
+        # TODO: make yaml file to say which is connected
         serial_controllers_names = ['ferg','parabolic']
         # initialise the serial port if it does not exist yet.
         #print('initialising the serial connections')
@@ -94,14 +96,11 @@ def video_feed():
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
-
-
-
 # DEBUG: combine the info with this page?
 @app.route('/settings/')
 def settings_io():
     ''' swap between opencv and picamera for streaming'''
-    stream_method = request.args.get('stream', '')
+    stream_method = request.args.get('stream_method', '')
     zoom_value = request.args.get('zoom', '')
     config_update = request.args.get('config_update', '')
     stop_flag = request.args.get('stop', '')
@@ -124,6 +123,7 @@ def settings_io():
     return jsonify(settings)
 
 
+# DEBUG: join the serial window and serial send 
 ''' general serial command url'''
 @app.route('/serial/')
 @app.route('/ser/')
@@ -131,23 +131,15 @@ def send_serial():
     initialse_serial_connection()
     # choose the arduino board and parser - ferg, waterscope, para
     serial_board = request.args.get('board', 'parabolic')
-    # split the command into two parts for type (LED_RGB) and value (r,g,b)
-    # the type is obtined from the dropdown
-    serial_command_type = request.args.get('type', '')
     # the value is obtained from the input_form
     serial_command_value = request.args.get('value', '')
-    # TODO: test the serial command and then simplify the template
-    serial_command = serial_command_type +  serial_command_value +')'
-    print(serial_command)
+
     try:
-        Camera.serial_controllers[serial_board].serial_write(serial_command, parser = serial_board)
+        Camera.serial_controllers[serial_board].serial_write(serial_command_value, parser = serial_board)
     except KeyError:
         print('cannot find this board')
     
-    return render_template('index.html', 
-        serial_board = serial_board, 
-        serial_command_type = serial_command_type, 
-        serial_command_value=serial_command_value)
+    return render_template('index.html')
 
 
 ''' The feed for serial_command output ''' 
@@ -170,7 +162,7 @@ def parabolic_serial_monitor():
 @app.route('/af')
 def auto_focus():
     # swap to opencv and then start the auto focusing
-    swap_stream_method(option='opencv')
+    swap_stream_method(option='OpenCV')
     initialse_serial_connection()
     # start auto focusing
     Camera.auto_focus_thread()
