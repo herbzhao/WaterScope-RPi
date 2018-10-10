@@ -93,7 +93,7 @@
                         <!-- NOTE: config_setting -->
                         <v-tooltip top>
                             <v-btn-toggle v-model="config_update_switch" slot="activator">
-                                <v-btn flat color="black" value="config_updating" @click="toggle_config_update">
+                                <v-btn flat color="black" value="true" @click="toggle_config_update">
                                     <span>Configs</span>
                                     <v-icon>settings</v-icon>
                                 </v-btn>
@@ -105,7 +105,7 @@
                         <!-- NOTE: recording -->
                         <v-tooltip top>
                             <v-btn-toggle v-model="recording_switch" slot="activator">
-                                <v-btn flat color="red" value="recording" @click="toggle_recording">
+                                <v-btn flat color="red" value="true" @click="toggle_recording">
                                     <span>Record</span>
                                     <v-icon>videocam</v-icon>
                                 </v-btn>
@@ -116,7 +116,7 @@
                         <!-- NOTE: LED -->
                         <v-tooltip top>
                             <v-btn-toggle v-model="LED_switch" slot="activator">
-                                <v-btn color="#fffa00" value="LED_on" @click="toggle_LED">
+                                <v-btn color="#fffa00" value="true" @click="toggle_LED">
                                     <span>LED</span>
                                     <v-icon>highlight</v-icon>
                                 </v-btn>
@@ -157,7 +157,7 @@
                 <!-- NOTE: Arduino command -->
                 <v-layout>
                     <v-flex xs3>
-                        <v-select :items="arduino_boards" v-model="chosen_arduino_board" menu-props="auto" label="Arduino board"
+                        <v-select :items="available_arduino_boards" v-model="chosen_arduino_board" menu-props="auto" label="Arduino board"
                             hide-details prepend-icon="memory" single-line></v-select>
                     </v-flex>
                     <v-flex xs3>
@@ -228,8 +228,8 @@
 <!-- Add this after vue.js -->
 <script type=text/javascript src="{{url_for('static', filename='javascript/axios.min.js') }}"></script>
 <script type=text/javascript src="{{url_for('static', filename='javascript/plotly.min.js') }}"></script>
+<script type=text/javascript src="{{url_for('static', filename='javascript/main.js') }}"></script>
 <script type=text/javascript src="{{url_for('static', filename='javascript/keyboard_control.js') }}"></script>
 <script type=text/javascript src="{{url_for('static', filename='javascript/plotting.js') }}"></script>
-<script type=text/javascript src="{{url_for('static', filename='javascript/main.js') }}"></script>
 
 </html>

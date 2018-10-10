@@ -94,38 +94,35 @@ def video_feed():
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
-@app.route('/stop')
-def stop():
-    """Stop the camera."""
-    Camera.stop_stream()
-    return render_template('index.html')
 
 
-@app.route('/zoom')
-def zoom():
-    """ Zoom in the streaming window """
-    return render_template('index.html', stream_class = 'stream_zoom')
 
-
-# auto-refresh to update the config
-@app.route('/c')
-@app.route('/config')
-def read_config():
-    Camera.update_camera_setting()
-    return render_template('index.html', refresh_interval=1)
-
-@app.route('/swap_stream/')
-def swap_stream():
+# DEBUG: combine the info with this page?
+@app.route('/settings/')
+def settings_io():
     ''' swap between opencv and picamera for streaming'''
     stream_method = request.args.get('stream', '')
-    swap_stream_method(option=stream_method)
+    zoom_value = request.args.get('zoom', '')
+    config_update = request.args.get('config_update', '')
+    stop_flag = request.args.get('stop', '')
 
-    return redirect('/')
+    if stream_method is not '':
+        swap_stream_method(option=stream_method)
+    if zoom_value is not '':
+        # only change zoom when passing an arg
+        Camera.change_zoom(zoom_value)
+    if config_update == 'true':
+        Camera.update_camera_setting()
+    if stop_flag == 'true':
+        Camera.stop_stream()
 
-@app.route('/info')
-def info():
-    # a page to send all the current info to vue
-    return jsonify({'stream_method': Camera.stream_type})
+    settings = {
+        'stream_method': Camera.stream_type, 
+        'available_arduino_boards': ['parabolic'],
+        }
+
+    return jsonify(settings)
+
 
 ''' general serial command url'''
 @app.route('/serial/')
@@ -186,37 +183,6 @@ def take_image():
     Camera.take_image()
     # start a thread
     return render_template('index.html')
-
-
-# this template includes an auto-refresh to keep snapping :D
-@app.route('/timelapse/')
-@app.route('/tl/')
-def take_timelapse():
-    # default time lapse interval is 10 sec
-    # to use different value - http://10.0.0.1:5000:5000/timelapse/?t=2
-    refresh_interval = request.args.get('t', '')
-    Camera.take_image()
-    # start a thread
-    return render_template('index.html', refresh_interval=refresh_interval)
-
-
-# this template includes an auto-refresh to keep snapping :D
-@app.route('/timelapse_waterscope/')
-@app.route('/tl_ws/')
-def take_timelapse_waterscope():
-    # default time lapse interval is 10 sec
-    # to use different value - http://10.0.0.1:5000:5000/timelapse/?t=2
-    refresh_interval = request.args.get('t', '10')
-    initialse_serial_connection()
-    Camera.serial_controllers['waterscope'].serial_write('led_off', parser='waterscope')
-    # stablise the LED before taking images
-    time.sleep(1)
-    Camera.take_image()
-    time.sleep(1)
-    Camera.serial_controllers['waterscope'].serial_write('led_on', parser='waterscope')
-
-    # start a thread
-    return render_template('index.html', refresh_interval=refresh_interval)
 
 
 if __name__ == '__main__':
