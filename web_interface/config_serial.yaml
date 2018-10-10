@@ -1,4 +1,4 @@
-ferg:
+fergboard:
   connect: True
   baudrate: 115200
   port_names: [Micro]

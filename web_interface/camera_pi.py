@@ -6,6 +6,7 @@ import datetime
 import sys
 import os
 import picamera
+import numpy as np
 # DEBUG: is this neccessary?
 # from threading import Condition
 import threading
@@ -24,7 +25,6 @@ class Camera(BaseCamera):
         cls.fps = 30
         cls.stream_resolution = (1648,1232)
         cls.image_resolution = (3280,2464)
-        cls.zoom =  [0,0,1,1]
         cls.starting_time = datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S')
 
     @classmethod
@@ -43,29 +43,35 @@ class Camera(BaseCamera):
 
     # TODO: a zoom function with picamera https://picamera.readthedocs.io/en/release-1.13/api_camera.html
     @classmethod
-    def zooming(cls, option='in'):
-        step = 0.1
-        if option == 'in':
-            cls.zoom = [cls.zoom[0]+step, cls.zoom[1]+step, cls.zoom[2]-step, cls.zoom[3]-step]
-        elif option == 'out':
-            cls.zoom = [cls.zoom[0]-step, cls.zoom[1]-step, cls.zoom[2]+step, cls.zoom[3]+step]
-        # limit the range
-        if cls.zoom[0] >=0.4:
-            cls.zoom = [0.4, 0.4, 0.6, 0.6]
-        elif cls.zoom[0]<1:
-            cls.zoom =  [0,0,1,1]
-
-        cls.camera.zoom = cls.zoom
-
+    def change_zoom(cls, zoom_value=1):
+        zoom_value = float(zoom_value)
+        if zoom_value <1:
+            zoom_value = 1
+        # Richard's code for zooming !
+        fov = cls.camera.zoom
+        centre = np.array([fov[0] + fov[2]/2.0, fov[1] + fov[3]/2.0])
+        size = 1.0/zoom_value
+        # If the new zoom value would be invalid, move the centre to
+        # keep it within the camera's sensor (this is only relevant 
+        # when zooming out, if the FoV is not centred on (0.5, 0.5)
+        for i in range(2):
+            if np.abs(centre[i] - 0.5) + size/2 > 0.5:
+                centre[i] = 0.5 + (1.0 - size)/2 * np.sign(centre[i]-0.5)
+        print("setting zoom, centre {}, size {}".format(centre, size))
+        new_fov = (centre[0] - size/2, centre[1] - size/2, size, size)
+        cls.camera.zoom = new_fov
 
 
     @classmethod
-    def record_video(cls):
-        cls.camera.start_recording('capture_video_port.h264', splitter_port=2, resize=(320, 240))
-        cls.camera.wait_recording(30)
-        cls.camera.stop_recording(splitter_port=2)
-
-
+    def record_video(cls, stop = False):
+        if stop is True:
+            cls.camera.stop_recording(splitter_port=2)
+            print('stop recording')
+        else: 
+            cls.camera.start_recording('capture_video_port.h264', splitter_port=2, resize=(320, 240))
+            print('start recording')
+            cls.camera.wait_recording(50)
+            cls.camera.stop_recording(splitter_port=2)
 
     @classmethod
     def take_image(cls):
@@ -95,7 +101,7 @@ class Camera(BaseCamera):
         print('taking image')
         #cls.camera.capture(filename, format = 'jpeg', bayer = True)
         # Change: remove bayer = Ture if dont care
-        cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = False)
+        cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = True)
         # reduce the resolution for video streaming
         cls.camera.resolution = cls.stream_resolution
         # Warning: be careful about the cls.camera.start_recording. 'bgr' for opencv and 'mjpeg' for picamera

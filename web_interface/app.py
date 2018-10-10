@@ -65,14 +65,17 @@ def initialse_serial_connection():
     except AttributeError:
         with open('config_serial.yaml') as config_serial_file:
             serial_controllers_config = yaml.load(config_serial_file)
-        
-        # Warning: depends on what boards are connected
-        # TODO: make yaml file to say which is connected
-        serial_controllers_names = ['ferg','parabolic']
+        Camera.available_arduino_boards = []
+
+        for board_name in serial_controllers_config:
+            if serial_controllers_config[board_name]['connect'] is True:
+                Camera.available_arduino_boards.append(board_name)
+
+        print(Camera.available_arduino_boards)
         # initialise the serial port if it does not exist yet.
         #print('initialising the serial connections')
         Camera.serial_controllers = {}
-        for name in serial_controllers_names:
+        for name in Camera.available_arduino_boards:
             Camera.serial_controllers[name] = serial_controller_class()
             Camera.serial_controllers[name].serial_connect(
                 port_names=serial_controllers_config[name]['port_names'], 
@@ -101,7 +104,7 @@ def video_feed():
 def settings_io():
     ''' swap between opencv and picamera for streaming'''
     stream_method = request.args.get('stream_method', '')
-    zoom_value = request.args.get('zoom', '')
+    zoom_value = request.args.get('zoom_value', '')
     config_update = request.args.get('config_update', '')
     stop_flag = request.args.get('stop', '')
 
@@ -116,8 +119,8 @@ def settings_io():
         Camera.stop_stream()
 
     settings = {
-        'stream_method': Camera.stream_type, 
-        'available_arduino_boards': ['parabolic'],
+        'stream_method': Camera.stream_method, 
+        'available_arduino_boards': Camera.available_arduino_boards,
         }
 
     return jsonify(settings)
@@ -169,10 +172,17 @@ def auto_focus():
     return render_template('index.html')
 
 # take one image
-@app.route('/snap')
-@app.route('/s')
+@app.route('/take_image/')
 def take_image():
-    Camera.take_image()
+    option = request.args.get('option', '')
+    if option == 'high-res':
+        Camera.take_image_high_res()
+    elif option == 'start_recording':
+        Camera.record_video()
+    elif option == 'stop_recording':
+        Camera.record_video(stop=True)
+    else:
+        Camera.take_image()
     # start a thread
     return render_template('index.html')
 

@@ -4,9 +4,7 @@
   <title>Video Streaming Demonstration</title>
   <!-- WARNING: CSS should be in head -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-<!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}"> -->
 <meta charset="utf-8">
-<link href='https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons' rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/vuetify.min.css') }}">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
 
@@ -28,11 +26,11 @@
 
 
         <v-content>
-            <v-container fluid row wrap   text-xs-center grid-list-xs justify-center>
+            <v-container fluid text-xs-center grid-list-xs justify-center>
                 <!-- NOTE: another layout here -->
                 <!--TEST: alert  -->
 
-                <v-layout>
+                <v-layout row wrap>
                     <v-flex xs12>
                         <v-alert :value="true" color="green" icon="directions_run" outline>
                             Currently running:
@@ -76,7 +74,7 @@
 
                         <v-tooltip top>
                             <!-- slot is needed for tooltip to work? -->
-                            <v-btn slot="activator" color="primary" fab @click='snap'>
+                            <v-btn slot="activator" color="primary" fab @click='take_image'>
                                 <v-icon>photo_camera</v-icon>
                             </v-btn>
                             <span>Take a low-res image (hkey: G) </span>
@@ -84,7 +82,7 @@
 
                         <v-tooltip top>
                             <!-- slot is needed for tooltip to work? -->
-                            <v-btn slot="activator" color="success" fab @click='snap'>
+                            <v-btn slot="activator" color="success" fab @click='take_image_high_res'>
                                 <v-icon>camera_enhance</v-icon>
                             </v-btn>
                             <span>Take a raw image (hkey: H)</span>
@@ -146,18 +144,19 @@
 
                     <v-flex xs3>
                         <!-- NOTE: zoom slider -->
-                        <v-slider v-model="zoom" :max="2" :min="1" :step="0.1" append-icon="zoom_in" prepend-icon="zoom_out"
-                            thumb-label ticks='always' color='black'></v-slider>
+                        <v-slider v-model="zoom" :max="max_zoom" :min="1" :step="0.5" append-icon="zoom_in"
+                            prepend-icon="zoom_out" thumb-label ticks='always' color='black' @click:append='zoom_in'
+                            @click:prepend='zoom_out'></v-slider>
                     </v-flex>
                 </v-layout>
 
 
                 <!-- Warning: another layout here -->
                 <!-- NOTE: Arduino command -->
-                <v-layout>
+                <v-layout row wrap>
                     <v-flex xs3>
-                        <v-select :items="available_arduino_boards" v-model="chosen_arduino_board" menu-props="auto" label="Arduino board"
-                            hide-details prepend-icon="memory" single-line></v-select>
+                        <v-select :items="available_arduino_boards" v-model="chosen_arduino_board" menu-props="auto"
+                            label="Arduino board" hide-details prepend-icon="memory" single-line></v-select>
                     </v-flex>
                     <v-flex xs3>
                         <v-form v-on:submit.prevent="send_serial_command">
@@ -199,11 +198,13 @@
                 <!-- NOTE: Streaming window -->
                 <v-layout>
                     <v-flex xs12>
-                        <v-img src="{{ url_for('video_feed') }}"></v-img>
+                        <v-img src="{{ url_for('video_feed') }}" aspect-ratio=1.337></v-img>
                     </v-flex>
                 </v-layout>
                 <v-layout>
+                        <v-flex xs12>
                     <div id='plotly_chart'></div>
+                    </v-flex>
                 </v-layout>
             </v-container>
 
@@ -219,7 +220,6 @@
 
 <!-- WARNING: javascript should be outside the body -->
 <script type=text/javascript src="{{url_for('static', filename='javascript/mousetrap.min.js') }}"></script>
-<script type=text/javascript src="{{url_for('static', filename='javascript/keyboard_capture.js') }}"></script>
 <script type=text/javascript src="{{url_for('static', filename='javascript/vue.js') }}"></script>
 <script type=text/javascript src="{{url_for('static', filename='javascript/vuetify.js') }}"></script>
 
@@ -227,8 +227,8 @@
 <!-- Add this after vue.js -->
 <script type=text/javascript src="{{url_for('static', filename='javascript/axios.min.js') }}"></script>
 <script type=text/javascript src="{{url_for('static', filename='javascript/plotly.min.js') }}"></script>
-<script type=text/javascript src="{{url_for('static', filename='javascript/main.js') }}"></script>
 <script type=text/javascript src="{{url_for('static', filename='javascript/keyboard_control.js') }}"></script>
+<script type=text/javascript src="{{url_for('static', filename='javascript/main.js') }}"></script>
 <script type=text/javascript src="{{url_for('static', filename='javascript/plotting.js') }}"></script>
 
 </html>

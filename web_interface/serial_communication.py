@@ -7,6 +7,8 @@ import time
 import datetime
 import numpy as np
 import os
+# regex for parsing the output
+import re
 
 
 class serial_controller_class():
@@ -138,10 +140,13 @@ class serial_controller_class():
                 self.log
             except AttributeError:
                 self.log = {'temp':[], 'time':[]}
+                # use regex to match the arduino output: 18.57 *C  4.05 s
+                self.temp_re = re.compile('\d+.\d+\s\*C')
+                self.time_re = re.compile('\d+.\d+\ss')
             # extract time and temperature value
-            if ' *C' in self.serial_output:
+            if self.temp_re.findall(self.serial_output):
                 self.log['temp'].append(float(self.serial_output.replace(' *C','')))
-            elif ' s' in self.serial_output:
+            elif self.time_re.findall(self.serial_output):
                 self.log['time'].append(float(self.serial_output.replace(' s','')))
 
 
