@@ -33,7 +33,6 @@ var app = new Vue({
                 this.led_off()
             }
         },
-
         recording_switch: function () {
             if (this.recording_switch == "true") {
                 this.start_recording()
@@ -56,7 +55,6 @@ var app = new Vue({
             } else if (this.timelapse_switch == 'timelapse') {
                 this.start_timelapse()
             } else if (this.timelapse_switch == null) {
-                // do nothing
             }
         },
         stream_method: function () {
@@ -186,7 +184,6 @@ var app = new Vue({
 
         change_zoom: function () {
             axios.get('/settings/?zoom_value={0}'.format(this.zoom))
-            console.log('/settings/?zoom_value={0}'.format(this.zoom))
         },
         zoom_in: function () {
             console.log('zoom in');

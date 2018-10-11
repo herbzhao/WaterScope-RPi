@@ -21,28 +21,26 @@ Mousetrap.bind('o f f', function () {
     app.LED_switch = null
 });
 
-Mousetrap.bind('s t a r t', function () {
+Mousetrap.bind('shift+s s t a r t', function () {
     app.chosen_arduino_board = 'parabolic'
     app.serial_command = 'start'
     app.send_serial_command()
 });
-Mousetrap.bind('s t o p', function () {
+Mousetrap.bind('shift+s s t o p', function () {
     app.chosen_arduino_board = 'parabolic'
     app.serial_command = 'stop'
     app.send_serial_command()
 });
-Mousetrap.bind('h o l d', function () {
+Mousetrap.bind('shift+s h o l d', function () {
     app.chosen_arduino_board = 'parabolic'
     app.serial_command = 'hold'
     app.send_serial_command()
 });
-Mousetrap.bind('p r e p', function () {
+Mousetrap.bind('shift+s p r e p a r e', function () {
     app.chosen_arduino_board = 'parabolic'
     app.serial_command = 'prepare'
     app.send_serial_command()
 });
-
-
 Mousetrap.bind(['g'], function () {
     app.take_image()
 });
@@ -57,32 +55,26 @@ var direction_key;
 Mousetrap.bind('w', function () {
     console.log('pressed w');
     direction_key = 'w';
-    // fetch('/ser/?type=jog&value=0,-1,0&board=ferg');
 });
 Mousetrap.bind('s', function () {
     console.log('pressed s');
     direction_key = 's';
-    // fetch('/ser/?type=jog&value=0,1,0&board=ferg');
 });
 Mousetrap.bind('a', function () {
     console.log('pressed a');
     direction_key = 'a';
-    // fetch('/ser/?type=jog&value=-1,0,0&board=ferg');
 });
 Mousetrap.bind('d', function () {
     console.log('pressed d');
     direction_key = 'd';
-    // fetch('/ser/?type=jog&value=1,0,0&board=ferg');
 });
 Mousetrap.bind('q', function () {
     direction_key = 'q';
     console.log('pressed q');
-    // fetch('/ser/?type=jog&value=0,0,1&board=ferg');
 });
 Mousetrap.bind('e', function () {
     direction_key = 'e';
     console.log('pressed e');
-    // fetch('/ser/?type=jog&value=0,0,-1&board=ferg');
 });
 
 

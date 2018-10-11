@@ -1,29 +1,19 @@
 <html>
 
-<!-- <head>
-  <title>Video Streaming Demonstration</title>
+<head>
   <!-- WARNING: CSS should be in head -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 <meta charset="utf-8">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/vuetify.min.css') }}">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
-
-
-<!-- Add this to <head> -->
-
 </head>
 
 <body>
-
-
     <v-app id="app">
-
-
         <v-toolbar color="black" dark fixed app>
             <v-toolbar-side-icon></v-toolbar-side-icon>
             <v-toolbar-title>WaterScope web interface</v-toolbar-title>
         </v-toolbar>
-
 
         <v-content>
             <v-container fluid text-xs-center grid-list-xs justify-center>
@@ -91,7 +81,7 @@
                         <!-- NOTE: config_setting -->
                         <v-tooltip top>
                             <v-btn-toggle v-model="config_update_switch" slot="activator">
-                                <v-btn flat color="black" value="true" @click="toggle_config_update">
+                                <v-btn flat color="black" value="true">
                                     <span>Configs</span>
                                     <v-icon>settings</v-icon>
                                 </v-btn>
@@ -103,7 +93,7 @@
                         <!-- NOTE: recording -->
                         <v-tooltip top>
                             <v-btn-toggle v-model="recording_switch" slot="activator">
-                                <v-btn flat color="red" value="true" @click="toggle_recording">
+                                <v-btn flat color="red" value="true">
                                     <span>Record</span>
                                     <v-icon>videocam</v-icon>
                                 </v-btn>
@@ -114,7 +104,7 @@
                         <!-- NOTE: LED -->
                         <v-tooltip top>
                             <v-btn-toggle v-model="LED_switch" slot="activator">
-                                <v-btn color="#fffa00" value="true" @click="toggle_LED">
+                                <v-btn color="#fffa00" value="true">
                                     <span>LED</span>
                                     <v-icon>highlight</v-icon>
                                 </v-btn>
@@ -125,7 +115,7 @@
                         <!-- NOTE: Stream selection -->
                         <v-tooltip top>
                             <v-btn-toggle v-model="stream_method" slot="activator">
-                                <v-btn flat color="black" value="PiCamera" @click.stop="toggle_stream">
+                                <v-btn flat color="black" value="PiCamera">
                                     <span>PiCamera</span>
                                 </v-btn>
                             </v-btn-toggle>
@@ -134,7 +124,7 @@
 
                         <v-tooltip top>
                             <v-btn-toggle v-model="stream_method" slot="activator">
-                                <v-btn flat color="black" value="OpenCV" @click="toggle_stream">
+                                <v-btn flat color="black" value="OpenCV">
                                     <span>OpenCV</span>
                                 </v-btn>
                             </v-btn-toggle>
@@ -174,7 +164,7 @@
                     <v-flex xs4>
                         <v-tooltip top>
                             <v-btn-toggle v-model="timelapse_switch" slot="activator">
-                                <v-btn flat color="black" large value="timelapse" @click="toggle_timelapse">
+                                <v-btn flat color="black" large value="timelapse">
                                     <span>Timelapse</span>
                                 </v-btn>
                             </v-btn-toggle>
@@ -183,7 +173,7 @@
 
                         <v-tooltip top>
                             <v-btn-toggle v-model="timelapse_switch" slot="activator">
-                                <v-btn flat color="blue" large value="waterscope_timelapse" @click="toggle_timelapse">
+                                <v-btn flat color="blue" large value="waterscope_timelapse">
                                     <span>WaterScope timelapse</span>
                                 </v-btn>
                             </v-btn-toggle>
