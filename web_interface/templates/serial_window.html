@@ -185,12 +185,13 @@
 
 
                 <!-- Warning: another layout here -->
-                <!-- NOTE: Streaming window -->
+                <!-- NOTE: Temperature plot -->
                 <v-layout>
                     <v-flex xs12>
-                        <v-img src="{{ url_for('video_feed') }}" aspect-ratio=1.337></v-img>
+                        <div id='plotly_chart'></div>
                     </v-flex>
                 </v-layout>
+            </v-container>
 
 
             <!-- Warning: footer -->
