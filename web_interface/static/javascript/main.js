@@ -73,6 +73,25 @@ var app = new Vue({
     mounted: function () {
         this.read_server_info()
     },
+    
+    computed: {
+        alert_content: function () {
+          alert_content = []
+          if (this.LED_switch != null) {
+            alert_content.push("LED")
+          }
+          if (this.config_update_switch != null) {
+            alert_content.push('Updating config')
+          }
+          if (this.recording_switch != null) {
+            alert_content.push('Recording')
+          }
+          if (this.timelapse_switch != null){
+            alert_content.push('Timelapse')
+          }
+            return alert_content.join(', ')
+        }
+      },
 
     methods: {
         led_on: function () {

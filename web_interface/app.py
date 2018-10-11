@@ -142,7 +142,7 @@ def send_serial():
     except KeyError:
         print('cannot find this board')
     
-    return render_template('index.html')
+    return render_template('serial_window.html')
 
 
 ''' The feed for serial_command output ''' 
@@ -157,7 +157,6 @@ def parabolic_serial_monitor():
         temp_value = 0
     # return jsonify({'time_value':time_value, 'temp_value':temp_value})
     return jsonify({'x':time_value, 'y':temp_value})
-
 
 
 # TODO: have a fine focus and coarse focus
