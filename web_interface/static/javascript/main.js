@@ -15,6 +15,8 @@ var app = new Vue({
         timelapse_interval: 10,
         zoom: 1,
         max_zoom: 5,
+        alert_window: false,
+        alert_window_timeout: 3000,
     }),
 
     // watch when data change 
@@ -69,10 +71,6 @@ var app = new Vue({
             }
         },
     },
-
-    mounted: function () {
-        this.read_server_info()
-    },
     
     computed: {
         alert_content: function () {
@@ -93,6 +91,10 @@ var app = new Vue({
         }
       },
 
+      mounted: function () {
+        this.read_server_info()
+    },
+
     methods: {
         led_on: function () {
             console.log('turn on LED')
@@ -103,14 +105,12 @@ var app = new Vue({
             axios.get("/ser/?value=led_off&board=parabolic")
         },
         start_recording: function () {
-            console.log('video recording on')
+            console.log('start recording..')
             axios.get("/take_image/?option=start_recording")
-            this.recording_switch = "true"
         },
         stop_recording: function () {
-            console.log('video recording off')
+            console.log('stop recording')
             axios.get("/take_image/?option=stop_recording")
-            this.recording_switch = null
         },
         start_config_update: function () {
             console.log('start updating config')
@@ -180,14 +180,15 @@ var app = new Vue({
         },
         start_OpenCV_stream: function () {
             console.log('changing streaming: {}'.format(this.stream_method))
-            // window.location = '/settings/?stream_method=opencv'
             axios.get('/settings/?stream_method=OpenCV')
             this.refresh()
         },
 
         send_serial_command: function () {
-            console.log('sending serial command {0}'.format(this.serial_command))
+            console.log('Sending serial command {0}'.format(this.serial_command))
             axios.get('/ser/?value={0}&board={1}'.format(this.serial_command, this.chosen_arduino_board))
+            // alert('Sending serial command \n {0}'.format(this.serial_command))
+            this.alert_window=true
         },
 
         read_server_info: function () {
@@ -197,7 +198,6 @@ var app = new Vue({
                 .then(response => {
                     this.stream_method = response.data.stream_method;
                     this.available_arduino_boards = response.data.available_arduino_boards;
-                    console.log(this.available_arduino_boards)
                 })
         },
 

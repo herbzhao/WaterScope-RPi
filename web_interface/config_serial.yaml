@@ -6,7 +6,7 @@ fergboard:
 parabolic:
   connect: True
   baudrate: 9600
-  port_names: [SERIAL, Serial]
+  port_names: [SERIAL, Serial, ACM]
   serial_read_options: [quiet, timelapse_data/PID]
 waterscope:
   connect: False

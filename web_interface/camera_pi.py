@@ -22,8 +22,9 @@ class Camera(BaseCamera):
     @classmethod
     def initialisation(cls):
         cls.image_seq = 0
-        cls.fps = 30
+        cls.fps = 20
         cls.stream_resolution = (1648,1232)
+        cls.video_resolution = (824, 616)
         cls.image_resolution = (3280,2464)
         # Change: 75 or 85 to see the streaming quality
         cls.jpeg_quality = 75
@@ -72,12 +73,15 @@ class Camera(BaseCamera):
         else: 
             # https://picamera.readthedocs.io/en/release-1.10/api_camera.html#picamera.camera.PiCamera.start_recording
             # CHange: whether h264 is better than mjpeg
-            cls.camera.start_recording('capture_video_port.h264', splitter_port=2, resize=None, quality=20)
+            folder_path = 'timelapse_data/{}'.format(cls.starting_time)
+            if not os.path.exists(folder_path):
+                os.mkdir(folder_path)
+                filename = folder_path+'/{:04d}.h264'.format(cls.image_seq)
+            cls.camera.start_recording(filename, splitter_port=2, resize=cls.video_resolution, quality=25)
             # cls.camera.start_recording('capture_video_port.mjpeg', splitter_port=2, resize=None, quality=cls.jpeg_quality)
             print('start recording')
             # DEBUG: is this wait_recording needed
-            cls.camera.wait_recording(500, splitter_port=2)
-            cls.camera.stop_recording(splitter_port=2)
+            cls.camera.wait_recording(600, splitter_port=2)
 
     @classmethod
     def take_image(cls):
@@ -133,7 +137,7 @@ class Camera(BaseCamera):
 
             # streaming
             cls.stream = io.BytesIO()
-            cls.camera.start_recording(cls.stream, format='mjpeg', quality = cls.jpeg_quality)
+            cls.camera.start_recording(cls.stream, format='mjpeg', quality = cls.jpeg_quality, splitter_port=1)
             while True:
                 # reset stream for next frame
                 cls.stream.seek(0)

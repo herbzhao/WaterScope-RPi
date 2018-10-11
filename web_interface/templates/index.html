@@ -1,11 +1,11 @@
 <html>
 
 <head>
-  <!-- WARNING: CSS should be in head -->
-<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-<meta charset="utf-8">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/vuetify.min.css') }}">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <!-- WARNING: CSS should be in head -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/vuetify.min.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
 </head>
 
 <body>
@@ -18,27 +18,22 @@
         <v-content>
             <v-container fluid text-xs-center grid-list-xs justify-center>
                 <!-- NOTE: another layout here -->
-                <!--TEST: alert  -->
-
                 <v-layout row wrap>
-                    <v-flex xs12>
-                        <v-alert :value="true" color="green" icon="directions_run" outline>
-                            Currently running:
-                            <label v-if="LED_switch != null">
-                                LED,
-                            </label>
-                            <label v-if="timelapse_switch !=null">
-                                Timelapse,
-                            </label>
-                            <label v-if="config_update_switch !=null">
-                                Config_updating,
-                            </label>
-                            <label v-if="recording_switch !=null">
-                                Recording,
-                            </label>
-                        </v-alert>
+                    <v-flex xs 12>
+                        <v-snackbar v-model="alert_window" bottom='bottom' :right='true' multi-line='multi-line'
+                            :timeout='alert_window_timeout' vertical='vertical'>
+                            Command sent: [[ serial_command]]
+                            <br>
+                            Currently running: [[alert_content]]
+                            <v-btn color="pink" flat @click="alert_window = false">
+                                Close
+                            </v-btn>
+                        </v-snackbar>
+                    </v-flex>
                 </v-layout>
 
+
+                <!-- NOTE: another layout here -->
                 <v-layout>
                     <!-- NOTE: refresh button-->
                     <v-flex xs9>
@@ -76,6 +71,16 @@
                                 <v-icon>camera_enhance</v-icon>
                             </v-btn>
                             <span>Take a raw image (hkey: H)</span>
+                        </v-tooltip>
+
+                        <!-- NOTE: stop streaming button-->
+
+                        <v-tooltip top>
+                            <!-- slot is needed for tooltip to work? -->
+                            <v-btn slot="activator" color="error" fab href='/serial'>
+                                <v-icon>memory</v-icon>
+                            </v-btn>
+                            <span>Serial window to see temperature plot</span>
                         </v-tooltip>
 
                         <!-- NOTE: config_setting -->
@@ -134,9 +139,10 @@
 
                     <v-flex xs3>
                         <!-- NOTE: zoom slider -->
-                        <v-slider v-model="zoom" :max="max_zoom" :min="1" :step="0.5" append-icon="zoom_in"
-                            prepend-icon="zoom_out" thumb-label ticks='always' color='black' @click:append='zoom_in'
-                            @click:prepend='zoom_out'></v-slider>
+                        <v-slider v-model="zoom" :max="max_zoom" :min="1" :step="0.5" 
+                        append-icon="zoom_in" prepend-icon="zoom_out"   
+                        @click:append='zoom_in' @click:prepend='zoom_out' thumb-label ticks='always' color='black'>
+                                </v-slider>
                     </v-flex>
                 </v-layout>
 
@@ -193,7 +199,7 @@
                 </v-layout>
 
 
-            <!-- Warning: footer -->
+                <!-- Warning: footer -->
         </v-content>
         <v-footer color="black" app inset>
             <span class="white--text">@Tianheng Zhao</span>
@@ -213,6 +219,6 @@
 <script type=text/javascript src="{{url_for('static', filename='javascript/plotly.min.js') }}"></script>
 <script type=text/javascript src="{{url_for('static', filename='javascript/keyboard_control.js') }}"></script>
 <script type=text/javascript src="{{url_for('static', filename='javascript/main.js') }}"></script>
-<script type=text/javascript src="{{url_for('static', filename='javascript/plotting.js') }}"></script>
+<!-- <script type=text/javascript src="{{url_for('static', filename='javascript/plotting.js') }}"></script> -->
 
 </html>
