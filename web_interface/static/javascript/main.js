@@ -16,7 +16,7 @@ var app = new Vue({
         zoom: 1,
         max_zoom: 5,
         alert_window: false,
-        alert_window_timeout: 3000,
+        alert_window_timeout: 5000,
     }),
 
     // watch when data change 
@@ -34,6 +34,7 @@ var app = new Vue({
             } else if (this.LED_switch == null) {
                 this.led_off()
             }
+            this.alert_window = true
         },
         recording_switch: function () {
             if (this.recording_switch == "true") {
@@ -41,6 +42,7 @@ var app = new Vue({
             } else if (this.recording_switch == null) {
                 this.stop_recording()
             }
+            this.alert_window = true
         },
         config_update_switch: function () {
             if (this.config_update_switch == "true") {
@@ -48,6 +50,7 @@ var app = new Vue({
             } else if (this.config_update_switch == null) {
                 this.stop_config_update()
             }
+            this.alert_window = true
         },
         timelapse_switch: function () {
             // always stop the timelapse first
@@ -58,6 +61,7 @@ var app = new Vue({
                 this.start_timelapse()
             } else if (this.timelapse_switch == null) {
             }
+            this.alert_window = true
         },
         stream_method: function () {
             if (this.stream_method == 'PiCamera') {
@@ -69,6 +73,7 @@ var app = new Vue({
                 // DEBUG: is this necessary?
                 this.start_PiCamera_stream()
             }
+            this.alert_window = true
         },
     },
     
@@ -188,6 +193,9 @@ var app = new Vue({
             console.log('Sending serial command {0}'.format(this.serial_command))
             axios.get('/ser/?value={0}&board={1}'.format(this.serial_command, this.chosen_arduino_board))
             // alert('Sending serial command \n {0}'.format(this.serial_command))
+            // remove focus of the text field
+            app.$refs.serial_command_field.blur()
+            // show the pop up alert
             this.alert_window=true
         },
 

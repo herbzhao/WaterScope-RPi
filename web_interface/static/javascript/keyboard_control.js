@@ -1,6 +1,7 @@
 Mousetrap.bind('esc', function () {
-    app.refresh()
-}, 'keyup');
+    app.alert_window = false
+    console.log('close window')
+});
 
 
 // change fergboard speed
@@ -21,22 +22,38 @@ Mousetrap.bind('o f f', function () {
     app.LED_switch = null
 });
 
-Mousetrap.bind('shift+s s t a r t', function () {
+
+Mousetrap.bind('shift+s', function () {
+    // first focus on the text_field
+    serial_command_field.focus()
+    // NOTE: it will automatically add an 'S', so we strip it off
+    setTimeout(() => {
+        app.serial_command = app.serial_command.slice(0, -1)
+    }, 0)
+    // finally, highlight all the existing text
+    setTimeout(() => {
+        serial_command_field.select()
+    }, 100)
+    
+
+});
+
+Mousetrap.bind('s t a r t', function () {
     app.chosen_arduino_board = 'parabolic'
     app.serial_command = 'start'
     app.send_serial_command()
 });
-Mousetrap.bind('shift+s s t o p', function () {
+Mousetrap.bind('s t o p', function () {
     app.chosen_arduino_board = 'parabolic'
     app.serial_command = 'stop'
     app.send_serial_command()
 });
-Mousetrap.bind('shift+s h o l d', function () {
+Mousetrap.bind('h o l d', function () {
     app.chosen_arduino_board = 'parabolic'
     app.serial_command = 'hold'
     app.send_serial_command()
 });
-Mousetrap.bind('shift+s p r e p a r e', function () {
+Mousetrap.bind('p r e p a r e', function () {
     app.chosen_arduino_board = 'parabolic'
     app.serial_command = 'prepare'
     app.send_serial_command()

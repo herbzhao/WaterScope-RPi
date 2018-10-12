@@ -1,0 +1,27 @@
+<html>
+
+<head>
+    <!-- WARNING: CSS should be in head -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+</head>
+
+<body>
+    <div id='plotly_chart'></div>
+</body>
+
+<!-- WARNING: javascript should be outside the body -->
+<script type=text/javascript src="{{url_for('static', filename='javascript/mousetrap.min.js') }}"></script>
+<script type=text/javascript src="{{url_for('static', filename='javascript/vue.js') }}"></script>
+
+<!-- development version, includes helpful console warnings -->
+<!-- Add this after vue.js -->
+<script type=text/javascript src="{{url_for('static', filename='javascript/axios.min.js') }}"></script>
+<script type=text/javascript src="{{url_for('static', filename='javascript/plotly.min.js') }}"></script>
+<script type=text/javascript src="{{url_for('static', filename='javascript/keyboard_control.js') }}"></script>
+<script type=text/javascript src="{{url_for('static', filename='javascript/main.js') }}"></script>
+<!-- Change: this is for serial plot window -->
+<script type=text/javascript src="{{url_for('static', filename='javascript/plotting.js') }}"></script>
+
+</html>

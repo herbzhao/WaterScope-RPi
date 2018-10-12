@@ -11,11 +11,8 @@ var trace = {
 var plotting_element_ID = 'plotly_chart'
 var API_url = '/parabolic_serial_monitor'
 
-// generates a bare plot
-
-setTimeout(() => {
-  Plotly.newPlot(plotting_element_ID, data = [trace]);
-}, 1000)
+// generates a bare plot - responsive as well
+Plotly.newPlot(plotting_element_ID, data = [trace], layout = {}, config = {responsive: true});
 
 // update the value from axios
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises
@@ -39,7 +36,7 @@ var layout = {
   },
   yaxis: {
     title: 'temperature (°c)',
-    range:[10,35]
+    range: [15, 30]
   }
 }
 
@@ -54,7 +51,7 @@ function real_time_plotting(x_value, y_value) {
   }, [0]);
   // automatically adjust the window range - scrolling
   if (x_value > window_size) {
-    layout['xaxis']['range'] = [x_value - window_size, x_value]    
+    layout['xaxis']['range'] = [x_value - window_size/2, x_value+ window_size/2]
   }
   Plotly.relayout(plotting_element_ID, layout);
 }

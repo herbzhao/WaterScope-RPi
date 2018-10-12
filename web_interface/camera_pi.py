@@ -68,7 +68,7 @@ class Camera(BaseCamera):
     @classmethod
     def record_video(cls, stop = False):
         if stop is True:
-            cls.camera.stop_recording(splitter_port=2)
+            cls.camera.stop_recording(splitter_port=3)
             print('stop recording')
         else: 
             # https://picamera.readthedocs.io/en/release-1.10/api_camera.html#picamera.camera.PiCamera.start_recording
@@ -76,12 +76,12 @@ class Camera(BaseCamera):
             folder_path = 'timelapse_data/{}'.format(cls.starting_time)
             if not os.path.exists(folder_path):
                 os.mkdir(folder_path)
-                filename = folder_path+'/{:04d}.h264'.format(cls.image_seq)
-            cls.camera.start_recording(filename, splitter_port=2, resize=cls.video_resolution, quality=25)
-            # cls.camera.start_recording('capture_video_port.mjpeg', splitter_port=2, resize=None, quality=cls.jpeg_quality)
+            filename = folder_path+'/{:04d}.h264'.format(cls.image_seq)
+            cls.camera.start_recording(filename, splitter_port=3, resize=cls.video_resolution, quality=25)
+            # cls.camera.start_recording('capture_video_port.mjpeg', splitter_port=3, resize=None, quality=cls.jpeg_quality)
+            cls.image_seq = cls.image_seq + 1
             print('start recording')
-            # DEBUG: is this wait_recording needed
-            cls.camera.wait_recording(600, splitter_port=2)
+            
 
     @classmethod
     def take_image(cls):
@@ -91,10 +91,7 @@ class Camera(BaseCamera):
             os.mkdir(folder_path)
         filename = folder_path+'/{:04d}.jpg'.format(cls.image_seq)
         print('taking image')
-        #cls.camera.capture(filename, format = 'jpeg', bayer = True)
-        # Change: remove bayer = Ture if dont care
         cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = False, use_video_port=True)
-        # reduce the resolution for video streaming
         cls.image_seq = cls.image_seq + 1
 
     @classmethod

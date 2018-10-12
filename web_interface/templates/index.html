@@ -20,7 +20,7 @@
                 <!-- NOTE: another layout here -->
                 <v-layout row wrap>
                     <v-flex xs 12>
-                        <v-snackbar v-model="alert_window" bottom='bottom' :right='true' multi-line='multi-line'
+                        <v-snackbar v-model="alert_window" :bottom='false' :right='false' multi-line='multi-line'
                             :timeout='alert_window_timeout' vertical='vertical'>
                             Command sent: [[ serial_command]]
                             <br>
@@ -37,14 +37,6 @@
                 <v-layout>
                     <!-- NOTE: refresh button-->
                     <v-flex xs9>
-                        <v-tooltip top>
-                            <!-- slot is needed for tooltip to work? -->
-                            <v-btn slot="activator" color="success" fab @click='refresh'>
-                                <v-icon>refresh</v-icon>
-                            </v-btn>
-                            <span>Refresh the page (hkey: ESC)</span>
-                        </v-tooltip>
-
                         <!-- NOTE: stop streaming button-->
 
                         <v-tooltip top>
@@ -76,8 +68,7 @@
                         <!-- NOTE: stop streaming button-->
 
                         <v-tooltip top>
-                            <!-- slot is needed for tooltip to work? -->
-                            <v-btn slot="activator" color="error" fab href='/serial'>
+                            <v-btn slot="activator" color="warning" fab href='/serial'>
                                 <v-icon>memory</v-icon>
                             </v-btn>
                             <span>Serial window to see temperature plot</span>
@@ -139,10 +130,10 @@
 
                     <v-flex xs3>
                         <!-- NOTE: zoom slider -->
-                        <v-slider v-model="zoom" :max="max_zoom" :min="1" :step="0.5" 
-                        append-icon="zoom_in" prepend-icon="zoom_out"   
-                        @click:append='zoom_in' @click:prepend='zoom_out' thumb-label ticks='always' color='black'>
-                                </v-slider>
+                        <v-slider v-model="zoom" :max="max_zoom" :min="1" :step="0.5" append-icon="zoom_in"
+                            prepend-icon="zoom_out" @click:append='zoom_in' @click:prepend='zoom_out' thumb-label ticks='always'
+                            color='black'>
+                        </v-slider>
                     </v-flex>
                 </v-layout>
 
@@ -156,7 +147,8 @@
                     </v-flex>
                     <v-flex xs3>
                         <v-form v-on:submit.prevent="send_serial_command">
-                            <v-text-field v-model="serial_command" prepend-icon="memory" label="Serial command here"></v-text-field>
+                            <v-text-field v-model="serial_command" prepend-icon="memory" label="Serial command here"
+                                ref="serial_command_field" id="serial_command_field"></v-text-field>
                         </v-form>
                     </v-flex>
 
@@ -189,9 +181,8 @@
                 </v-layout>
 
 
-
+                <!-- Change: this is for streaming window -->
                 <!-- Warning: another layout here -->
-                <!-- NOTE: Streaming window -->
                 <v-layout>
                     <v-flex xs12>
                         <v-img src="{{ url_for('video_feed') }}" aspect-ratio=1.337></v-img>
@@ -199,7 +190,7 @@
                 </v-layout>
 
 
-                <!-- Warning: footer -->
+            <!-- Warning: footer -->
         </v-content>
         <v-footer color="black" app inset>
             <span class="white--text">@Tianheng Zhao</span>
@@ -219,6 +210,7 @@
 <script type=text/javascript src="{{url_for('static', filename='javascript/plotly.min.js') }}"></script>
 <script type=text/javascript src="{{url_for('static', filename='javascript/keyboard_control.js') }}"></script>
 <script type=text/javascript src="{{url_for('static', filename='javascript/main.js') }}"></script>
+<!-- Change: this is for serial plot window -->
 <!-- <script type=text/javascript src="{{url_for('static', filename='javascript/plotting.js') }}"></script> -->
 
 </html>
