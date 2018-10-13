@@ -173,15 +173,23 @@ def auto_focus():
 # take one image
 @app.route('/take_image/')
 def take_image():
-    option = request.args.get('option', '')
-    if option == 'high-res':
-        Camera.take_image_high_res()
-    elif option == 'start_recording':
+    option = request.args.getlist('option')
+    if option[0] == 'start_recording':
         Camera.record_video()
-    elif option == 'stop_recording':
+    elif option[0] == 'stop_recording':
         Camera.record_video(stop=True)
+    elif option[0] == 'high-res':
+        if option[1] == 'sync_arduino_time':
+            arduino_time = str(Camera.serial_controllers['parabolic'].log['time'][-1]) + 's'
+            Camera.take_image(filename = arduino_time)
+        Camera.take_image(resolution='high')
+
     else:
-        Camera.take_image()
+        if option[1] == 'sync_arduino_time':
+            arduino_time = str(Camera.serial_controllers['parabolic'].log['time'][-1]) + 's'
+            Camera.take_image(filename = arduino_time)
+    Camera.take_image(resolution='normal')
+
     # start a thread
     return render_template('index.html')
 

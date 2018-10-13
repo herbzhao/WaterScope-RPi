@@ -21,11 +21,7 @@ var app = new Vue({
 
     // watch when data change 
     watch: {
-        zoom: function (newzoom, oldzoom) {
-            // can we incorporate a delay?
-            // setTimeout(() => {
-            //     this.change_zoom()
-            // }, 100)
+        zoom: function () {
             this.change_zoom()
         },
         LED_switch: function () {
@@ -235,6 +231,10 @@ var app = new Vue({
         take_image: function () {
             axios.get("/take_image/")
             console.log("taking image")
+        },
+        take_image_with_arduino_time: function () {
+            axios.get("/take_image/?option=high_res")
+            console.log("taking image in high res")
         },
         take_image_high_res: function () {
             axios.get("/take_image/?option=high_res")

@@ -355,7 +355,7 @@ class Camera(BaseCamera):
 
             # streaming - using bgr so we do not need to encode->decode->encode
             cls.stream = io.BytesIO()
-            cls.camera.start_recording(cls.stream, format='bgr')
+            cls.camera.start_recording(cls.stream, format='bgr', splitter_port=1)
             print('starting now')
 
             while True:

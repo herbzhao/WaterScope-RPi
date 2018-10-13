@@ -77,44 +77,40 @@ class Camera(BaseCamera):
             if not os.path.exists(folder_path):
                 os.mkdir(folder_path)
             filename = folder_path+'/{:04d}.h264'.format(cls.image_seq)
-            cls.camera.start_recording(filename, splitter_port=3, resize=cls.video_resolution, quality=25)
+            # DEBUG: changing resolution and quality until having a reasonable results
+            cls.camera.start_recording(filename, splitter_port=3, resize=cls.video_resolution, quality=15)
             # cls.camera.start_recording('capture_video_port.mjpeg', splitter_port=3, resize=None, quality=cls.jpeg_quality)
             cls.image_seq = cls.image_seq + 1
             print('start recording')
             
 
     @classmethod
-    def take_image(cls):
+    def take_image(cls, filename = '', resolution='normal'):
         # folder_path = '/home/pi/WaterScope-RPi/water_test/timelapse/{}'.format(cls.starting_time)
         folder_path = 'timelapse_data/{}'.format(cls.starting_time)
         if not os.path.exists(folder_path):
             os.mkdir(folder_path)
-        filename = folder_path+'/{:04d}.jpg'.format(cls.image_seq)
+        # NOTE: when file name is not specified, use a counter
+        if filename == '':
+            filename = folder_path+'/{:04d}.jpg'.format(cls.image_seq)
+        else:
+            filename = folder_path+'/{:04d}-{}.jpg'.format(cls.image_seq, filename)
         print('taking image')
-        cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = False, use_video_port=True)
-        cls.image_seq = cls.image_seq + 1
+        if resolution == 'normal':
+            cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = False, use_video_port=True)
+        elif resolution == 'high':
+            # when taking photos at high res, need to stop the video channel first
+            cls.camera.stop_recording(splitter_port=1)
+            cls.camera.resolution = cls.image_resolution
+            # Remove bayer = Ture if dont care about RAW
+            cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = True)
+            # reduce the resolution for video streaming
+            cls.camera.resolution = cls.stream_resolution
+            # resume the video channel
+            # Warning: be careful about the cls.camera.start_recording. 'bgr' for opencv and 'mjpeg' for picamera
+            cls.camera.start_recording(cls.stream, format='mjpeg', quality = cls.jpeg_quality, splitter_port=1)
+            # cls.camera.start_recording(cls.stream, format='bgr', splitter_port=1)
 
-    @classmethod
-    def take_image_high_res(cls):
-        # when taking photos, increase the resolution and everything
-        # need to stop the video channel first
-        cls.camera.stop_recording()
-        cls.camera.resolution = cls.image_resolution
-        # folder_path = '/home/pi/WaterScope-RPi/water_test/timelapse/{}'.format(cls.starting_time)
-        folder_path = 'timelapse_data/{}'.format(cls.starting_time)
-        if not os.path.exists(folder_path):
-            os.mkdir(folder_path)
-        filename = folder_path+'/{:04d}.jpg'.format(cls.image_seq)
-        print('taking image')
-        #cls.camera.capture(filename, format = 'jpeg', bayer = True)
-        # Change: remove bayer = Ture if dont care
-        cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = True)
-        # reduce the resolution for video streaming
-        cls.camera.resolution = cls.stream_resolution
-        # Warning: be careful about the cls.camera.start_recording. 'bgr' for opencv and 'mjpeg' for picamera
-        # resume the video channel
-        cls.camera.start_recording(cls.stream, format='mjpeg', quality = cls.jpeg_quality)
-        # cls.camera.start_recording(cls.stream, format='bgr')
         cls.image_seq = cls.image_seq + 1
 
     

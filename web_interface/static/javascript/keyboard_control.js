@@ -25,17 +25,19 @@ Mousetrap.bind('o f f', function () {
 
 Mousetrap.bind('shift+s', function () {
     // first focus on the text_field
-    serial_command_field.focus()
-    // NOTE: it will automatically add an 'S', so we strip it off
+    // DEBUG: added a delay, maybe this will not cause S input
     setTimeout(() => {
-        app.serial_command = app.serial_command.slice(0, -1)
-    }, 0)
+        serial_command_field.focus()
+    }, 100)
+
+    // NOTE: it will automatically add an 'S', so we strip it off
+    // setTimeout(() => {
+    //     app.serial_command = app.serial_command.slice(0, -1)
+    // }, 0)
     // finally, highlight all the existing text
     setTimeout(() => {
         serial_command_field.select()
     }, 100)
-    
-
 });
 
 Mousetrap.bind('s t a r t', function () {
