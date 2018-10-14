@@ -66,6 +66,9 @@ Mousetrap.bind(['g'], function () {
 Mousetrap.bind(['h'], function () {
     app.take_image_high_res()
 });
+Mousetrap.bind(['j'], function () {
+    app.take_image_record_arduino_time()
+});
 
 
 

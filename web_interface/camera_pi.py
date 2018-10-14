@@ -66,7 +66,7 @@ class Camera(BaseCamera):
 
 
     @classmethod
-    def record_video(cls, stop = False):
+    def record_video(cls, stop = False, filename = ''):
         if stop is True:
             cls.camera.stop_recording(splitter_port=3)
             print('stop recording')
@@ -76,7 +76,10 @@ class Camera(BaseCamera):
             folder_path = 'timelapse_data/{}'.format(cls.starting_time)
             if not os.path.exists(folder_path):
                 os.mkdir(folder_path)
-            filename = folder_path+'/{:04d}.h264'.format(cls.image_seq)
+            if filename == '':
+                filename = folder_path+'/{:04d}.h264'.format(cls.image_seq)
+            else:
+                filename = folder_path+'/{:04d}-{}.h264'.format(cls.image_seq, filename)
             # DEBUG: changing resolution and quality until having a reasonable results
             cls.camera.start_recording(filename, splitter_port=3, resize=cls.video_resolution, quality=15)
             # cls.camera.start_recording('capture_video_port.mjpeg', splitter_port=3, resize=None, quality=cls.jpeg_quality)

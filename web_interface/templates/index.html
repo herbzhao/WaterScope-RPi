@@ -68,7 +68,7 @@
                         <!-- NOTE: stop streaming button-->
 
                         <v-tooltip top>
-                            <v-btn slot="activator" color="warning" fab href='/serial'>
+                            <v-btn slot="activator" color="warning" fab @click="toggle_serial_window">
                                 <v-icon>memory</v-icon>
                             </v-btn>
                             <span>Serial window to see temperature plot</span>
@@ -181,16 +181,31 @@
                 </v-layout>
 
 
-                <!-- Change: this is for streaming window -->
+                <!--Note:  Stream only  -->
                 <!-- Warning: another layout here -->
-                <v-layout>
+                <v-layout v-show='serial_montior_window == false'>
                     <v-flex xs12>
                         <v-img src="{{ url_for('video_feed') }}" aspect-ratio=1.337></v-img>
                     </v-flex>
+            </v-container>
+
+                <!--Note:  Sream + serial  -->
+                <!-- Warning: another layout here -->
+                <v-layout v-show='serial_montior_window == true'>
+                    <v-flex xs8>
+                        <v-img src="{{ url_for('video_feed') }}" aspect-ratio=1.337></v-img>
+                    </v-flex>
+                <!--  this is for serial plot window -->
+                    <v-flex xs4>
+                        <div id='plotly_chart'></div>
+                    </v-flex>
                 </v-layout>
+            </v-container>
 
 
-            <!-- Warning: footer -->
+
+
+            <!-- footer -->
         </v-content>
         <v-footer color="black" app inset>
             <span class="white--text">@Tianheng Zhao</span>
@@ -211,6 +226,6 @@
 <script type=text/javascript src="{{url_for('static', filename='javascript/keyboard_control.js') }}"></script>
 <script type=text/javascript src="{{url_for('static', filename='javascript/main.js') }}"></script>
 <!-- Change: this is for serial plot window -->
-<!-- <script type=text/javascript src="{{url_for('static', filename='javascript/plotting.js') }}"></script> -->
+<script   type=text/javascript src="{{url_for('static', filename='javascript/plotting.js') }}"></script>
 
 </html>

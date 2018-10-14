@@ -151,6 +151,8 @@ def parabolic_serial_monitor():
     initialse_serial_connection()
     try:
         time_value = Camera.serial_controllers['parabolic'].log['time'][-1]
+        minute, seconds = divmod(time_value, 60)
+        time_value = '{}:{}'.format(int(minute), int(seconds))
         temp_value = Camera.serial_controllers['parabolic'].log['temp'][-1]
     except IndexError:
         time_value = 0
@@ -173,22 +175,20 @@ def auto_focus():
 # take one image
 @app.route('/take_image/')
 def take_image():
-    option = request.args.getlist('option')
-    if option[0] == 'start_recording':
-        Camera.record_video()
-    elif option[0] == 'stop_recording':
-        Camera.record_video(stop=True)
-    elif option[0] == 'high-res':
-        if option[1] == 'sync_arduino_time':
-            arduino_time = str(Camera.serial_controllers['parabolic'].log['time'][-1]) + 's'
-            Camera.take_image(filename = arduino_time)
-        Camera.take_image(resolution='high')
+    option = request.args.get('option')
+    filename= request.args.get('filename', '')
+    # synchronise the arduino_time
+    if filename == 'arduino_time':
+        filename = str(Camera.serial_controllers['parabolic'].log['time'][-1]) + 's'
 
+    if option == 'start_recording':
+        Camera.record_video(filename=filename)
+    elif option == 'stop_recording':
+        Camera.record_video(stop=True)
+    elif option == 'high-res':
+            Camera.take_image(resolution='high', filename=filename)
     else:
-        if option[1] == 'sync_arduino_time':
-            arduino_time = str(Camera.serial_controllers['parabolic'].log['time'][-1]) + 's'
-            Camera.take_image(filename = arduino_time)
-    Camera.take_image(resolution='normal')
+            Camera.take_image(resolution='normal', filename=filename)
 
     # start a thread
     return render_template('index.html')
