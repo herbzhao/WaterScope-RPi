@@ -86,11 +86,11 @@ def read_parabolic_time_temp():
     # synchronise the arduino_time
     initialse_serial_connection()
     try:
-        time_value_seconds = Camera.serial_controllers['parabolic'].log['time'][-1]
+        time_value = Camera.serial_controllers['parabolic'].log['time'][-1]
         temp_value = Camera.serial_controllers['parabolic'].log['temp'][-1]
-        minute, seconds = divmod(time_value_seconds, 60)
-        # convert to the format of MM:SS for plotly
-        time_value = '{}:{}'.format(int(minute), int(seconds))
+        # minute, seconds = divmod(time_value_seconds, 60)
+        # # convert to the format of MM:SS for plotly
+        # time_value = '{}:{}'.format(int(minute), int(seconds))
     except (IndexError, KeyError): 
         time_value = 0
         temp_value = 0
