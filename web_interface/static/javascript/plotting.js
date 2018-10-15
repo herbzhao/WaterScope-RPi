@@ -29,12 +29,14 @@ function get_data_and_plot() {
   }).catch(error => console.log(error))
 }
 
-// the size of x-range
-window_size = 200
+// the size of x-range in minutes
+window_size = 2
 var layout = {
   xaxis: {
     title: 'time (s)',
-    range: [0, window_size]
+    // Plotly’s date format is 'yyyy-mm-dd HH:MM:SS.ssssss'.
+    // https://plot.ly/python/time-series/#manually-set-range
+    range: ['00:00', '02:00']
   },
   yaxis: {
     title: 'temperature (°c)',
@@ -53,8 +55,10 @@ function real_time_plotting(x_value, y_value) {
   }, [0]);
 
   // automatically adjust the window range - scrolling
-  if (x_value > window_size) {
-    layout['xaxis']['range'] = [x_value - window_size / 2, x_value + window_size / 2]
+  minute = x_value.split(':')[0]
+  second = x_value.split(':')[1]
+  if (minute > window_size) {
+    layout['xaxis']['range'] = ['{0}:{1} '.format(minute - window_size / 2, second), '{0}:{1}'.format(minute + window_size / 2, second))
   }
   // automatically change temperature range
   if (y_value > 25) {

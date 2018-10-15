@@ -68,7 +68,7 @@
                         <!-- NOTE: stop streaming button-->
 
                         <v-tooltip top>
-                            <v-btn slot="activator" color="warning" fab @click="toggle_serial_window">
+                            <v-btn slot="activator" color="warning" fab @click="toggle_temp_plot">
                                 <v-icon>memory</v-icon>
                             </v-btn>
                             <span>Serial window to see temperature plot</span>
@@ -183,7 +183,7 @@
 
                 <!--Note:  Stream only  -->
                 <!-- Warning: another layout here -->
-                <v-layout v-show='serial_montior_window == false'>
+                <v-layout v-show='temp_plot == false'>
                     <v-flex xs12>
                         <v-img src="{{ url_for('video_feed') }}" aspect-ratio=1.337></v-img>
                     </v-flex>
@@ -191,12 +191,13 @@
 
                 <!--Note:  Sream + serial  -->
                 <!-- Warning: another layout here -->
-                <v-layout v-show='serial_montior_window == true'>
+                <v-layout v-show='temp_plot == true'>
                     <v-flex xs8>
                         <v-img src="{{ url_for('video_feed') }}" aspect-ratio=1.337></v-img>
                     </v-flex>
                 <!--  this is for serial plot window -->
-                    <v-flex xs4>
+                    <!-- v-if will not render but v-show is always pre-rendered but not shown.-->
+                    <v-flex xs4  v-if="available_arduino_boards.includes('parabolic')" >
                         <div id='plotly_chart'></div>
                     </v-flex>
                 </v-layout>

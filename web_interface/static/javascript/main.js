@@ -6,7 +6,7 @@ var app = new Vue({
         serial_command: '',
         peltier_control_command: '',
         chosen_arduino_board: 'parabolic',
-        available_arduino_boards: ['parabolic', 'waterscope', 'fergboard'],
+        available_arduino_boards: [],
         LED_switch: 'true',
         stream_method: 'PiCamera',
         recording_switch: null,
@@ -15,7 +15,7 @@ var app = new Vue({
         timelapse_interval: 10,
         zoom: 1,
         max_zoom: 5,
-        serial_montior_window: true,
+        temp_plot: true,
         alert_window: false,
         alert_window_timeout: 5000,
     }),
@@ -72,9 +72,6 @@ var app = new Vue({
             }
             this.alert_window = true
         },
-        serial_montior_window: function(){
-            this.$forceUpdate()
-        }
     },
     
     computed: {
@@ -223,8 +220,8 @@ var app = new Vue({
         refresh: function () {
             window.location = "/"
         },
-        toggle_serial_window: function() {
-            this.serial_montior_window = !this.serial_montior_window
+        toggle_temp_plot: function() {
+            this.temp_plot = !this.temp_plot
         },
         stop_stream: function () {
             axios.get("/settings/?stop=true");

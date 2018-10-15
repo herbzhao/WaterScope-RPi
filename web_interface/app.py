@@ -82,6 +82,19 @@ def initialse_serial_connection():
                 baudrate=serial_controllers_config[name]['baudrate'])
             Camera.serial_controllers[name].serial_read_threading(options=serial_controllers_config[name]['serial_read_options'])
 
+def read_parabolic_time_temp():
+    # synchronise the arduino_time
+    initialse_serial_connection()
+    try:
+        time_value_seconds = Camera.serial_controllers['parabolic'].log['time'][-1]
+        temp_value = Camera.serial_controllers['parabolic'].log['temp'][-1]
+        minute, seconds = divmod(time_value_seconds, 60)
+        # convert to the format of MM:SS for plotly
+        time_value = '{}:{}'.format(int(minute), int(seconds))
+    except (IndexError, KeyError): 
+        time_value = 0
+        temp_value = 0
+    return time_value, temp_value
 
 @app.route('/')
 def index():
@@ -148,15 +161,7 @@ def send_serial():
 ''' The feed for serial_command output ''' 
 @app.route('/parabolic_serial_monitor')
 def parabolic_serial_monitor():
-    initialse_serial_connection()
-    try:
-        time_value = Camera.serial_controllers['parabolic'].log['time'][-1]
-        minute, seconds = divmod(time_value, 60)
-        time_value = '{}:{}'.format(int(minute), int(seconds))
-        temp_value = Camera.serial_controllers['parabolic'].log['temp'][-1]
-    except IndexError:
-        time_value = 0
-        temp_value = 0
+    time_value, temp_value = read_parabolic_time_temp()
     # return jsonify({'time_value':time_value, 'temp_value':temp_value})
     return jsonify({'x':time_value, 'y':temp_value})
 
@@ -179,8 +184,8 @@ def take_image():
     filename= request.args.get('filename', '')
     # synchronise the arduino_time
     if filename == 'arduino_time':
-        filename = str(Camera.serial_controllers['parabolic'].log['time'][-1]) + 's'
-
+        time_value, temp_value = read_parabolic_time_temp()
+        filename = time_value
     if option == 'start_recording':
         Camera.record_video(filename=filename)
     elif option == 'stop_recording':
