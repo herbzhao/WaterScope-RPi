@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from importlib import import_module
 import time
+import datetime
 
 from flask import Flask, render_template, Response, redirect, request, jsonify
 import yaml
@@ -88,13 +89,17 @@ def read_parabolic_time_temp():
     try:
         time_value = Camera.serial_controllers['parabolic'].log['time'][-1]
         temp_value = Camera.serial_controllers['parabolic'].log['temp'][-1]
-        # minute, seconds = divmod(time_value_seconds, 60)
-        # # convert to the format of MM:SS for plotly
-        # time_value = '{}:{}'.format(int(minute), int(seconds))
     except (IndexError, KeyError): 
         time_value = 0
         temp_value = 0
-    return time_value, temp_value
+
+    minute, second = divmod(time_value,60)
+    hour, minute = divmod(time_value, 60)
+    time_value_formatted = datetime.time(int(hour), int(minute), int(second))
+    # use a arbitrary date for plotly to work properly
+    time_value_formatted = datetime.datetime.combine(datetime.date(1, 1, 1), time_value_formatted)
+
+    return time_value_formatted, temp_value
 
 @app.route('/')
 def index():
@@ -161,9 +166,13 @@ def send_serial():
 ''' The feed for serial_command output ''' 
 @app.route('/parabolic_serial_monitor')
 def parabolic_serial_monitor():
-    time_value, temp_value = read_parabolic_time_temp()
+    time_value_formatted, temp_value = read_parabolic_time_temp()
+    date = time_value_formatted.date()
+    second = time_value_formatted.time().second
+    minute = time_value_formatted.time().minute
+    hour = time_value_formatted.time().hour
     # return jsonify({'time_value':time_value, 'temp_value':temp_value})
-    return jsonify({'x':time_value, 'y':temp_value})
+    return jsonify({'x':time_value_formatted, 'date': str(date), 'hour':hour, 'minute': minute, 'second': second, 'y':temp_value})
 
 
 # TODO: have a fine focus and coarse focus
@@ -184,8 +193,9 @@ def take_image():
     filename= request.args.get('filename', '')
     # synchronise the arduino_time
     if filename == 'arduino_time':
-        time_value, temp_value = read_parabolic_time_temp()
-        filename = time_value
+        time_value_formatted, temp_value = read_parabolic_time_temp()
+        # HH:MM:SS format
+        filename = str(time_value_formatted.time())
     if option == 'start_recording':
         Camera.record_video(filename=filename)
     elif option == 'stop_recording':
