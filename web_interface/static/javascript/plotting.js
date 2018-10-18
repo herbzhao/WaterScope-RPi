@@ -66,7 +66,7 @@ function get_data_and_plot() {
     }, [0]);
     
   // automatically adjust the window range - scrolling
-  if (minute > window_size) {
+  if (minute >= window_size) {
     layout.xaxis.range = ['{0} {1}:{2}:{3}'.format(date, format_two_digits(hour), format_two_digits(minute - window_size), format_two_digits(second)),  x_value]
   } 
   if (hour > 0){

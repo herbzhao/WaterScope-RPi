@@ -12,10 +12,6 @@ from serial_communication import serial_controller_class
 # Raspberry Pi camera module (requires picamera package)
 from camera_pi import Camera
 
-# TEST: just temporary
-from output import output_class_builder 
-
-
 app = Flask(__name__)
 
 
@@ -94,7 +90,7 @@ def read_parabolic_time_temp():
         temp_value = 0
 
     minute, second = divmod(time_value,60)
-    hour, minute = divmod(time_value, 60)
+    hour, minute = divmod(minute, 60)
     time_value_formatted = datetime.time(int(hour), int(minute), int(second))
     # use a arbitrary date for plotly to work properly
     time_value_formatted = datetime.datetime.combine(datetime.date(1, 1, 1), time_value_formatted)
@@ -172,7 +168,7 @@ def parabolic_serial_monitor():
     minute = time_value_formatted.time().minute
     hour = time_value_formatted.time().hour
     # return jsonify({'time_value':time_value, 'temp_value':temp_value})
-    return jsonify({'x':time_value_formatted, 'date': str(date), 'hour':hour, 'minute': minute, 'second': second, 'y':temp_value})
+    return jsonify({'x':str(time_value_formatted), 'date': str(date), 'hour':hour, 'minute': minute, 'second': second, 'y':temp_value})
 
 
 # TODO: have a fine focus and coarse focus
