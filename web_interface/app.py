@@ -85,7 +85,7 @@ def read_parabolic_time_temp():
     try:
         time_value = Camera.serial_controllers['parabolic'].log['time'][-1]
         temp_value = Camera.serial_controllers['parabolic'].log['temp'][-1]
-    except (IndexError, KeyError): 
+    except (IndexError, KeyError, AttributeError): 
         time_value = 0
         temp_value = 0
 
@@ -193,9 +193,9 @@ def take_image():
         # HH:MM:SS format
         filename = str(time_value_formatted.time())
     if option == 'start_recording':
-        Camera.record_video(filename=filename)
+        Camera.record_video_thread(filename=filename)
     elif option == 'stop_recording':
-        Camera.record_video(stop=True)
+        Camera.record_video_thread(option='stop')
     elif option == 'high-res':
             Camera.take_image(resolution='high', filename=filename)
     else:

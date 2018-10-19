@@ -2,12 +2,12 @@
 exposure_mode: 'off'
 
 # The analog gain offers higher sensitivity and less noise than using digital gain only
-analog_gain: 2.5
+analog_gain: 1.5
 digital_gain: 2.
 
 # When queried, the shutter_speed property returns the shutter speed of the camera in microseconds, or 0 which indicates that the speed will be automatically determined
 # if high value does not work, need to decrease the fps for streaming
-shutter_speed: 50000
+shutter_speed: 15000
 
 # Auto white balance: The red and blue values are returned Fraction instances. The values will be between 0.0 and 8.0.
 awb_mode: 'off'

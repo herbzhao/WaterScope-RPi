@@ -95,7 +95,7 @@ function get_data_and_plot() {
   setTimeout(() => {
     setInterval(() => {
       get_data_and_plot()
-    }, 500);
+    }, 1000*1);
   }, 2000)
 
 

@@ -21,6 +21,7 @@ from set_picamera_gain import set_analog_gain, set_digital_gain
 class Camera(BaseCamera):
     @classmethod
     def initialisation(cls):
+        # TODO: implement a higher camera resolution and then resize to lower resolution for streaming?
         cls.image_seq = 0
         cls.fps = 20
         cls.stream_resolution = (1648,1232)
@@ -66,26 +67,40 @@ class Camera(BaseCamera):
 
 
     @classmethod
-    def record_video(cls, stop = False, filename = ''):
-        if stop is True:
-            cls.camera.stop_recording(splitter_port=3)
+    def record_video(cls, option='', filename=''):
+        ''' the basic function, then needs to be run in a thread ''' 
+        folder_path = 'timelapse_data/{}'.format(cls.starting_time)
+        if not os.path.exists(folder_path):
+            os.mkdir(folder_path)
+        if filename == '':
+            filename = folder_path+'/{:04d}.h264'.format(cls.image_seq)
+        else:
+            filename = folder_path+'/{:04d}-{}.h264'.format(cls.image_seq, filename)
+        # DEBUG: changing resolution and quality until having a reasonable results
+        cls.image_seq = cls.image_seq + 1    
+        print(cls.image_seq)
+        cls.camera.start_recording(filename, splitter_port=3, resize=cls.steam_resolution, quality=25)
+
+        while True:
+            if cls.video_recording_flag == 'stop':
+                cls.camera.stop_recording(splitter_port=3)
+                break
+            pass
+
+    @classmethod
+    def record_video_thread(cls, option='', filename=''):
+        if option == 'stop':
+            cls.video_recording_flag = 'stop'
             print('stop recording')
-        else: 
-            # https://picamera.readthedocs.io/en/release-1.10/api_camera.html#picamera.camera.PiCamera.start_recording
-            # CHange: whether h264 is better than mjpeg
-            folder_path = 'timelapse_data/{}'.format(cls.starting_time)
-            if not os.path.exists(folder_path):
-                os.mkdir(folder_path)
-            if filename == '':
-                filename = folder_path+'/{:04d}.h264'.format(cls.image_seq)
-            else:
-                filename = folder_path+'/{:04d}-{}.h264'.format(cls.image_seq, filename)
-            # DEBUG: changing resolution and quality until having a reasonable results
-            cls.camera.start_recording(filename, splitter_port=3, resize=cls.video_resolution, quality=15)
-            # cls.camera.start_recording('capture_video_port.mjpeg', splitter_port=3, resize=None, quality=cls.jpeg_quality)
-            cls.image_seq = cls.image_seq + 1
+        else:
+            ''' if not running a thread, the capture will not continue ''' 
+            cls.threading_recording = threading.Thread(target=cls.record_video, args=[option, filename])
+            cls.threading_recording.daemon = True
+            cls.threading_recording.start()
+            cls.video_recording_flag = 'start'
             print('start recording')
-            
+
+
 
     @classmethod
     def take_image(cls, filename = '', resolution='normal'):

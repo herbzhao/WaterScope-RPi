@@ -100,9 +100,19 @@ Mousetrap.bind('e', function () {
 });
 
 
-Mousetrap.bind('r', function () {
+function reset_direction_key() {
     fetch('/ser/?value=reset&board=fergboard');
+}
+
+Mousetrap.bind('r', function () {
+    reset_direction_key()
 });
+
+// NOTE: auto reset every half seconds to prevent problem
+setInterval(() => {
+    reset_direction_key()
+}, 1000*5)
+
 
 // some delay for the key input as it is too fast!
 function direction_key_loop() { //  create a loop function
