@@ -1,6 +1,4 @@
-// PID_AutoTune_v0 - Version: Latest 
 #include <PID_v1.h>
-//#include <PID_AutoTune_v0.h>
 double PID_setpoint, PID_input, PID_output;
 //Define the aggressive and conservative Tuning Parameters
 // https://robotics.stackexchange.com/questions/9786/how-do-the-pid-parameters-kp-ki-and-kd-affect-the-heading-of-a-differential
@@ -30,13 +28,37 @@ int r=30, g=30, b=30;
 #define B_coefficient 3950
 // the value of the serial resistor
 #define reference_resistor 100000    
-// how many analogue_readings to take and average, more takes longer
+// how many temp_analogue_readings to take and average, more takes longer
 // but is more 'smooth'
-#define number_of_analogue_measurements 10
+#define number_of_temp_analogue_measurements 10
 // set some variables for thermistor
-uint16_t analogue_readings[number_of_analogue_measurements];
+uint16_t temp_analogue_readings[number_of_temp_analogue_measurements];
 uint8_t index_k;
-float average_analogue_reading;
+float average_temp_analogue_reading;
+
+
+// Accelerometer
+// which analog pin to connect
+#define X_pin A1    
+#define Y_pin A2     
+#define Z_pin A3
+// temp. for nominal resistance (almost always 25 C)
+#define X_0 = 2.5239
+#define Y_0 = 2.5120
+#define Z_0 = 2.4825
+#define X_k = 1.0086
+#define X_k = 1.0367
+#define X_k = 1.0083
+
+#define number_of_acceleration_analogue_measurements 10
+uint16_t X_analogue_readings[number_of_acceleration_analogue_measurements];
+uint16_t Y_analogue_readings[number_of_acceleration_analogue_measurements];
+uint16_t Z_analogue_readings[number_of_acceleration_analogue_measurements];
+
+uint8_t index_j;
+float average_X_analogue_reading;
+float average_Y_analogue_reading;
+float average_Z_analogue_reading;
 
 
 // global varialbes for the code
@@ -95,8 +117,7 @@ void setup(void) {
 
 
 void loop(void) {
-  PID_input = read_temperature();
-  
+  PID_input = read_temperature();  
   // check if the average temperature is stable within range
   // then adjust PID_setpoint with small step to prevent overshoot
   if (cooling == true){
@@ -142,59 +163,26 @@ void measure_average_temp_and_adjust_PID_setpoint(){
   }
 }
 
-int number_of_analog_acceleration_measurements = 10;
-uint16_t X_values[number_of_analog_acceleration_measurements];
-uint16_t Y_values[number_of_analog_acceleration_measurements];
-uint16_t Z_values[number_of_analog_acceleration_measurements];
-uint8_t index_j;
-float average_X_value;
-float average_Y_value;
-float average_Z_value;
 
-float read_acceleration(){
-  // take N analogue_readings in a row, with a slight delay
-  for (index_j=0; index_j< number_of_analog_acceleration_measurements; index_j++) {
-
-    X_values[index_j] = analogRead(A1);
-    Y_values[index_j] = analogRead(A2);
-    Z_values[index_j] = analogRead(A3);;
-    delay(10);
-  }
- 
-  // average all the analogue_readings out
-  average_X_value = 0;
-  average_Y_value = 0;
-  average_Z_value = 0;
-  
-  for (index_j=0; index_j< number_of_analogue_measurements; index_j++){
-    average_X_value += X_values[index_j];
-    average_Y_value += Y_values[index_j];
-    average_Z_value += Z_values[index_j];  
-  }
-  
-  average_X_value = average_X_value / number_of_analogue_measurements  * (5.0 / 1023.0);
-  average_Y_value = average_Y_value / number_of_analogue_measurements  * (5.0 / 1023.0);
-  average_Z_value = average_Z_value / number_of_analogue_measurements  * (5.0 / 1023.0);
-}
 
 float read_temperature(){
-  // take N analogue_readings in a row, with a slight delay
-  for (index_k=0; index_k< number_of_analogue_measurements; index_k++) {
-    analogue_readings[index_k] = analogRead(thermistor_pin);
+  // take N temp_analogue_readings in a row, with a slight delay
+  for (index_k=0; index_k< number_of_temp_analogue_measurements; index_k++) {
+    temp_analogue_readings[index_k] = analogRead(thermistor_pin);
     delay(10);
   }
  
-  // average all the analogue_readings out
-  average_analogue_reading = 0;
-  for (index_k=0; index_k< number_of_analogue_measurements; index_k++){
-    average_analogue_reading += analogue_readings[index_k];
+  // average all the temp_analogue_readings out
+  average_temp_analogue_reading = 0;
+  for (index_k=0; index_k< number_of_temp_analogue_measurements; index_k++){
+    average_temp_analogue_reading += temp_analogue_readings[index_k];
   }
-  average_analogue_reading /= number_of_analogue_measurements;
+  average_temp_analogue_reading /= number_of_temp_analogue_measurements;
   
   // convert the voltage value to resistance
-  average_analogue_reading = 1023 / average_analogue_reading - 1;
-  average_analogue_reading = reference_resistor / average_analogue_reading;
-  temperature = average_analogue_reading / thermistor_norminal_resistance;     // (R/Ro)
+  average_temp_analogue_reading = 1023 / average_temp_analogue_reading - 1;
+  average_temp_analogue_reading = reference_resistor / average_temp_analogue_reading;
+  temperature = average_temp_analogue_reading / thermistor_norminal_resistance;     // (R/Ro)
   temperature = log(temperature);                  // ln(R/Ro)
   temperature /= B_coefficient;                   // 1/B * ln(R/Ro)
   temperature += 1.0 / (temperature_norminal + 273.15); // + (1/To)
@@ -216,6 +204,44 @@ float read_temperature(){
   // return value
   return temperature;
 }
+
+
+void read_acceleration(){
+  // take N temp_analogue_readings in a row, with a slight delay
+  for (index_j=0; index_j< number_of_acceleration_analogue_measurements; index_j++) {
+    X_analogue_readings[index_j] = analogRead(X_pin);
+    Y_analogue_readings[index_j] = analogRead(Y_pin);
+    Z_analogue_readings[index_j] = analogRead(Z_pin);
+    delay(10);
+  }
+ 
+  // average all the X_analogue_readings out
+  average_X_analogue_reading = 0;
+  average_Y_analogue_reading = 0;
+  average_Z_analogue_reading = 0;
+  
+  for (index_j=0; index_j< number_of_acceleration_analogue_measurements; index_j++){
+    average_X_analogue_reading += X_analogue_readings[index_j];
+    average_Y_analogue_reading += Y_analogue_readings[index_j];
+    average_Z_analogue_reading += Z_analogue_readings[index_j];
+
+  }
+  average_X_analogue_reading /= number_of_acceleration_analogue_measurements;
+  average_Y_analogue_reading /= number_of_acceleration_analogue_measurements;
+  average_Z_analogue_reading /= number_of_acceleration_analogue_measurements;
+
+  float X_acceleration = (average_X_analogue_reading* (5.0 / 1023.0));
+  float Y_acceleration = (average_X_analogue_reading* (5.0 / 1023.0));
+  float Z_acceleration = (average_X_analogue_reading* (5.0 / 1023.0));
+
+  Serial.print("X acceleration: ");
+  Serial.print(X_acceleration);
+    Serial.print(" Y acceleration: ");
+  Serial.print(Y_acceleration);
+    Serial.print(" Z acceleration: ");
+  Serial.println(Z_acceleration);
+}
+
 
 
 // automatically adjust the setpoint from the PID_setpoint to the PID_final_setpoint
@@ -251,7 +277,7 @@ void serial_condition(String serial_input){
   serial_input.trim();
   
   if (serial_input == "66" or serial_input == "led_on"){
-    LED_colour(255,255,255);
+    LED_colour(r,g,b);
   }
   else if (serial_input == "-66" or serial_input == "led_off"){
     LED_colour(0,0,0);

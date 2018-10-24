@@ -27,6 +27,8 @@ class Camera(BaseCamera):
         cls.stream_resolution = (1648,1232)
         cls.video_resolution = (824, 616)
         cls.image_resolution = (3280,2464)
+        # how many seconds before we automatically stop recording
+        cls.record_timeout = 120
         # Change: 75 or 85 to see the streaming quality
         cls.stream_quality = 75
         cls.starting_time = datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S')
@@ -67,24 +69,25 @@ class Camera(BaseCamera):
 
 
     @classmethod
-    def record_video_with_splitter_channel(cls, option='', filename=''):
-        ''' the basic function, then needs to be run in a thread ''' 
+    def record_video_with_splitter_channel(cls, filename=''):
+        ''' This method directly use another splitter channel to record the video to local files
+        it allows video to be recorded at different  ''' 
         time_start = time.time()
         # define the filename 
         folder_path = 'timelapse_data/{}'.format(cls.starting_time)
         if not os.path.exists(folder_path):
             os.mkdir(folder_path)
         if filename == '':
-            filename = folder_path+'/{:04d}.mjpeg'.format(cls.image_seq)
+            filename = folder_path+'/{:04d}.h264'.format(cls.image_seq)
         else:
-            filename = folder_path+'/{:04d}-{}.mjepg'.format(cls.image_seq, filename)
+            filename = folder_path+'/{:04d}-{}.h264'.format(cls.image_seq, filename)
         cls.image_seq = cls.image_seq + 1
 
         cls.camera.start_recording(filename, splitter_port=3, resize=cls.video_resolution, quality=25)
 
         while True:
             # Use a thread to sniff for the flag change and stop the video recording?
-            if time.time() - time_start >= 60:
+            if time.time() - time_start > cls.record_timeout:
                 cls.recording_flag = False
 
             if cls.recording_flag is False:
@@ -100,7 +103,7 @@ class Camera(BaseCamera):
 
     @classmethod
     def capture_video_from_stream(cls, filename=''):
-        ''' the basic function, then needs to be run in a thread ''' 
+        ''' This method directly save the stream into a local file, so it should consume less computing power ''' 
         time_start = time.time()
         # define the filename 
         folder_path = 'timelapse_data/{}'.format(cls.starting_time)
@@ -112,19 +115,31 @@ class Camera(BaseCamera):
             filename = folder_path+'/{:04d}-{}.mjepg'.format(cls.image_seq, filename)
         cls.image_seq = cls.image_seq + 1
 
+        # NOTE: this mjpeg_headings is required to add before each frame for VLC to render the video properly
+        mjpeg_headings = b'''
+        --myboundary
+        Content Type: image/jpeg
+        FPS: {}
+        CamcorderFrame: {} x {}
+        '''.format(cls.fps, cls.stream_resolution[0], cls.stream_resolution[1])
+
         # open the file and append new frames
         with open(filename, 'a+') as f:
             while True:
                 time_now = time.time()
                 try:
-                    f.write(str(cls.frame_to_capture))
-                    # after capturing it, destorying the frame
-                    del(cls.frame_to_capture)
+                    if cls.frame_to_capture:
+                        f.write(mjpeg_headings)
+                        time.sleep(0)
+                        f.write(str(cls.frame_to_capture))
+                        # after capturing it, destorying the frame
+                        del(cls.frame_to_capture)
+                # when there is no frame, just wait for a bit
                 except AttributeError:
-                    time.sleep(1/cls.fps*0.1)
+                    time.sleep(1/cls.fps*0.05)
 
                 # after certain time of recording, automatically close
-                if time_now - time_start >=60:
+                if time_now - time_start > cls.record_timeout:
                     cls.recording_flag = False
 
                 # close the thread with the flag
@@ -134,14 +149,14 @@ class Camera(BaseCamera):
 
 
     @classmethod
-    def record_video_thread(cls, recording_flag = True, filename=''):
+    def video_recording_thread(cls, recording_flag = True, filename=''):
         if recording_flag is True:
             # first stop the recording
             cls.recording_flag = False
             time.sleep(1)
             # then resume
             cls.recording_flag = True
-            cls.threading_recording = threading.Thread(target=cls.capture_video_from_stream, args=[filename])
+            cls.threading_recording = threading.Thread(target=cls.record_video_with_splitter_channel, args=[filename])
             cls.threading_recording.daemon = True
             cls.threading_recording.start()
             print('start recording')
