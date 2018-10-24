@@ -28,7 +28,7 @@ class Camera(BaseCamera):
         cls.video_resolution = (824, 616)
         cls.image_resolution = (3280,2464)
         # Change: 75 or 85 to see the streaming quality
-        cls.jpeg_quality = 75
+        cls.stream_quality = 75
         cls.starting_time = datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S')
 
     @classmethod
@@ -67,68 +67,87 @@ class Camera(BaseCamera):
 
 
     @classmethod
-    def record_video(cls, option='', filename=''):
+    def record_video_with_splitter_channel(cls, option='', filename=''):
         ''' the basic function, then needs to be run in a thread ''' 
+        time_start = time.time()
+        # define the filename 
         folder_path = 'timelapse_data/{}'.format(cls.starting_time)
         if not os.path.exists(folder_path):
             os.mkdir(folder_path)
         if filename == '':
-            filename = folder_path+'/{:04d}.h264'.format(cls.image_seq)
+            filename = folder_path+'/{:04d}.mjpeg'.format(cls.image_seq)
         else:
-            filename = folder_path+'/{:04d}-{}.h264'.format(cls.image_seq, filename)
-        # DEBUG: changing resolution and quality until having a reasonable results
-        cls.image_seq = cls.image_seq + 1    
-        print(cls.image_seq)
-        cls.camera.start_recording(filename, splitter_port=3, resize=cls.steam_resolution, quality=25)
+            filename = folder_path+'/{:04d}-{}.mjepg'.format(cls.image_seq, filename)
+        cls.image_seq = cls.image_seq + 1
+
+        cls.camera.start_recording(filename, splitter_port=3, resize=cls.video_resolution, quality=25)
 
         while True:
-            if cls.video_recording_flag == 'stop':
+            # Use a thread to sniff for the flag change and stop the video recording?
+            if time.time() - time_start >= 60:
+                cls.recording_flag = False
+
+            if cls.recording_flag is False:
+                cls.camera.stop_recording(splitter_port=1)
+                time.sleep(0.5)
                 cls.camera.stop_recording(splitter_port=3)
+                time.sleep(0.5)
+                # Warning: be careful about the cls.camera.start_recording. 'bgr' for opencv and 'mjpeg' for picamera
+                cls.camera.start_recording(cls.stream, format='mjpeg', quality = cls.stream_quality, splitter_port=1)
+                # cls.camera.start_recording(cls.stream, format='bgr', splitter_port=1)
                 break
-            pass
+
 
     @classmethod
-    def record_video_thread(cls, option='', filename=''):
-        if option == 'stop':
-            cls.video_recording_flag = 'stop'
-            print('stop recording')
+    def capture_video_from_stream(cls, filename=''):
+        ''' the basic function, then needs to be run in a thread ''' 
+        time_start = time.time()
+        # define the filename 
+        folder_path = 'timelapse_data/{}'.format(cls.starting_time)
+        if not os.path.exists(folder_path):
+            os.mkdir(folder_path)
+        if filename == '':
+            filename = folder_path+'/{:04d}.mjpeg'.format(cls.image_seq)
         else:
-            ''' if not running a thread, the capture will not continue ''' 
-            cls.threading_recording = threading.Thread(target=cls.record_video, args=[option, filename])
+            filename = folder_path+'/{:04d}-{}.mjepg'.format(cls.image_seq, filename)
+        cls.image_seq = cls.image_seq + 1
+
+        # open the file and append new frames
+        with open(filename, 'a+') as f:
+            while True:
+                time_now = time.time()
+                try:
+                    f.write(str(cls.frame_to_capture))
+                    # after capturing it, destorying the frame
+                    del(cls.frame_to_capture)
+                except AttributeError:
+                    time.sleep(1/cls.fps*0.1)
+
+                # after certain time of recording, automatically close
+                if time_now - time_start >=60:
+                    cls.recording_flag = False
+
+                # close the thread with the flag
+                if cls.recording_flag is False:
+                    break
+        
+
+
+    @classmethod
+    def record_video_thread(cls, recording_flag = True, filename=''):
+        if recording_flag is True:
+            # first stop the recording
+            cls.recording_flag = False
+            time.sleep(1)
+            # then resume
+            cls.recording_flag = True
+            cls.threading_recording = threading.Thread(target=cls.capture_video_from_stream, args=[filename])
             cls.threading_recording.daemon = True
             cls.threading_recording.start()
-            cls.video_recording_flag = 'start'
             print('start recording')
-
-
-    @classmethod
-    def record_video_new(cls, option='', filename=''):
-        if option == 'stop':
-            cls.camera.stop_recording(splitter_port=1)
-            time.sleep(1)
-            cls.camera.stop_recording(splitter_port=3)
-            time.sleep(1)
-            # Warning: be careful about the cls.camera.start_recording. 'bgr' for opencv and 'mjpeg' for picamera
-            cls.camera.start_recording(cls.stream, format='mjpeg', quality = cls.jpeg_quality, splitter_port=1)
-            # cls.camera.start_recording(cls.stream, format='bgr', splitter_port=1)
-            
         else:
-            ''' the basic function, then needs to be run in a thread ''' 
-            folder_path = 'timelapse_data/{}'.format(cls.starting_time)
-            if not os.path.exists(folder_path):
-                os.mkdir(folder_path)
-            if filename == '':
-                filename = folder_path+'/{:04d}.h264'.format(cls.image_seq)
-            else:
-                filename = folder_path+'/{:04d}-{}.h264'.format(cls.image_seq, filename)
-            # DEBUG: changing resolution and quality until having a reasonable results
-            cls.image_seq = cls.image_seq + 1    
-            cls.camera.start_recording(filename, splitter_port=3, resize=cls.steam_resolution, quality=25)
-
-    @classmethod
-    def capture_video_from_stream(cls, option='', filename=''):
-        # TEST: directly steal the frames from the stream
-        
+            cls.recording_flag = False
+            print('stop recording')
 
 
 
@@ -156,7 +175,7 @@ class Camera(BaseCamera):
             cls.camera.resolution = cls.stream_resolution
             # resume the video channel
             # Warning: be careful about the cls.camera.start_recording. 'bgr' for opencv and 'mjpeg' for picamera
-            cls.camera.start_recording(cls.stream, format='mjpeg', quality = cls.jpeg_quality, splitter_port=1)
+            cls.camera.start_recording(cls.stream, format='mjpeg', quality = cls.stream_quality, splitter_port=1)
             # cls.camera.start_recording(cls.stream, format='bgr', splitter_port=1)
 
         cls.image_seq = cls.image_seq + 1
@@ -178,7 +197,7 @@ class Camera(BaseCamera):
 
             # streaming
             cls.stream = io.BytesIO()
-            cls.camera.start_recording(cls.stream, format='mjpeg', quality = cls.jpeg_quality, splitter_port=1)
+            cls.camera.start_recording(cls.stream, format='mjpeg', quality = cls.stream_quality, splitter_port=1)
             while True:
                 # reset stream for next frame
                 cls.stream.seek(0)
@@ -192,5 +211,7 @@ class Camera(BaseCamera):
                 if len(frame) == 0:
                     pass
                 else:
+                    # useful for saving frames into seperate file
+                    cls.frame_to_capture = frame
                     yield frame
 

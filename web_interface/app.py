@@ -193,9 +193,9 @@ def take_image():
         # HH:MM:SS format
         filename = str(time_value_formatted.time())
     if option == 'start_recording':
-        Camera.record_video_thread(filename=filename)
+        Camera.record_video_thread(filename=filename, recording_flag=True)
     elif option == 'stop_recording':
-        Camera.record_video_thread(option='stop')
+        Camera.record_video_thread(recording_flag=False)
     elif option == 'high-res':
             Camera.take_image(resolution='high', filename=filename)
     else:

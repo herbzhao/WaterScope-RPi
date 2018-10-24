@@ -142,6 +142,40 @@ void measure_average_temp_and_adjust_PID_setpoint(){
   }
 }
 
+int number_of_analog_acceleration_measurements = 10;
+uint16_t X_values[number_of_analog_acceleration_measurements];
+uint16_t Y_values[number_of_analog_acceleration_measurements];
+uint16_t Z_values[number_of_analog_acceleration_measurements];
+uint8_t index_j;
+float average_X_value;
+float average_Y_value;
+float average_Z_value;
+
+float read_acceleration(){
+  // take N analogue_readings in a row, with a slight delay
+  for (index_j=0; index_j< number_of_analog_acceleration_measurements; index_j++) {
+
+    X_values[index_j] = analogRead(A1);
+    Y_values[index_j] = analogRead(A2);
+    Z_values[index_j] = analogRead(A3);;
+    delay(10);
+  }
+ 
+  // average all the analogue_readings out
+  average_X_value = 0;
+  average_Y_value = 0;
+  average_Z_value = 0;
+  
+  for (index_j=0; index_j< number_of_analogue_measurements; index_j++){
+    average_X_value += X_values[index_j];
+    average_Y_value += Y_values[index_j];
+    average_Z_value += Z_values[index_j];  
+  }
+  
+  average_X_value = average_X_value / number_of_analogue_measurements  * (5.0 / 1023.0);
+  average_Y_value = average_Y_value / number_of_analogue_measurements  * (5.0 / 1023.0);
+  average_Z_value = average_Z_value / number_of_analogue_measurements  * (5.0 / 1023.0);
+}
 
 float read_temperature(){
   // take N analogue_readings in a row, with a slight delay
