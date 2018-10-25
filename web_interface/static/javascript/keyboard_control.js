@@ -42,24 +42,28 @@ Mousetrap.bind('shift+s', function () {
 });
 
 // image capture
-Mousetrap.bind(['t'], function () {
-    app.take_image()
+Mousetrap.bind(['c'], function () {
+    app.take_image_record_raspberry_pi_time()
 });
-Mousetrap.bind(['y'], function () {
-    app.take_image_high_res()
-});
-Mousetrap.bind(['u'], function () {
-    app.take_image_record_arduino_time()
-});
-// video capture
+
 Mousetrap.bind(['g'], function () {
-    app.take_image_record_arduino_time()
+    app.take_high_res_image_record_arduino_time()
 });
 Mousetrap.bind(['h'], function () {
-    app.take_image_record_arduino_time()
+    app.take_high_res_image()
 });
 Mousetrap.bind(['j'], function () {
+    app.take_image()
+});
+
+// video switch
+Mousetrap.bind(['v'], function () {
     app.take_image_record_arduino_time()
+    if (app.recording_switch == "true") {
+        app.recording_switch = null
+    } else if (this.recording_switch == null) {
+        app.recording_switch = "true"
+    }
 });
 
 // temperature control

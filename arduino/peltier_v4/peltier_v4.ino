@@ -15,7 +15,7 @@ PID myPID(&PID_input, &PID_output, &PID_setpoint, Kp, Ki, Kd, REVERSE);
 #define num_LEDs 12
 Adafruit_NeoPixel LEDs = Adafruit_NeoPixel(num_LEDs, LED_PIN, NEO_GRB + NEO_KHZ800);
 // starting LED colour
-int r=255, g=255, b=255;
+int r=100, g=100, b=100;
 
 // Thermistor
 // which analog pin to connect
@@ -50,7 +50,7 @@ float average_temp_analogue_reading;
 #define X_k = 1.0367
 #define X_k = 1.0083
 
-#define number_of_acceleration_analogue_measurements 10
+#define number_of_acceleration_analogue_measurements 1
 uint16_t X_analogue_readings[number_of_acceleration_analogue_measurements];
 uint16_t Y_analogue_readings[number_of_acceleration_analogue_measurements];
 uint16_t Z_analogue_readings[number_of_acceleration_analogue_measurements];
@@ -113,7 +113,7 @@ void setup(void) {
   
   //start the LED
   LEDs.begin();
-  LED_colour(r,g,b);
+  LED_colour(0,0,0);
   
   // measure a starting time
   starting_time = float(millis())/float(1000);

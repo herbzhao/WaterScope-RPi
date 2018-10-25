@@ -149,14 +149,17 @@ class Camera(BaseCamera):
 
 
     @classmethod
-    def video_recording_thread(cls, recording_flag = True, filename=''):
+    def video_recording_thread(cls, video_record_method='capture_video_from_stream', recording_flag = True, filename=''):
         if recording_flag is True:
             # first stop the recording
             cls.recording_flag = False
             time.sleep(1)
             # then resume
             cls.recording_flag = True
-            cls.threading_recording = threading.Thread(target=cls.record_video_with_splitter_channel, args=[filename])
+            if video_record_method == 'record_video_with_splitter_channel':
+                cls.threading_recording = threading.Thread(target=cls.record_video_with_splitter_channel, args=[filename])
+            elif video_record_method == 'capture_video_from_stream':
+                cls.threading_recording = threading.Thread(target=cls.capture_video_from_stream, args=[filename])
             cls.threading_recording.daemon = True
             cls.threading_recording.start()
             print('start recording')

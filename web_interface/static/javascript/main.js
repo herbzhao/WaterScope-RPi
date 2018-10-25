@@ -108,7 +108,7 @@ var app = new Vue({
         },
         start_recording: function () {
             console.log('start recording..')
-            axios.get("/take_image/?option=start_recording")
+            axios.get("/take_image/?option=start_recording&filename=arduino_time")
         },
         stop_recording: function () {
             console.log('stop recording')
@@ -240,9 +240,17 @@ var app = new Vue({
             axios.get("/take_image/?filename=arduino_time")
             console.log("taking image and record arduino time")
         },
-        take_image_high_res: function () {
+        take_image_record_raspberry_pi_time: function () {
+            axios.get("/take_image/?filename=raspberry_pi_time")
+            console.log("taking image and record arduino time")
+        },
+        take_high_res_image: function () {
             axios.get("/take_image/?option=high_res")
             console.log("taking image in high res")
+        },
+        take_high_res_image_record_arduino_time: function () {
+            axios.get("/take_image/?option=high_res&filename=arduino_time")
+            console.log("taking image in high res and record arduino time")
         },
     }
 })

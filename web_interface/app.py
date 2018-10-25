@@ -160,8 +160,8 @@ def send_serial():
 
 
 ''' The feed for serial_command output ''' 
-@app.route('/parabolic_serial_monitor')
-def parabolic_serial_monitor():
+@app.route('/parabolic_serial_monitor_old')
+def parabolic_serial_monitor_old():
     time_value_formatted, temp_value = read_parabolic_time_temp()
     date = time_value_formatted.date()
     second = time_value_formatted.time().second
@@ -169,6 +169,20 @@ def parabolic_serial_monitor():
     hour = time_value_formatted.time().hour
     # return jsonify({'time_value':time_value, 'temp_value':temp_value})
     return jsonify({'x':str(time_value_formatted), 'date': str(date), 'hour':hour, 'minute': minute, 'second': second, 'y':temp_value})
+
+''' The feed for serial_command output ''' 
+@app.route('/parabolic_serial_monitor')
+def parabolic_serial_monitor():
+
+    time_value_formatted, temp_value = read_parabolic_time_temp()
+    now = datetime.datetime.now()
+    date = now.date()
+    second = now.second
+    minute = now.minute
+    hour = now.hour
+    # return jsonify({'time_value':time_value, 'temp_value':temp_value})
+    return jsonify({'x':str(time_value_formatted), 'date': str(date), 'hour':hour, 'minute': minute, 'second': second, 'y':temp_value})
+
 
 
 # TODO: have a fine focus and coarse focus
@@ -189,9 +203,15 @@ def take_image():
     filename= request.args.get('filename', '')
     # synchronise the arduino_time
     if filename == 'arduino_time':
-        time_value_formatted, temp_value = read_parabolic_time_temp()
         # HH:MM:SS format
-        filename = str(time_value_formatted.time())
+        time_value_formatted, temp_value = read_parabolic_time_temp()
+        filename = str(time_value_formatted.time()) + '_T{}'.format(temp_value)
+
+    elif filename == 'raspberry_pi_time':
+        time_value_formatted, temp_value = read_parabolic_time_temp()
+        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        filename = str(now) + '_T{}'.format(temp_value)
+
     if option == 'start_recording':
         Camera.video_recording_thread(filename=filename, recording_flag=True)
     elif option == 'stop_recording':
