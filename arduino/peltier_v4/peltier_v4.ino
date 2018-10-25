@@ -15,7 +15,7 @@ PID myPID(&PID_input, &PID_output, &PID_setpoint, Kp, Ki, Kd, REVERSE);
 #define num_LEDs 12
 Adafruit_NeoPixel LEDs = Adafruit_NeoPixel(num_LEDs, LED_PIN, NEO_GRB + NEO_KHZ800);
 // starting LED colour
-int r=30, g=30, b=30;
+int r=255, g=255, b=255;
 
 // Thermistor
 // which analog pin to connect
@@ -76,10 +76,16 @@ float temperature_ave;
 
 // final goal of temperature
 // CHANGE: this is used to offset depending on the sample position, sensor position, etc.
-#define temp_offset 0
-float PID_default_starting_setpoint = 21 + temp_offset;
-float PID_default_final_setpoint = 17 + temp_offset;
-float PID_prep_setpoint = 22 + temp_offset;
+float temp_offset = 0;
+// the temp before shape changing
+float Tprep = 21 + temp_offset;
+// shape changing range
+float T0 = 20 + temp_offset;
+float T1 = 19 + temp_offset;
+float T2 = 18 + temp_offset;
+float T3 = 17 + temp_offset;
+// the temperature to heat up till the droplet melt
+float Theat = 25 + temp_offset; 
 
 float PID_final_setpoint;
 // starting the arduino with cooling or not?
@@ -100,8 +106,6 @@ void setup(void) {
   Serial.setTimeout(50);
   
   //initialize the variables we're linked to
-  PID_setpoint = PID_default_starting_setpoint;
-  PID_final_setpoint = PID_default_final_setpoint;
   myPID.SetOutputLimits(0, 255);
 
   //turn the PID on
@@ -117,6 +121,7 @@ void setup(void) {
 
 
 void loop(void) {
+  // read_acceleration();
   PID_input = read_temperature();  
   // check if the average temperature is stable within range
   // then adjust PID_setpoint with small step to prevent overshoot
@@ -236,9 +241,9 @@ void read_acceleration(){
 
   Serial.print("X acceleration: ");
   Serial.print(X_acceleration);
-    Serial.print(" Y acceleration: ");
+  Serial.print(" Y acceleration: ");
   Serial.print(Y_acceleration);
-    Serial.print(" Z acceleration: ");
+  Serial.print(" Z acceleration: ");
   Serial.println(Z_acceleration);
 }
 
@@ -286,27 +291,6 @@ void serial_condition(String serial_input){
     Serial.println("stop cooling");
     cooling = false;
   }
-  else if (serial_input == "restart"){
-    Serial.println("start the cooling procedure using the default values");
-    PID_setpoint = PID_default_starting_setpoint;
-    PID_final_setpoint = PID_default_final_setpoint;
-    cooling = true;
-  }
-  else if (serial_input == "continue" or serial_input == "start" or serial_input == "cool"){
-    Serial.println("start the cooling procedure using previously specified Temps or default");
-    // cool to PID_setpoint and then move slowly towards PID_final_setpoint
-    // the PID_final_setpoint can be a new value (if defined)
-    PID_setpoint = temperature;
-    PID_final_setpoint = PID_default_final_setpoint;
-    cooling = true;
-  }
-  else if (serial_input == "prepare"){ 
-    Serial.print("equilibriate to the droplets right before the shape changing");
-    Serial.println(PID_prep_setpoint);
-    PID_setpoint = PID_prep_setpoint;
-    PID_final_setpoint = PID_prep_setpoint;
-    cooling = true;
-  }
   //goto=15
   else if (serial_input.substring(0,4) == "goto"){ 
     Serial.print("Go to temperature: ");
@@ -316,33 +300,64 @@ void serial_condition(String serial_input){
     PID_final_setpoint = temperature_input;
     cooling = true;
   }
+  
+  //set=Tprep, useful for preset temperature
+  else if (serial_input.substring(0,3) == "set"){ 
+    String temperature_preset = serial_input.substring(4);
+    float temperature_input = temperature;
+
+    if (temperature_preset == "Tprep"){
+      Serial.println("go to prepare temperature");
+      Serial.println(Tprep);
+      temperature_input = Tprep;
+    }
+    else if (temperature_preset == "Theat"){
+      Serial.println("go to heat temperature");
+      Serial.println(Tprep);
+      temperature_input = Theat;
+    }
+    else if (temperature_preset == "T0"){
+      Serial.println("go to T0");
+      Serial.println(Tprep);
+      temperature_input = T0;
+    }
+    else if (temperature_preset == "T1"){
+      temperature_input = T1;
+    }
+    else if (temperature_preset == "T2"){
+      temperature_input = T2;
+    }
+    else if (temperature_preset == "T3"){
+      temperature_input = T3;
+    }
+    Serial.print("Go to temperature: ");
+    Serial.println(temperature_input);
+    PID_setpoint = temperature_input;
+    cooling = true;
+  }
+  // offset=5
+  else if (serial_input.substring(0,6) == "offset"){ 
+    Serial.print("Change offset to: ");
+    temp_offset = serial_input.substring(7).toFloat();
+    Serial.println(temp_offset);
+    // the temp before shape changing
+    Tprep = 21 + temp_offset;
+    // shape changing range
+    T0 = 20 + temp_offset;
+    T1 = 19 + temp_offset;
+    T2 = 18 + temp_offset;
+    T3 = 17 + temp_offset;
+    // the temperature to heat up till the droplet melt
+    Theat = 25 + temp_offset;
+    Serial.print("the new prepare temperature is: ");
+    Serial.println(Tprep);
+  }
+  
   else if (serial_input == "hold"){
     Serial.println("hold at current temperature");
     PID_final_setpoint = temperature;
     PID_setpoint = temperature;
     cooling = true;
-  }
-// T_start=24
-  else if (serial_input.substring(0,6) == "Tstart"){
-    Serial.print("changing the starting temperature: ");
-    float temperature_input = serial_input.substring(7).toFloat();
-    Serial.println(temperature_input);
-    PID_default_starting_setpoint = temperature_input;
-  }
-  // T_fin=19
-  else if (serial_input.substring(0,4) == "Tfin"){
-    Serial.print("changing the finishing temperature: ");
-    float temperature_input = serial_input.substring(5).toFloat();
-    Serial.println(temperature_input);
-    PID_default_final_setpoint = temperature_input;
-  }
-  
-  // T_prep=25
-  else if (serial_input.substring(0,5) == "Tprep"){
-    Serial.print("changing the prepare temperature: ");
-    float temperature_input = serial_input.substring(6).toFloat();
-    Serial.println(temperature_input);
-    PID_prep_setpoint = temperature_input;
   }
   // PID_step=0.1
   else if (serial_input.substring(0,8) == "PID_step"){
