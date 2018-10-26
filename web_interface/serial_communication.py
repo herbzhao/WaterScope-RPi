@@ -112,6 +112,10 @@ class serial_controller_class():
 
         elif 'reset' in serial_command:
             self.fin_flag = ['FIN']
+            # https://pyserial.readthedocs.io/en/latest/pyserial_api.html#serial.Serial.reset_input_buffer
+            #  flush the input and output to prevent filling up the whole buffer
+            self.ser.reset_input_buffer()
+            self.ser.reset_output_buffer()
 
         serial_command = serial_command.replace('(',' 1 ').replace(')','').replace(",", " ")
         return serial_command
@@ -183,20 +187,18 @@ class serial_controller_class():
                         with open(log_file_location, 'a+') as log_file:
                             log_file.writelines(self.serial_output)
                     elif options[0] == 'logging_parabolic':
-                        if not os.path.exists("timelapse_data/arduino/{}".format(self.starting_time)):
-                            os.mkdir("timelapse_data/arduino/{}".format(self.starting_time))
-                        log_file_location = "timelapse_data/arduino/{}/temp_log.txt".format(self.starting_time)
+                        if not os.path.exists("timelapse_data/arduino"):
+                            os.mkdir("timelapse_data/arduino")
+                        log_file_location = "timelapse_data/arduino/{}.txt".format(self.starting_time)
                         with open(log_file_location, 'a+') as log_file:
                             now = datetime.datetime.now()
-                            time_value_formatted = now.strftime("%Y-%m-%d %H:%M:%S")
+                            time_value_formatted = now.strftime("%Y-%m-%d %H:%M:%S.%f")
                             try:
                                 if self.last_logged_temp:
-                                    log_file.write(time_value_formatted)
-                                    log_file.write('\n')
-                                    log_file.write(str(self.last_logged_temp))
-                                    log_file.write('\n')
+                                    log_file.write(time_value_formatted+'\n')
+                                    log_file.write(str(self.last_logged_temp)+'\n')
                                     del(self.last_logged_temp)
-                            except:
+                            except AttributeError:
                                 pass
                 
     def serial_read_threading(self, options=['quiet']):
