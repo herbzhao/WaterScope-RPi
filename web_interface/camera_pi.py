@@ -23,16 +23,16 @@ class Camera(BaseCamera):
     def initialisation(cls):
         # TODO: implement a higher camera resolution and then resize to lower resolution for streaming?
         cls.image_seq = 0
-        cls.fps = 20
+        cls.fps = 15
         # reduce the fps for video recording to reduce the file size
-        cls.video_recording_fps = 5
+        cls.video_recording_fps = 3
         cls.stream_resolution = (1648,1232)
         cls.video_resolution = (824, 616)
         cls.image_resolution = (3280,2464)
         # how many seconds before we automatically stop recording
-        cls.record_timeout = 120
+        cls.record_timeout = 600
         # Change: 75 or 85 to see the streaming quality
-        cls.stream_quality = 75
+        cls.stream_quality = 85
         cls.starting_time = datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S')
 
     @classmethod

@@ -203,16 +203,19 @@ def take_image():
     option = request.args.get('option')
     filename= request.args.get('filename', '')
     # synchronise the arduino_time
-    if filename == 'arduino_time':
+    if 'arduino_time' in filename:
         # HH:MM:SS format
         time_value_formatted, temp_value = read_parabolic_time_temp()
-        filename = str(time_value_formatted.time()) + '_T{}'.format(temp_value)
+        # allowing other appendix
+        filename = str(time_value_formatted.time()) + '_T{}'.format(temp_value) + filename.replace('arduino_time', '')
     # synchronise the raspberry pi time
     # to set pi's time: sudo date -s '2017-02-05 15:30:00'
-    elif filename == 'raspberry_pi_time':
+    elif 'raspberry_pi_time' in filename:
         time_value_formatted, temp_value = read_parabolic_time_temp()
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        filename = now + '_T{}'.format(temp_value)
+        # allowing other appendix
+        filename = now + '_T{}'.format(temp_value) + filename.replace('raspberry_pi_time', '')
+        
     # video capture
     if option == 'start_recording':
         Camera.video_recording_thread(filename=filename, recording_flag=True)

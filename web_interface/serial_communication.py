@@ -146,6 +146,7 @@ class serial_controller_class():
             # extract time and temperature value
             if self.temp_re.findall(self.serial_output):
                 self.log['temp'].append(float(self.serial_output.replace(' *C','')))
+                self.last_logged_temp = self.log['temp'][-1]
             elif self.time_re.findall(self.serial_output):
                 self.log['time'].append(float(self.serial_output.replace(' s','')))
 
@@ -181,10 +182,22 @@ class serial_controller_class():
                         log_file_location = "{}/temp_log.txt".format(options[1])
                         with open(log_file_location, 'a+') as log_file:
                             log_file.writelines(self.serial_output)
-
-                    
-
-
+                    elif options[0] == 'logging_parabolic':
+                        if not os.path.exists("timelapse_data/arduino/{}".format(self.starting_time)):
+                            os.mkdir("timelapse_data/arduino/{}".format(self.starting_time))
+                        log_file_location = "timelapse_data/arduino/{}/temp_log.txt".format(self.starting_time)
+                        with open(log_file_location, 'a+') as log_file:
+                            now = datetime.datetime.now()
+                            time_value_formatted = now.strftime("%Y-%m-%d %H:%M:%S")
+                            try:
+                                if self.last_logged_temp:
+                                    log_file.write(time_value_formatted)
+                                    log_file.write('\n')
+                                    log_file.write(str(self.last_logged_temp))
+                                    log_file.write('\n')
+                                    del(self.last_logged_temp)
+                            except:
+                                pass
                 
     def serial_read_threading(self, options=['quiet']):
         ''' used to start threading for reading the serial'''

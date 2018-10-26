@@ -33,7 +33,7 @@
                     <v-flex xs 12>
                         <v-snackbar v-model="alert_window_2" :top='true' :right='false' multi-line='multi-line'
                             :timeout='alert_window_2_timeout' vertical='vertical'>
-                            [[photo_capture_status]]
+                            [[alert_content_2]]
                             <v-btn color="pink" flat @click="alert_window_2 = false">
                                 Close
                             </v-btn>
@@ -68,7 +68,7 @@
 
                         <v-tooltip top>
                             <!-- slot is needed for tooltip to work? -->
-                            <v-btn slot="activator" color="success" fab @click='take_high_res_image'>
+                            <v-btn slot="activator" color="success" fab @click='take_image()'>
                                 <v-icon>camera_enhance</v-icon>
                             </v-btn>
                             <span>Take a raw image (hkey: H)</span>

@@ -7,7 +7,7 @@ parabolic:
   connect: True
   baudrate: 9600
   port_names: [SERIAL, Serial, ACM]
-  serial_read_options: [quiet, timelapse_data/PID]
+  serial_read_options: [logging_parabolic]
 waterscope:
   connect: False
   baudrate: 9600

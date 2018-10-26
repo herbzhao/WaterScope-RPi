@@ -2,7 +2,7 @@
 double PID_setpoint, PID_input, PID_output;
 //Define the aggressive and conservative Tuning Parameters
 // https://robotics.stackexchange.com/questions/9786/how-do-the-pid-parameters-kp-ki-and-kd-affect-the-heading-of-a-differential
-double Kp=1000, Ki=50, Kd=50;
+double Kp=1000, Ki=50, Kd=200;
 //Specify the links and initial tuning parameters
 PID myPID(&PID_input, &PID_output, &PID_setpoint, Kp, Ki, Kd, REVERSE);
 
@@ -378,6 +378,8 @@ void serial_condition(String serial_input){
     Serial.print(Ki);
     Serial.print(", ");
     Serial.println(Kd);
+    //Specify the links and initial tuning parameters
+    PID myPID(&PID_input, &PID_output, &PID_setpoint, Kp, Ki, Kd, REVERSE);
   }
   // LED_RGB=255,255,255
   else if (serial_input.substring(0,7) == "LED_RGB" or serial_input.substring(0,7) == "LED_rgb"){

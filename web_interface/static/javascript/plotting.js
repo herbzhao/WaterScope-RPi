@@ -93,7 +93,7 @@ function real_time_plotting(x_value, y_value) {
 setTimeout(() => {
   setInterval(() => {
     get_data_and_plot()
-  }, 1000 * 1);
+  }, 1000 * 0.5);
 }, 2000)
 
 

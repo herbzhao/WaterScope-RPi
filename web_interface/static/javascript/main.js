@@ -7,7 +7,7 @@ var app = new Vue({
         peltier_control_command: '',
         chosen_arduino_board: 'parabolic',
         available_arduino_boards: [],
-        LED_switch: 'true',
+        LED_switch: 'false',
         stream_method: 'PiCamera',
         recording_switch: null,
         config_update_switch: null,
@@ -18,9 +18,9 @@ var app = new Vue({
         temp_plot: true,
         alert_window: false,
         alert_window_timeout: 5000,
-        photo_capture_status: '',
-        alert_window_2: true,
+        alert_window_2: false,
         alert_window_2_timeout: 1000,
+        alert_content_2: '',
     }),
 
     // watch when data change 
@@ -38,9 +38,9 @@ var app = new Vue({
         },
         recording_switch: function () {
             if (this.recording_switch == "true") {
-                this.start_recording_with_raspberry_pi_time()
+                this.record_video(recording=true, filename='rasbperry_pi_time')
             } else if (this.recording_switch == null) {
-                this.stop_recording()
+                this.record_video(recording=false)
             }
             this.alert_window = true
         },
@@ -59,8 +59,7 @@ var app = new Vue({
                 this.start_waterscope_timelapse()
             } else if (this.timelapse_switch == 'timelapse') {
                 this.start_timelapse()
-            } else if (this.timelapse_switch == null) {
-            }
+            } else if (this.timelapse_switch == null) {}
             this.alert_window = true
         },
         stream_method: function () {
@@ -76,27 +75,27 @@ var app = new Vue({
             this.alert_window = true
         },
     },
-    
+
     computed: {
         alert_content: function () {
-          alert_content = []
-          if (this.LED_switch != null) {
-            alert_content.push("LED")
-          }
-          if (this.config_update_switch != null) {
-            alert_content.push('Updating config')
-          }
-          if (this.recording_switch != null) {
-            alert_content.push('Recording')
-          }
-          if (this.timelapse_switch != null){
-            alert_content.push('Timelapse')
-          }
+            alert_content = []
+            if (this.LED_switch != null) {
+                alert_content.push("LED")
+            }
+            if (this.config_update_switch != null) {
+                alert_content.push('Updating config')
+            }
+            if (this.recording_switch != null) {
+                alert_content.push('Recording')
+            }
+            if (this.timelapse_switch != null) {
+                alert_content.push('Timelapse')
+            }
             return alert_content.join(', ')
-        }
-      },
+        },
+    },
 
-      mounted: function () {
+    mounted: function () {
         this.read_server_info()
     },
 
@@ -215,77 +214,46 @@ var app = new Vue({
         refresh: function () {
             window.location = "/"
         },
-        toggle_temp_plot: function() {
+        toggle_temp_plot: function () {
             this.temp_plot = !this.temp_plot
         },
         stop_stream: function () {
             axios.get("/settings/?stop=true");
             this.stop_config_update()
             this.stop_timelapse()
-            this.stop_recording()
+            this.record_video(recording=false)
         },
         auto_focus: function () {
             window.location = "/auto_focus";
         },
-        take_image: function () {
-            axios.get("/take_image/")
-            console.log("taking image")
-            this.photo_capture_status = 'Taking a photo..'
+        take_image: function (option = '', filename = 'raspberry_pi_time') {
+            axios.get("/take_image/?option={0}&filename={1}".format(option, filename))
+            console.log("taking image: option: {0}, time: {1}".format(option, filename))
             this.alert_window_2 = true
+            this.alert_content_2 = 'taking image..'
+            if (this.recording_switch != null){
+                this.alert_content_2 = 'recording video, taking image'
+                setTimeout(() => {
+                    this.alert_content_2 = 'recording video...'
+                }, 1000);
+            }
         },
-        take_image_record_arduino_time: function () {
-            axios.get("/take_image/?filename=arduino_time")
-            console.log("taking image and record arduino time")
-            this.photo_capture_status = 'Taking a photo..'
-            this.alert_window_2 = true
-        },
-        take_image_record_raspberry_pi_time: function () {
-            axios.get("/take_image/?filename=raspberry_pi_time")
-            console.log("taking image and record arduino time")
-            this.photo_capture_status = 'Taking a photo..'
-            this.alert_window_2 = true
-        },
-        take_high_res_image: function () {
-            axios.get("/take_image/?option=high_res")
-            console.log("taking image in high res")
-            this.photo_capture_status = 'Taking a photo..'
-            this.alert_window_2 = true
-        },
-        take_high_res_image_record_arduino_time: function () {
-            axios.get("/take_image/?option=high_res&filename=arduino_time")
-            console.log("taking image in high res and record arduino time")            
-            this.photo_capture_status = 'Taking a photo..'
-            this.alert_window_2 = true
-        },
-        take_high_res_image_record_raspberry_pi_time: function () {
-            axios.get("/take_image/?option=high_res&filename=raspberry_pi_time")
-            console.log("taking image in high res and record raspberry pi time")
-            this.photo_capture_status = 'Taking a photo..'
-            this.alert_window_2 = true
-            this.alert_window_2 = true            
-        },
-        start_recording: function () {
-            console.log('start recording..')
-            axios.get("/take_image/?option=start_recording&filename=arduino_time")
-            // make the alert window stay on
-            this.photo_capture_status = 'Taking a video'    
-            this.alert_window_2 = true
-            this.alert_window_2_timeout = 1000*500
-        },
-        start_recording_with_raspberry_pi_time: function () {
-            console.log('start recording..')
-            axios.get("/take_image/?option=start_recording&filename=raspberry_pi_time")
-            // make the alert window stay on
-            this.photo_capture_status = 'Taking a video'    
-            this.alert_window_2 = true
-            this.alert_window_2_timeout = 1000*500
-        },
-        stop_recording: function () {
-            console.log('stop recording')
-            axios.get("/take_image/?option=stop_recording")
-            this.photo_capture_status = ''
-            this.alert_window_2 = false
-            this.alert_window_2_timeout = 1000
+        record_video: function (recording = true, filename = 'raspberry_pi_time' ) {
+            if (recording == true) {
+                this.take_image(option = '', filename = 'raspberry_pi_time_start_recording')
+                axios.get("/take_image/?option=start_recording&filename={0}".format(filename))
+                console.log("recording video")
+                this.alert_window_2 = true
+                this.alert_content_2 = 'recording video...'
+                this.alert_window_2_timeout = 1000 * 500
+            } else {
+                this.take_image(option = '', filename = 'raspberry_pi_time_stop_recording')
+                console.log('stop recording')
+                axios.get("/take_image/?option=stop_recording")
+                this.photo_capture_status = ''
+                this.alert_window_2 = false
+                this.alert_window_2_timeout = 1000
+            }
         },
     }
 })
