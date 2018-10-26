@@ -47,7 +47,7 @@ Mousetrap.bind(['c'], function () {
 });
 
 Mousetrap.bind(['g'], function () {
-    app.take_high_res_image_record_arduino_time()
+    app.take_high_res_image_record_raspberry_pi_time()
 });
 Mousetrap.bind(['h'], function () {
     app.take_high_res_image()
@@ -58,7 +58,6 @@ Mousetrap.bind(['j'], function () {
 
 // video switch
 Mousetrap.bind(['v'], function () {
-    app.take_image_record_arduino_time()
     if (app.recording_switch == "true") {
         app.recording_switch = null
     } else if (this.recording_switch == null) {
@@ -97,7 +96,7 @@ Mousetrap.bind(['0'], function () {
     app.chosen_arduino_board = 'parabolic'
     app.send_serial_command()
 });
-Mousetrap.bind(['backspace'], function () {
+Mousetrap.bind(['tab'], function () {
     app.serial_command = 'stop'
     app.chosen_arduino_board = 'parabolic'
     app.send_serial_command()

@@ -20,12 +20,21 @@
                 <!-- NOTE: another layout here -->
                 <v-layout row wrap>
                     <v-flex xs 12>
-                        <v-snackbar v-model="alert_window" :bottom='false' :right='false' multi-line='multi-line'
+                        <v-snackbar v-model="alert_window" :bottom='true' :right='false' multi-line='multi-line'
                             :timeout='alert_window_timeout' vertical='vertical'>
                             Command sent: [[ serial_command]]
                             <br>
                             Currently running: [[alert_content]]
                             <v-btn color="pink" flat @click="alert_window = false">
+                                Close
+                            </v-btn>
+                        </v-snackbar>
+                    </v-flex>
+                    <v-flex xs 12>
+                        <v-snackbar v-model="alert_window_2" :top='true' :right='false' multi-line='multi-line'
+                            :timeout='alert_window_2_timeout' vertical='vertical'>
+                            [[photo_capture_status]]
+                            <v-btn color="pink" flat @click="alert_window_2 = false">
                                 Close
                             </v-btn>
                         </v-snackbar>

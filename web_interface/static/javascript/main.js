@@ -18,6 +18,9 @@ var app = new Vue({
         temp_plot: true,
         alert_window: false,
         alert_window_timeout: 5000,
+        photo_capture_status: '',
+        alert_window_2: true,
+        alert_window_2_timeout: 1000,
     }),
 
     // watch when data change 
@@ -35,7 +38,7 @@ var app = new Vue({
         },
         recording_switch: function () {
             if (this.recording_switch == "true") {
-                this.start_recording()
+                this.start_recording_with_raspberry_pi_time()
             } else if (this.recording_switch == null) {
                 this.stop_recording()
             }
@@ -105,14 +108,6 @@ var app = new Vue({
         led_off: function () {
             console.log('turn off LED')
             axios.get("/ser/?value=led_off&board=parabolic")
-        },
-        start_recording: function () {
-            console.log('start recording..')
-            axios.get("/take_image/?option=start_recording&filename=arduino_time")
-        },
-        stop_recording: function () {
-            console.log('stop recording')
-            axios.get("/take_image/?option=stop_recording")
         },
         start_config_update: function () {
             console.log('start updating config')
@@ -193,7 +188,7 @@ var app = new Vue({
             // remove focus of the text field
             app.$refs.serial_command_field.blur()
             // show the pop up alert
-            this.alert_window=true
+            this.alert_window = true
         },
 
         read_server_info: function () {
@@ -235,26 +230,62 @@ var app = new Vue({
         take_image: function () {
             axios.get("/take_image/")
             console.log("taking image")
+            this.photo_capture_status = 'Taking a photo..'
+            this.alert_window_2 = true
         },
         take_image_record_arduino_time: function () {
             axios.get("/take_image/?filename=arduino_time")
             console.log("taking image and record arduino time")
+            this.photo_capture_status = 'Taking a photo..'
+            this.alert_window_2 = true
         },
         take_image_record_raspberry_pi_time: function () {
             axios.get("/take_image/?filename=raspberry_pi_time")
             console.log("taking image and record arduino time")
+            this.photo_capture_status = 'Taking a photo..'
+            this.alert_window_2 = true
         },
         take_high_res_image: function () {
             axios.get("/take_image/?option=high_res")
             console.log("taking image in high res")
+            this.photo_capture_status = 'Taking a photo..'
+            this.alert_window_2 = true
         },
         take_high_res_image_record_arduino_time: function () {
             axios.get("/take_image/?option=high_res&filename=arduino_time")
-            console.log("taking image in high res and record arduino time")
+            console.log("taking image in high res and record arduino time")            
+            this.photo_capture_status = 'Taking a photo..'
+            this.alert_window_2 = true
         },
         take_high_res_image_record_raspberry_pi_time: function () {
             axios.get("/take_image/?option=high_res&filename=raspberry_pi_time")
             console.log("taking image in high res and record raspberry pi time")
+            this.photo_capture_status = 'Taking a photo..'
+            this.alert_window_2 = true
+            this.alert_window_2 = true            
+        },
+        start_recording: function () {
+            console.log('start recording..')
+            axios.get("/take_image/?option=start_recording&filename=arduino_time")
+            // make the alert window stay on
+            this.photo_capture_status = 'Taking a video'    
+            this.alert_window_2 = true
+            this.alert_window_2_timeout = 1000*500
+        },
+        start_recording_with_raspberry_pi_time: function () {
+            console.log('start recording..')
+            axios.get("/take_image/?option=start_recording&filename=raspberry_pi_time")
+            // make the alert window stay on
+            this.photo_capture_status = 'Taking a video'    
+            this.alert_window_2 = true
+            this.alert_window_2_timeout = 1000*500
+        },
+        stop_recording: function () {
+            console.log('stop recording')
+            axios.get("/take_image/?option=stop_recording")
+            this.photo_capture_status = ''
+            this.alert_window_2 = false
+            this.alert_window_2_timeout = 1000
         },
     }
 })

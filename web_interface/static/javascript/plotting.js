@@ -7,19 +7,19 @@ var trace = {
   y: [],
   type: 'line'
 }
- 
+
 var plotting_element_ID = 'plotly_chart'
 var API_url = '/parabolic_serial_monitor'
 
 // the size of x-range in minute
 // https://codepen.io/etpinard/pen/BZLPqo?editors=0010
-window_size = 2
+window_size = 1
 var layout = {
   xaxis: {
     title: 'time',
     type: 'date',
-    tickformat: '%M:%S',
-    // range: ['0001-01-01 00:00:00', '0001-01-01 00:0{0}:00'.format(window_size)]
+    tickformat: '%H:%M:%S',
+    range: ['0001-01-01 00:00:00', '0001-01-01 00:0{0}:00'.format(window_size)]
   },
   yaxis: {
     title: 'temperature (°c)',
@@ -53,53 +53,51 @@ function get_data_and_plot() {
 }
 
 
-  
-  // https://redstapler.co/javascript-realtime-chart-plotly/
-  function real_time_plotting(x_value, y_value) {
-    Plotly.extendTraces(plotting_element_ID, {
-      x: [
-        [x_value]
-      ],
-      y: [
-        [y_value]
-      ]
-    }, [0]);
-    
+
+// https://redstapler.co/javascript-realtime-chart-plotly/
+function real_time_plotting(x_value, y_value) {
+  Plotly.extendTraces(plotting_element_ID, {
+    x: [
+      [x_value]
+    ],
+    y: [
+      [y_value]
+    ]
+  }, [0]);
+
   // automatically adjust the window range - scrolling
+  // e.g. 09:32:00 - 09:34:00
   if (minute >= window_size) {
-    layout.xaxis.range = ['{0} {1}:{2}:{3}'.format(date, format_two_digits(hour), format_two_digits(minute - window_size), format_two_digits(second)),  x_value]
-  } 
-  if (hour > 0){
-    layout.xaxis.tickformat = '%H:%M:%S'
-    if (minute < window_size) {
-      // to avoid after 00:59 --> 01:00 and the minute is smaller than window size
-      layout.xaxis.range = ['{0} {1}:{2}:{3}'.format(date, format_two_digits(hour-1), 60-window_size, format_two_digits(second)),  x_value]      
-    }
+    layout.xaxis.range = ['{0} {1}:{2}:{3}'.format(date, format_two_digits(hour), format_two_digits(minute - window_size), format_two_digits(second)), x_value]
+  }
+  // e.g. 08:59:00 - 09:02:00
+  // e.g. 08:58:00 - 09:01:00
+  if (minute < window_size) {
+    // to avoid after 00:59 --> 01:00 and the minute is smaller than window size
+    layout.xaxis.range = ['{0} {1}:{2}:{3}'.format(date, format_two_digits(hour - 1), 60 - window_size + minute, format_two_digits(second)), x_value]
   }
 
-    // automatically change temperature range
-    if (y_value > 25) {
-      layout.yaxis.range = [20,35]
-    }
-    else if (y_value < 25 && y_value > 15) {
-      layout.yaxis.range = [15,25]
-    }
-    else if (y_value <15) {
-      layout.yaxis.range = [10,25]
-    }
-
-    Plotly.relayout(plotting_element_ID, layout);
+  // automatically change temperature range
+  if (y_value > 25) {
+    layout.yaxis.range = [20, 35]
+  } else if (y_value < 25 && y_value > 15) {
+    layout.yaxis.range = [15, 25]
+  } else if (y_value < 15) {
+    layout.yaxis.range = [10, 25]
   }
-  
-  // plot with intervals
-  setTimeout(() => {
-    setInterval(() => {
-      get_data_and_plot()
-    }, 1000*1);
-  }, 2000)
+
+  Plotly.relayout(plotting_element_ID, layout);
+}
+
+// plot with intervals
+setTimeout(() => {
+  setInterval(() => {
+    get_data_and_plot()
+  }, 1000 * 1);
+}, 2000)
 
 
-  // a home-made function to ensure HH:MM:SS format when the value is single digit
-  function format_two_digits(input_number_string) {
-    return ("0" + input_number_string).slice(-2)  
-  }
+// a home-made function to ensure HH:MM:SS format when the value is single digit
+function format_two_digits(input_number_string) {
+  return ("0" + input_number_string).slice(-2)
+}
