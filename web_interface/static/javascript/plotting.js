@@ -19,7 +19,7 @@ var layout = {
     title: 'time',
     type: 'date',
     tickformat: '%M:%S',
-    range: ['0001-01-01 00:00:00', '0001-01-01 00:0{0}:00'.format(window_size)]
+    // range: ['0001-01-01 00:00:00', '0001-01-01 00:0{0}:00'.format(window_size)]
   },
   yaxis: {
     title: 'temperature (°c)',

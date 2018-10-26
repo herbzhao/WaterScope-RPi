@@ -114,16 +114,16 @@ class Camera(BaseCamera):
         if filename == '':
             filename = folder_path+'/{:04d}.mjpeg'.format(cls.image_seq)
         else:
-            filename = folder_path+'/{:04d}-{}.mjepg'.format(cls.image_seq, filename)
+            filename = folder_path+'/{:04d}-{}.mjpeg'.format(cls.image_seq, filename)
         cls.image_seq = cls.image_seq + 1
 
         # NOTE: this mjpeg_headings is required to add before each frame for VLC to render the video properly
         mjpeg_headings = b'''
-        --myboundary
-        Content Type: image/jpeg
-        FPS: {}
-        CamcorderFrame: {} x {}
-        '''.format(cls.video_recording_fps, cls.stream_resolution[0], cls.stream_resolution[1])
+
+--myboundary
+Content Type: image/jpeg
+FPS: {}
+'''.format(cls.video_recording_fps)
 
         # open the file and append new frames
         with open(filename, 'a+') as f:
@@ -136,7 +136,8 @@ class Camera(BaseCamera):
                         f.write(str(cls.frame_to_capture))
                         # after capturing it, destorying the frame
                         del(cls.frame_to_capture)
-                        time.sleep(1/cls.video_recording_fps*0.9)
+                        # use a lower fps than the stream to reduce the file size
+                        time.sleep(1/cls.video_recording_fps)
                 # when there is no frame, just wait for a bit
                 except AttributeError:
                     time.sleep(1/cls.fps*0.05)
