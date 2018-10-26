@@ -252,6 +252,10 @@ var app = new Vue({
             axios.get("/take_image/?option=high_res&filename=arduino_time")
             console.log("taking image in high res and record arduino time")
         },
+        take_high_res_image_record_raspberry_pi_time: function () {
+            axios.get("/take_image/?option=high_res&filename=raspberry_pi_time")
+            console.log("taking image in high res and record raspberry pi time")
+        },
     }
 })
 

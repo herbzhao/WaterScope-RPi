@@ -161,7 +161,7 @@ def send_serial():
 
 ''' The feed for serial_command output ''' 
 @app.route('/parabolic_serial_monitor_old')
-def parabolic_serial_monitor_old():
+def parabolic_serial_monitor_arduino_time():
     time_value_formatted, temp_value = read_parabolic_time_temp()
     date = time_value_formatted.date()
     second = time_value_formatted.time().second
@@ -176,12 +176,13 @@ def parabolic_serial_monitor():
 
     time_value_formatted, temp_value = read_parabolic_time_temp()
     now = datetime.datetime.now()
+    time_value_formatted = now.strftime("%Y-%m-%d %H:%M:%S")
     date = now.date()
     second = now.second
     minute = now.minute
     hour = now.hour
     # return jsonify({'time_value':time_value, 'temp_value':temp_value})
-    return jsonify({'x':str(time_value_formatted), 'date': str(date), 'hour':hour, 'minute': minute, 'second': second, 'y':temp_value})
+    return jsonify({'x':time_value_formatted, 'date': str(date), 'hour':hour, 'minute': minute, 'second': second, 'y':temp_value})
 
 
 
@@ -206,18 +207,20 @@ def take_image():
         # HH:MM:SS format
         time_value_formatted, temp_value = read_parabolic_time_temp()
         filename = str(time_value_formatted.time()) + '_T{}'.format(temp_value)
-
+    # synchronise the raspberry pi time
+    # to set pi's time: sudo date -s '2017-02-05 15:30:00'
     elif filename == 'raspberry_pi_time':
         time_value_formatted, temp_value = read_parabolic_time_temp()
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        filename = str(now) + '_T{}'.format(temp_value)
-
+        filename = now + '_T{}'.format(temp_value)
+    # video capture
     if option == 'start_recording':
         Camera.video_recording_thread(filename=filename, recording_flag=True)
     elif option == 'stop_recording':
         Camera.video_recording_thread(recording_flag=False)
-    elif option == 'high-res':
-            Camera.take_image(resolution='high', filename=filename)
+    # image capture
+    elif option == 'high_res':
+            Camera.take_image(resolution='high_res', filename=filename)
     else:
             Camera.take_image(resolution='normal', filename=filename)
 

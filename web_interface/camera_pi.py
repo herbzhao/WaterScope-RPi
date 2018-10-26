@@ -24,6 +24,8 @@ class Camera(BaseCamera):
         # TODO: implement a higher camera resolution and then resize to lower resolution for streaming?
         cls.image_seq = 0
         cls.fps = 20
+        # reduce the fps for video recording to reduce the file size
+        cls.video_recording_fps = 5
         cls.stream_resolution = (1648,1232)
         cls.video_resolution = (824, 616)
         cls.image_resolution = (3280,2464)
@@ -71,7 +73,7 @@ class Camera(BaseCamera):
     @classmethod
     def record_video_with_splitter_channel(cls, filename=''):
         ''' This method directly use another splitter channel to record the video to local files
-        it allows video to be recorded at different  ''' 
+        it allows video to be recorded at different  resolution, but it is slow''' 
         time_start = time.time()
         # define the filename 
         folder_path = 'timelapse_data/{}'.format(cls.starting_time)
@@ -121,7 +123,7 @@ class Camera(BaseCamera):
         Content Type: image/jpeg
         FPS: {}
         CamcorderFrame: {} x {}
-        '''.format(cls.fps, cls.stream_resolution[0], cls.stream_resolution[1])
+        '''.format(cls.video_recording_fps, cls.stream_resolution[0], cls.stream_resolution[1])
 
         # open the file and append new frames
         with open(filename, 'a+') as f:
@@ -134,6 +136,7 @@ class Camera(BaseCamera):
                         f.write(str(cls.frame_to_capture))
                         # after capturing it, destorying the frame
                         del(cls.frame_to_capture)
+                        time.sleep(1/cls.video_recording_fps*0.9)
                 # when there is no frame, just wait for a bit
                 except AttributeError:
                     time.sleep(1/cls.fps*0.05)
@@ -145,7 +148,6 @@ class Camera(BaseCamera):
                 # close the thread with the flag
                 if cls.recording_flag is False:
                     break
-        
 
 
     @classmethod
@@ -183,12 +185,15 @@ class Camera(BaseCamera):
         print('taking image')
         if resolution == 'normal':
             cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = False, use_video_port=True)
-        elif resolution == 'high':
+        elif resolution == 'high_res':
+            print('taking high_res image')
             # when taking photos at high res, need to stop the video channel first
             cls.camera.stop_recording(splitter_port=1)
+            time.sleep(0)
             cls.camera.resolution = cls.image_resolution
             # Remove bayer = Ture if dont care about RAW
-            cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = True)
+            cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = False)
+            time.sleep(0)
             # reduce the resolution for video streaming
             cls.camera.resolution = cls.stream_resolution
             # resume the video channel
