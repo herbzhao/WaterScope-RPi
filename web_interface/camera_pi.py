@@ -76,6 +76,8 @@ class Camera(BaseCamera):
         it allows video to be recorded at different  resolution, but it is slow''' 
         time_start = time.time()
         # define the filename 
+        if not os.path.exists('timelapse_data'):
+            os.mkdir('timelapse_data')
         folder_path = 'timelapse_data/{}'.format(cls.starting_time)
         if not os.path.exists(folder_path):
             os.mkdir(folder_path)
@@ -108,6 +110,8 @@ class Camera(BaseCamera):
         ''' This method directly save the stream into a local file, so it should consume less computing power ''' 
         time_start = time.time()
         # define the filename 
+        if not os.path.exists('timelapse_data'):
+            os.mkdir('timelapse_data')
         folder_path = 'timelapse_data/{}'.format(cls.starting_time)
         if not os.path.exists(folder_path):
             os.mkdir(folder_path)

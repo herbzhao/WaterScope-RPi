@@ -35,7 +35,7 @@ class arduino_controller_class():
         self.serial_controllers = {}
 
         if self.fergboard_connect is True:
-            serial_controllers_names.append('ferg')
+            serial_controllers_names.append('fergboard')
         if self.arduino_connect is True:
             serial_controllers_names.append('parabolic')
         if self.waterscope_connect is True:
@@ -58,7 +58,7 @@ class arduino_controller_class():
                 ''' Motor movement'''
                 serial_command = 'jog({},{},{})'.format(self.move_keys[k][0], self.move_keys[k][1], self.move_keys[k][2])
                 if self.fergboard_connect is True:
-                    self.serial_controllers['ferg'].serial_write(serial_command, parser='ferg')
+                    self.serial_controllers['fergboard'].serial_write(serial_command, parser='fergboard')
 
                 elif self.fergboard_connect is False:
                     print(serial_command)
@@ -74,7 +74,7 @@ class arduino_controller_class():
                 # elif k == 'y':
                 #     serial_command = 'move(-1000,-1000,-1000)'
                     
-                self.serial_controllers['ferg'].serial_write(serial_command, parser='ferg')
+                self.serial_controllers['fergboard'].serial_write(serial_command, parser='fergboard')
                 if self.fergboard_connect is False:
                     print(serial_command)
 
@@ -98,7 +98,7 @@ class arduino_controller_class():
             elif k in ['x']:
                 print('Exiting...')
                 if self.fergboard_connect is True:
-                    self.serial_controllers['ferg'].close()
+                    self.serial_controllers['fergboard'].close()
                 if self.arduino_connect is True:
                     self.serial_controllers['parabolic'].close()
                 break

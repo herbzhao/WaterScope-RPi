@@ -21,6 +21,13 @@ var app = new Vue({
         alert_window_2: false,
         alert_window_2_timeout: 1000,
         alert_content_2: '',
+        offset_temp:0,
+        Tprep:21,
+        Theat:26,
+        T0:20,
+        T1:19,
+        T2:18,
+        T3:17
     }),
 
     // watch when data change 
@@ -97,6 +104,7 @@ var app = new Vue({
 
     mounted: function () {
         this.read_server_info()
+        this.LED_switch = "true"
     },
 
     methods: {
@@ -188,6 +196,23 @@ var app = new Vue({
             app.$refs.serial_command_field.blur()
             // show the pop up alert
             this.alert_window = true
+            // a special function to record the current offset temperature and update other T0, T1..
+            this.measure_offset_temp()
+            // scroll to the bottom automatically
+            window.scrollTo(0,2000);
+        },
+
+        // a special function to record the current offset temperature
+        measure_offset_temp: function(){
+            if(this.serial_command.includes('offset=') == true){
+                offset_temp = parseFloat(this.serial_command.substring(7))
+                this.Tprep = 21+offset_temp
+                this.Theat = 25+offset_temp
+                this.T0 = 20+offset_temp
+                this.T1 = 19+offset_temp
+                this.T2 = 18+offset_temp
+                this.T3 = 17+offset_temp
+            }
         },
 
         read_server_info: function () {

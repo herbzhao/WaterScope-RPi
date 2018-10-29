@@ -2,7 +2,7 @@ fergboard:
   connect: True
   baudrate: 115200
   port_names: [Micro]
-  serial_read_options: [quiet]
+  serial_read_options: [normal]
 parabolic:
   connect: True
   baudrate: 9600

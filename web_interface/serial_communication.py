@@ -109,6 +109,8 @@ class serial_controller_class():
             else:
                 serial_command = serial_command.replace('jog', 'JOG') 
                 self.fin_flag.pop()
+            # serial_command = serial_command.replace('jog', 'JOG') 
+            # time.sleep(0.05)
 
         elif 'reset' in serial_command:
             self.fin_flag = ['FIN']
@@ -116,6 +118,7 @@ class serial_controller_class():
             #  flush the input and output to prevent filling up the whole buffer
             self.ser.reset_input_buffer()
             self.ser.reset_output_buffer()
+            self.ser.flush()
 
         serial_command = serial_command.replace('(',' 1 ').replace(')','').replace(",", " ")
         return serial_command
@@ -187,6 +190,8 @@ class serial_controller_class():
                         with open(log_file_location, 'a+') as log_file:
                             log_file.writelines(self.serial_output)
                     elif options[0] == 'logging_parabolic':
+                        if not os.path.exists("timelapse_data"):
+                            os.mkdir("timelapse_data")
                         if not os.path.exists("timelapse_data/arduino"):
                             os.mkdir("timelapse_data/arduino")
                         log_file_location = "timelapse_data/arduino/{}.txt".format(self.starting_time)
@@ -207,7 +212,7 @@ class serial_controller_class():
         self.threading_ser_read = threading.Thread(target=self.serial_read, args=[options])
         self.threading_ser_read.daemon = True
         self.threading_ser_read.start()
-        time.sleep(2)
+        time.sleep(0)
 
     def close(self):
         # TODO: add a way to shut the thread, possibly by passing a flag to each loop

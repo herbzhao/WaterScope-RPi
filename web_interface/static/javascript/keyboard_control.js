@@ -1,3 +1,12 @@
+// NOTE: python-like string format method https://coderwall.com/p/flonoa/simple-string-format-in-javascript
+String.prototype.format = function () {
+    var str = this;
+    for (var i in arguments) {
+        str = str.replace(new RegExp("\\{" + i + "\\}", 'g'), arguments[i]);
+    }
+    return str
+}
+
 Mousetrap.bind('esc', function () {
     app.alert_window = false
     console.log('close window')
@@ -26,19 +35,27 @@ Mousetrap.bind('o f f', function () {
 
 Mousetrap.bind('shift+s', function () {
     // first focus on the text_field
-    // DEBUG: added a delay, maybe this will not cause S input
+    // NOTE: added a delay, maybe this will not cause S input
     setTimeout(() => {
         serial_command_field.focus()
     }, 100)
-
-    // NOTE: it will automatically add an 'S', so we strip it off
-    // setTimeout(() => {
-    //     app.serial_command = app.serial_command.slice(0, -1)
-    // }, 0)
-    // finally, highlight all the existing text
     setTimeout(() => {
         serial_command_field.select()
     }, 100)
+});
+
+Mousetrap.bind(',', function () {
+    // change the textfield to offset=
+    // NOTE: added a delay, maybe this will not cause S input
+    setTimeout(() => {
+        app.serial_command = 'offset='
+    }, 50)
+
+    setTimeout(() => {
+        serial_command_field.focus()
+    }, 50)
+    // move the window focus to the top
+    window.scrollTo(0, 0)
 });
 
 // image capture
@@ -67,32 +84,32 @@ Mousetrap.bind(['v'], function () {
 
 // temperature control
 Mousetrap.bind(['5'], function () {
-    app.serial_command = 'set=Tprep'
+    app.serial_command = 'goto={0}'.format(app.Tprep)
     app.chosen_arduino_board = 'parabolic'
     app.send_serial_command()
 });
 Mousetrap.bind(['6'], function () {
-    app.serial_command = 'set=T0'
+    app.serial_command = 'goto={0}'.format(app.T0)
     app.chosen_arduino_board = 'parabolic'
     app.send_serial_command()
 });
 Mousetrap.bind(['7'], function () {
-    app.serial_command = 'set=T1'
+    app.serial_command = 'goto={0}'.format(app.T1)
     app.chosen_arduino_board = 'parabolic'
     app.send_serial_command()
 });
 Mousetrap.bind(['8'], function () {
-    app.serial_command = 'set=T2'
+    app.serial_command = 'goto={0}'.format(app.T2)
     app.chosen_arduino_board = 'parabolic'
     app.send_serial_command()
 });
 Mousetrap.bind(['9'], function () {
-    app.serial_command = 'set=T3'
+    app.serial_command = 'goto={0}'.format(app.T3)
     app.chosen_arduino_board = 'parabolic'
     app.send_serial_command()
 });
 Mousetrap.bind(['0'], function () {
-    app.serial_command = 'set=Theat'
+    app.serial_command = 'goto={0}'.format(app.Theat)
     app.chosen_arduino_board = 'parabolic'
     app.send_serial_command()
 });
