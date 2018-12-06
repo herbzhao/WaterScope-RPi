@@ -15,17 +15,16 @@
 #define LED2 19
 #define CONTROL_PIN 3
 #define ONE_WIRE_BUS 2
-#define END_STOP A0
+#define END_STOP 7
 #define PIN 4
 #define NUMPIXELS      12
 
 //motor controls
 int end_stop = 0;
-Stepper small_stepper(32, 6, 8, 7, 9);
+Stepper small_stepper(32, 8, 10, 9, 11);
 int  Steps2Take;
 int val = 1;
 int led_flag = 0;
-int speed = 250;
 int previous_led = -256;
 
 //Define Variables we'll be connecting to for PID temperature control
@@ -109,7 +108,6 @@ void LED(int r, int g, int b) {
     }
 }
 
-
 void loop(void)
 {
   time = millis();
@@ -142,15 +140,9 @@ void loop(void)
     //}
     myPID.Compute();
     analogWrite(CONTROL_PIN, Output);
-    
-    //prints time since program started
-    Serial.print(time);   
-    Serial.println(" s");
-    // temeperature  
-    Serial.println("Temperature is:")
-    Serial.print(temperature);
-    Serial.println(" *C");
-    Serial.print(" Heating effort is: ");
+    Serial.print("Temperature is ");
+    Serial.print(Input);
+    Serial.print(" Heating effort is ");
     Serial.println(Output);
   }
   }
@@ -200,82 +192,74 @@ void find_end() {
 
 
 void condition(String Serial_input){
-  //Serial.println(serial_input);
   // trim is needed as there is blank space and line break
-  serial_input.trim();
-  
-  if (serial_input == "66" or serial_input == "led_on"){
-  // turn off the incubator to prevent current spike
-  analogWrite(CONTROL_PIN, 0);
-  led_flag = 1;
-  LED(red,green,blue);
-  Serial.println("lights on");
+  char first;
+  first = Serial_input[0];
+  Serial_input[0] = ' ';
+  Serial_input.trim();
+  if (Serial_input == "ed_on")
+  {
+    analogWrite(CONTROL_PIN, 0);
+    led_flag = 1;
+    LED(red,green,blue);
+    Serial.println("lights on");
   }
-  else if (serial_input == "-66" or serial_input == "led_off"){
+  else if (Serial_input == "ed_off")
+  {
     led_flag = 0;
     LED(0,0,0);
     Serial.println("lights off");
   }
-  // move=600 
-  // positive is toward the camera, negative is toward the endstop
-  else if (serial_input.substring(0,4) == "move"){
-    Serial.print("Move to: ");
-    Serial.println(serial_input.substring(5).toFloat());
-    int pos = serial_input.substring(5).toFloat();
-    // turn off the incubator to prevent current spike
-    analogWrite(CONTROL_PIN, 0);
-    if (pos < 0 && digitalRead(END_STOP) == LOW) {
-      // if hit end_stop, do nothing
-    }
-    else {
-        small_stepper.step(pos);
-    }
-    absolute = absolute + pos;
-    Serial.println("done");
-    Serial.print("Absolute position: ");
-    Serial.println(absolute);
+  else if (first == 'C'){
+    Serial.print("New RGB: ");
+    red = (getValue(Serial_input, ',', 0).toInt());
+    green = (getValue(Serial_input, ',', 1).toInt());   // turn the LED on (HIGH is the voltage level
+    blue = (getValue(Serial_input, ',', 2).toInt());   // turn the LED on (HIGH is the voltage level
+    Serial.print(red);Serial.print(",");Serial.print(green);Serial.print(",");Serial.println(blue);
   }
-
-  // speed=500
-  else if (serial_input.substring(0,5) == "speed"){
-    Serial.print("Changing the speed to: ");
-    Serial.println(serial_input.substring(6).toFloat());
-    speed = serial_input.substring(6).toFloat();
-    if(speed==0){
-      speed=250;
+  else if(first == 'M')
+  {
+    Serial.println("Moving");
+    int pos = (getValue(Serial_input, ',', 0).toInt());   // turn the LED on (HIGH is the voltage level
+    int speeed (getValue(Serial_input, ',', 1).toInt());   // turn the LED on (HIGH is the voltage level
+    if(speeed==0){
+      speeed=250;
     }
-    small_stepper.setSpeed(speed);
+     analogWrite(CONTROL_PIN, 0);
+      small_stepper.setSpeed(speeed);
+      if (val < 0 && digitalRead(END_STOP) == LOW) {
+      }
+      else {
+        if (led_flag == 1) {
+          small_stepper.step(pos);
+        }
+        else {
+          small_stepper.step(pos);
+        }
+      }
+      absolute = absolute + pos;
+      Serial.println("done");
+      Serial.print("Absolute position: ");
+      Serial.println(absolute);
   }
-
-  //
-  else if(serial_input == 'home'){
+  else if(first == 'H'){
     find_end();
     Serial.println("homing");
   }
-
-  // LED_RGB=255,255,255
-  else if (serial_input.substring(0,7) == "LED_RGB" or serial_input.substring(0,7) == "LED_rgb"){
-    serial_input = serial_input.substring(8);
-    r = (getValue(serial_input, ',', 0).toInt());
-    g = (getValue(serial_input, ',', 1).toInt());   // turn the LED on (HIGH is the voltage level
-    b = (getValue(serial_input, ',', 2).toInt());   // turn the LED on (HIGH is the voltage level
-    LED(r,g,b);
-  }
-
-  // temp=37
-  else if (serial_input.substring(0,4) == "temp"){
-    Serial.print("Changing the speed to: ");
-    Serial.println(serial_input.substring(5).toFloat());
-    Setpoint = serial_input.substring(5).toFloat();
+  else if(first == 'T'){
+    Setpoint = (getValue(Serial_input, ',', 0).toFloat());
     if(Setpoint>50){
-      Serial.println("Maximum temperature is 50 C");
       Setpoint = 50;
+      Serial.println("Maximum temperature is 50 C");
     }
     Serial.print("Temperature is set to ");
     Serial.print(Setpoint);
     Serial.println(" C");
   }
-
+  else {
+    Serial.println("invalid command");
+  }
+}
 
 String getValue(String data, char separator, int index)
 {
