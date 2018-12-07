@@ -158,20 +158,20 @@ void serial_condition(String serial_input){
   // trim is needed as there is blank space and line break
   serial_input.trim();
   
-  if (serial_input == "led_on"){
+  if (serial_input == "led_on" or serial_input == "LED_on" ){
   // turn off the incubator to prevent current spike
   analogWrite(HEATER_PIN, 0);
   LED_colour(r,g,b);
   Serial.println("lights on");
   }
-  else if (serial_input == "led_off"){
+  else if (serial_input == "led_off" or serial_input == "LED_off"){
     LED_colour(0,0,0);
     Serial.println("lights off");
   }
   // move=600 
   // positive is toward the camera, negative is toward the endstop
   else if (serial_input.substring(0,4) == "move"){
-    Serial.print("Move to: ");
+    Serial.print("Move by: ");
     Serial.println(serial_input.substring(5).toFloat());
     int distance = serial_input.substring(5).toFloat();
     // turn off the incubator to prevent current spike
@@ -199,10 +199,15 @@ void serial_condition(String serial_input){
     small_stepper.setSpeed(speed);
   }
 
+  else if(serial_input == "pos"){
+    Serial.print("Current position is: ");
+    Serial.println(absolute_pos);
+  }
+
   //
-  else if(serial_input == 'home'){
-    home_stage();
+  else if(serial_input == "home"){
     Serial.println("homing");
+    home_stage();
   }
 
   // LED_RGB=255,255,255
@@ -216,8 +221,6 @@ void serial_condition(String serial_input){
 
   // temp=37
   else if (serial_input.substring(0,4) == "temp"){
-    Serial.print("Changing the speed to: ");
-    Serial.println(serial_input.substring(5).toFloat());
     PID_setpoint = serial_input.substring(5).toFloat();
     if(PID_setpoint>50){
       Serial.println("Maximum temperature is 50 C");
@@ -292,6 +295,8 @@ unsigned int EEPROMReadInt(int p_address)
   byte highByte = EEPROM.read(p_address + 1);
   return ((lowByte << 0) & 0xFF) + ((highByte << 8) & 0xFF00);
 }
+
+
 
 
 
