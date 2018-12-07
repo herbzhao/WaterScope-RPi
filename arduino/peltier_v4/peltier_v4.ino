@@ -92,8 +92,7 @@ float PID_final_setpoint;
 bool cooling = false;
 // this is the step that PID setpoint change each time 
 // (smaller = longer = less overshoot)
-float PID_setpoint_change_step = 0.2
-;
+float PID_setpoint_change_step = 0.2;
 // this is temperature fluctuation range that is acceptable before changing PID_setpoint
 // (smaller = longer time to reach stability = less chance of false positive )
 float PID_fluctuation_range = 0.05;

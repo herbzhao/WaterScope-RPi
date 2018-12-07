@@ -56,5 +56,5 @@ slaac private
 #fallback static_eth0
 
 interface eth0
-    static ip_address=10.0.0.2
+    static ip_address=10.0.0.1
     nohook wpa_supplicant
