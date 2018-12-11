@@ -55,19 +55,9 @@ class serial_controller_class():
 
     def parsing_command_waterscope(self, serial_command):
         ''' parsing the command from interface for WaterScope water testing kit (Sammy code)'''
-        # move(distance,speed)
-        if 'move' in serial_command:
-            serial_command = serial_command.replace('move', 'M')
-        # LED_RGB(255,255,255)
-        elif 'LED_RGB' in serial_command:
-            serial_command = serial_command.replace('LED_RGB', 'C')
-        # set_temp(30)
-        elif 'set_temp':
-            serial_command = serial_command.replace('set_temp', 'T')
-        elif 'home' in serial_command:
-            serial_command = 'H'
-
-        serial_command = serial_command.replace(' ','').replace('(','').replace(')','')
+        # move(500) --> move=500
+        # LED_RGB(5,6,7) --> LED_RGB=5,6,7
+        serial_command = serial_command.replace(' ','').replace('(','=').replace(')','')
         return serial_command
 
     def parsing_command_fergboard(self, serial_command):
@@ -156,9 +146,12 @@ class serial_controller_class():
                 self.last_logged_temp = self.log['temp'][-1]
             elif self.time_re.findall(self.serial_output):
                 self.log['time'].append(float(self.serial_output.replace(' s','')))
+            # verify the results
+            # if len(self.log['time'])>0 and len(self.log['temp'])>0:
+            #     print(self.log['time'][-1])
+            #     print(self.log['temp'][-1])
 
-
-    def serial_read(self, options=['quiet']):
+    def serial_read(self, options=['quiet'], parser_option=['motor', 'temperature']):
         self.stop_threading = False
         # set a default tag
         while True:
@@ -169,42 +162,46 @@ class serial_controller_class():
                 # time.sleep(0)
                 # only when serial is available to read
                 if self.ser.in_waiting:
-                    self.serial_output = self.ser.readline().decode()
-                    # parse the output directly for other purposes
-                    self.serial_output_parse(options = ['motor', 'temperature'])
-                    # decide whether to print the output or store in a txt file
-                    if options[0] == 'quiet':
+                    try:
+                        self.serial_output = self.ser.readline().decode()                        
+                        # parse the output directly for other purposes
+                        self.serial_output_parse(options = parser_option)
+                        # decide whether to print the output or store in a txt file
+                        if options[0] == 'quiet':
+                            pass
+                        elif options[0] == 'normal':
+                            print(self.serial_output)
+                        elif options[0] == 'logging':
+                            print(self.serial_output)
+                            # NOTE: the options[1] is the folder name
+                            # if not specified the folder name, use the starting time for the folder name
+                            if len(options) == 1:
+                                options.append(self.starting_time)
+                            # create the folder for the first time.
+                            if not os.path.exists("{}".format(options[1])):
+                                os.mkdir("{}".format(options[1]))
+                            log_file_location = "{}/temp_log.txt".format(options[1])
+                            with open(log_file_location, 'a+') as log_file:
+                                log_file.writelines(self.serial_output)
+                        elif options[0] == 'logging_time_temp':
+                            if not os.path.exists("timelapse_data"):
+                                os.mkdir("timelapse_data")
+                            if not os.path.exists("timelapse_data/arduino"):
+                                os.mkdir("timelapse_data/arduino")
+                            log_file_location = "timelapse_data/arduino/{}.txt".format(self.starting_time)
+                            with open(log_file_location, 'a+') as log_file:
+                                now = datetime.datetime.now()
+                                time_value_formatted = now.strftime("%Y-%m-%d %H:%M:%S.%f")
+                                try:
+                                    if self.last_logged_temp:
+                                        log_file.write(time_value_formatted+'\n')
+                                        log_file.write(str(self.last_logged_temp)+'\n')
+                                        del(self.last_logged_temp)
+                                except AttributeError:
+                                    pass
+                    except UnicodeDecodeError:
+                        # when arduino serial boots up, it sometimes have error
                         pass
-                    elif options[0] == 'normal':
-                        print(self.serial_output)
-                    elif options[0] == 'logging':
-                        print(self.serial_output)
-                        # NOTE: the options[1] is the folder name
-                        # if not specified the folder name, use the starting time for the folder name
-                        if len(options) == 1:
-                            options.append(self.starting_time)
-                        # create the folder for the first time.
-                        if not os.path.exists("{}".format(options[1])):
-                            os.mkdir("{}".format(options[1]))
-                        log_file_location = "{}/temp_log.txt".format(options[1])
-                        with open(log_file_location, 'a+') as log_file:
-                            log_file.writelines(self.serial_output)
-                    elif options[0] == 'logging_parabolic':
-                        if not os.path.exists("timelapse_data"):
-                            os.mkdir("timelapse_data")
-                        if not os.path.exists("timelapse_data/arduino"):
-                            os.mkdir("timelapse_data/arduino")
-                        log_file_location = "timelapse_data/arduino/{}.txt".format(self.starting_time)
-                        with open(log_file_location, 'a+') as log_file:
-                            now = datetime.datetime.now()
-                            time_value_formatted = now.strftime("%Y-%m-%d %H:%M:%S.%f")
-                            try:
-                                if self.last_logged_temp:
-                                    log_file.write(time_value_formatted+'\n')
-                                    log_file.write(str(self.last_logged_temp)+'\n')
-                                    del(self.last_logged_temp)
-                            except AttributeError:
-                                pass
                 
     def serial_read_threading(self, options=['quiet']):
         ''' used to start threading for reading the serial'''
@@ -225,11 +222,11 @@ class serial_controller_class():
 # TODO: change this example 
 if __name__ == '__main__':
     serial_controller = serial_controller_class()
-    serial_controller.serial_connect(port_names=['SERIAL'], baudrate=9600)
+    serial_controller.serial_connect(port_names=['Serial'], baudrate=9600)
     #serial_controller.serial_connect(port_names=['Micro'], baudrate=115200)
-    serial_controller.serial_read_threading(options='logging')
+    serial_controller.serial_read_threading(options=['quiet'])
 
     # accept user input
     while True:
         user_input = str(input())
-        serial_controller.serial_write(user_input, 'fergboard')
+        serial_controller.serial_write(user_input, 'waterscope')

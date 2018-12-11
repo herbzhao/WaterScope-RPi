@@ -120,7 +120,7 @@
                         <!-- NOTE: Stream selection -->
                         <v-tooltip top>
                             <v-btn-toggle v-model="stream_method" slot="activator">
-                                <v-btn flat color="black" value="PiCamera">
+                                <v-btn flat color="black" value="PiCamera" @click='change_stream_method'>
                                     <span>PiCamera</span>
                                 </v-btn>
                             </v-btn-toggle>
@@ -129,7 +129,7 @@
 
                         <v-tooltip top>
                             <v-btn-toggle v-model="stream_method" slot="activator">
-                                <v-btn flat color="black" value="OpenCV">
+                                <v-btn flat color="black" value="OpenCV" @click='change_stream_method'>
                                     <span>OpenCV</span>
                                 </v-btn>
                             </v-btn-toggle>
@@ -233,7 +233,7 @@
 <!-- Add this after vue.js -->
 <script type=text/javascript src="{{url_for('static', filename='javascript/axios.min.js') }}"></script>
 <script type=text/javascript src="{{url_for('static', filename='javascript/plotly.min.js') }}"></script>
-<script type=text/javascript src="{{url_for('static', filename='javascript/keyboard_control.js') }}"></script>
+<script type=text/javascript src="{{url_for('static', filename='javascript/keyboard_control_waterscope.js') }}"></script>
 <script type=text/javascript src="{{url_for('static', filename='javascript/main.js') }}"></script>
 <!-- Change: this is for serial plot window -->
 <script   type=text/javascript src="{{url_for('static', filename='javascript/plotting.js') }}"></script>

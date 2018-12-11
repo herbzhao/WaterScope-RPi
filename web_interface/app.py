@@ -31,16 +31,20 @@ def swap_stream_method(option='swap'):
     # DEBUG: why do I need the global Camera?
     global Camera
     if option == 'OpenCV':
+        # only change the stream method if the current one is not right
         if Camera.stream_method == 'PiCamera':
             Camera.stop_stream()
             from camera_pi_cv import Camera
+            Camera.stream_method = 'OpenCV'
             Camera.start_stream()
             time.sleep(0.1)
     
     elif option == 'PiCamera':
+        # only change the stream method if the current one is not right
         if Camera.stream_method == 'OpenCV':
             Camera.stop_stream()
             from camera_pi import Camera
+            Camera.stream_method = 'PiCamera'
             Camera.start_stream()
             time.sleep(0.1)
             
@@ -57,9 +61,16 @@ def swap_stream_method(option='swap'):
 def initialse_serial_connection():
     ''' all the arduino connection is done via this function''' 
     try:
-        #print(' serial connections already exist')
+        # print(' serial connections already exist')
         Camera.serial_controllers
     except AttributeError:
+        print('''
+        
+        
+        Connecting serial connection
+        
+        
+        ''')
         with open('config_serial.yaml') as config_serial_file:
             serial_controllers_config = yaml.load(config_serial_file)
         Camera.available_arduino_boards = []
@@ -79,12 +90,14 @@ def initialse_serial_connection():
                 baudrate=serial_controllers_config[name]['baudrate'])
             Camera.serial_controllers[name].serial_read_threading(options=serial_controllers_config[name]['serial_read_options'])
 
-def read_parabolic_time_temp():
+def parse_serial_time_temp():
     # synchronise the arduino_time
     initialse_serial_connection()
     try:
-        time_value = Camera.serial_controllers['parabolic'].log['time'][-1]
-        temp_value = Camera.serial_controllers['parabolic'].log['temp'][-1]
+        time_value = Camera.serial_controllers['waterscope'].log['time'][-1]
+        temp_value = Camera.serial_controllers['waterscope'].log['temp'][-1]
+        print('temp: {}'.format(temp_value) )
+
     except (IndexError, KeyError, AttributeError): 
         time_value = 0
         temp_value = 0
@@ -117,13 +130,17 @@ def video_feed():
 @app.route('/settings/')
 def settings_io():
     ''' swap between opencv and picamera for streaming'''
-    stream_method = request.args.get('stream_method', '')
+    #  default value
+    Camera.stream_method = 'PiCamera'
+    stream_method = request.args.get('stream_method', 'PiCamera')
     zoom_value = request.args.get('zoom_value', '')
     config_update = request.args.get('config_update', '')
     stop_flag = request.args.get('stop', '')
 
-    if stream_method is not '':
-        swap_stream_method(option=stream_method)
+    if stream_method == 'PiCamera':
+        swap_stream_method(option='PiCamera')
+    elif stream_method == 'OpenCV':
+        swap_stream_method(option='OpenCV')
     if zoom_value is not '':
         # only change zoom when passing an arg
         Camera.change_zoom(zoom_value)
@@ -147,12 +164,12 @@ def settings_io():
 def send_serial():
     initialse_serial_connection()
     # choose the arduino board and parser - ferg, waterscope, para
-    serial_board = request.args.get('board', 'parabolic')
+    serial_board = request.args.get('board', 'waterscope')
     # the value is obtained from the input_form
     serial_command_value = request.args.get('value', '')
 
     try:
-        Camera.serial_controllers[serial_board].serial_write(serial_command_value, parser = serial_board)
+        Camera.serial_controllers[serial_board].serial_write(serial_command_value, parser=serial_board)
     except KeyError:
         print('cannot find this board')
     
@@ -160,21 +177,9 @@ def send_serial():
 
 
 ''' The feed for serial_command output ''' 
-@app.route('/parabolic_serial_monitor_old')
-def parabolic_serial_monitor_arduino_time():
-    time_value_formatted, temp_value = read_parabolic_time_temp()
-    date = time_value_formatted.date()
-    second = time_value_formatted.time().second
-    minute = time_value_formatted.time().minute
-    hour = time_value_formatted.time().hour
-    # return jsonify({'time_value':time_value, 'temp_value':temp_value})
-    return jsonify({'x':str(time_value_formatted), 'date': str(date), 'hour':hour, 'minute': minute, 'second': second, 'y':temp_value})
-
-''' The feed for serial_command output ''' 
-@app.route('/parabolic_serial_monitor')
-def parabolic_serial_monitor():
-
-    time_value_formatted, temp_value = read_parabolic_time_temp()
+@app.route('/serial_time_temp')
+def serial_time_temp():
+    time_value_formatted, temp_value = parse_serial_time_temp()
     now = datetime.datetime.now()
     time_value_formatted = now.strftime("%Y-%m-%d %H:%M:%S")
     date = now.date()
@@ -205,13 +210,13 @@ def take_image():
     # synchronise the arduino_time
     if 'arduino_time' in filename:
         # HH:MM:SS format
-        time_value_formatted, temp_value = read_parabolic_time_temp()
+        time_value_formatted, temp_value = parse_serial_time_temp()
         # allowing other appendix
         filename = str(time_value_formatted.time()) + '_T{}'.format(temp_value) + filename.replace('arduino_time', '')
     # synchronise the raspberry pi time
     # to set pi's time: sudo date -s '2017-02-05 15:30:00'
     elif 'raspberry_pi_time' in filename:
-        time_value_formatted, temp_value = read_parabolic_time_temp()
+        time_value_formatted, temp_value = parse_serial_time_temp()
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         # allowing other appendix
         filename = now + '_T{}'.format(temp_value) + filename.replace('raspberry_pi_time', '')

@@ -9,7 +9,7 @@ var trace = {
 }
 
 var plotting_element_ID = 'plotly_chart'
-var API_url = '/parabolic_serial_monitor'
+var API_url = '/serial_time_temp'
 
 // the size of x-range in minute
 // https://codepen.io/etpinard/pen/BZLPqo?editors=0010

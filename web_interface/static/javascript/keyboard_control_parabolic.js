@@ -14,7 +14,7 @@ Mousetrap.bind('esc', function () {
 
 
 
-// change fergboard speed
+// change zoom
 Mousetrap.bind(']', function () {
     app.zoom_in()
 });
@@ -262,11 +262,6 @@ function reset_direction_key() {
 Mousetrap.bind('r', function () {
     reset_direction_key()
 });
-
-// NOTE: auto reset every half seconds to prevent problem
-setInterval(() => {
-    reset_direction_key()
-}, 1000*5)
 
 
 // some delay for the key input as it is too fast!

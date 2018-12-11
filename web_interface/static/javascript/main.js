@@ -5,8 +5,8 @@ var app = new Vue({
     data: () => ({
         serial_command: '',
         peltier_control_command: '',
-        chosen_arduino_board: 'parabolic',
-        available_arduino_boards: [],
+        chosen_arduino_board: "waterscope",
+        available_arduino_boards: ['waterscope'],
         LED_switch: 'false',
         stream_method: 'PiCamera',
         recording_switch: null,
@@ -69,18 +69,6 @@ var app = new Vue({
             } else if (this.timelapse_switch == null) {}
             this.alert_window = true
         },
-        stream_method: function () {
-            if (this.stream_method == 'PiCamera') {
-                this.start_PiCamera_stream()
-            } else if (this.stream_method == 'OpenCV') {
-                this.start_OpenCV_stream()
-            } else if (this.stream_method == null) {
-                this.stream_method = 'PiCamera'
-                // DEBUG: is this necessary?
-                this.start_PiCamera_stream()
-            }
-            this.alert_window = true
-        },
     },
 
     computed: {
@@ -110,11 +98,11 @@ var app = new Vue({
     methods: {
         led_on: function () {
             console.log('turn on LED')
-            axios.get("/ser/?value=led_on&board=parabolic");
+            axios.get("/ser/?value=led_on&board={0}".format(this.chosen_arduino_board));
         },
         led_off: function () {
             console.log('turn off LED')
-            axios.get("/ser/?value=led_off&board=parabolic")
+            axios.get("/ser/?value=led_off&board={0}".format(this.chosen_arduino_board))
         },
         start_config_update: function () {
             console.log('start updating config')
@@ -135,21 +123,21 @@ var app = new Vue({
             }
             timelapse_interval_ms = this.timelapse_interval * 1000
             console.log('Starting waterscope timelapse')
-            this.LED_on()
+            this.led_on()
             setTimeout(() => {
                 this.take_image()
             }, 1000)
             setTimeout(() => {
-                this.LED_off()
+                this.led_off()
             }, 3000)
             // NOTE: arrow function very important to prevent misunderstanding of this.
             this.timelapse_loop = setInterval(() => {
-                this.LED_on()
+                this.led_on()
                 setTimeout(() => {
                     this.take_image()
                 }, 1000)
                 setTimeout(() => {
-                    this.LED_off()
+                    this.led_off()
                 }, 3000)
             }, timelapse_interval_ms);
         },
@@ -176,16 +164,24 @@ var app = new Vue({
             } finally {}
         },
 
-        start_PiCamera_stream: function () {
-            console.log('changing streaming: {0}'.format(this.stream_method))
-            axios.get('/settings/?stream_method=PiCamera')
-            this.refresh()
-            // TODO: maybe we can refresh the jpg elements
-        },
-        start_OpenCV_stream: function () {
-            console.log('changing streaming: {0}'.format(this.stream_method))
-            axios.get('/settings/?stream_method=OpenCV')
-            this.refresh()
+        change_stream_method: function () {
+            // have a slight delay for the stream_method to change
+            setTimeout(() => {
+                if (this.stream_method == 'PiCamera' || this.stream_method==null) {
+                    console.log('changing streaming: {0}'.format(this.stream_method))
+                    axios.get('/settings/?stream_method=PiCamera')
+                    console.log('change to picamera')
+                    // TODO: maybe we can refresh the jpg elements
+                    this.refresh()
+
+                } else if (this.stream_method == 'OpenCV') {
+                    console.log('changing streaming: {0}'.format(this.stream_method))
+                    axios.get('/settings/?stream_method=OpenCV')
+                    console.log('change to opencv')
+                    this.refresh()
+                }
+            }, 100)
+            this.alert_window = true
         },
 
         send_serial_command: function () {
@@ -199,7 +195,7 @@ var app = new Vue({
             // a special function to record the current offset temperature and update other T0, T1..
             this.measure_offset_temp()
             // scroll to the bottom automatically
-            window.scrollTo(0,2000);
+            // window.scrollTo(0,2000);
         },
 
         // a special function to record the current offset temperature

@@ -69,22 +69,24 @@ class Camera(BaseCamera):
         new_fov = (centre[0] - size/2, centre[1] - size/2, size, size)
         cls.camera.zoom = new_fov
 
-
+    @classmethod
+    def initialise_data_folder(cls):
+        if not os.path.exists('timelapse_data'):
+            os.mkdir('timelapse_data')
+        cls.folder_path = 'timelapse_data/{}'.format(cls.starting_time)
+        if not os.path.exists(cls.folder_path):
+            os.mkdir(cls.folder_path)
+        
     @classmethod
     def record_video_with_splitter_channel(cls, filename=''):
         ''' This method directly use another splitter channel to record the video to local files
         it allows video to be recorded at different  resolution, but it is slow''' 
         time_start = time.time()
-        # define the filename 
-        if not os.path.exists('timelapse_data'):
-            os.mkdir('timelapse_data')
-        folder_path = 'timelapse_data/{}'.format(cls.starting_time)
-        if not os.path.exists(folder_path):
-            os.mkdir(folder_path)
+        cls.initialise_data_folder()
         if filename == '':
-            filename = folder_path+'/{:04d}.h264'.format(cls.image_seq)
+            filename = cls.folder_path+'/{:04d}.h264'.format(cls.image_seq)
         else:
-            filename = folder_path+'/{:04d}-{}.h264'.format(cls.image_seq, filename)
+            filename = cls.folder_path+'/{:04d}-{}.h264'.format(cls.image_seq, filename)
         cls.image_seq = cls.image_seq + 1
 
         cls.camera.start_recording(filename, splitter_port=3, resize=cls.video_resolution, quality=25)
@@ -105,20 +107,17 @@ class Camera(BaseCamera):
                 break
 
 
+        
+
     @classmethod
     def capture_video_from_stream(cls, filename=''):
         ''' This method directly save the stream into a local file, so it should consume less computing power ''' 
+        cls.initialise_data_folder()
         time_start = time.time()
-        # define the filename 
-        if not os.path.exists('timelapse_data'):
-            os.mkdir('timelapse_data')
-        folder_path = 'timelapse_data/{}'.format(cls.starting_time)
-        if not os.path.exists(folder_path):
-            os.mkdir(folder_path)
         if filename == '':
-            filename = folder_path+'/{:04d}.mjpeg'.format(cls.image_seq)
+            filename = cls.folder_path+'/{:04d}.mjpeg'.format(cls.image_seq)
         else:
-            filename = folder_path+'/{:04d}-{}.mjpeg'.format(cls.image_seq, filename)
+            filename = cls.folder_path+'/{:04d}-{}.mjpeg'.format(cls.image_seq, filename)
         cls.image_seq = cls.image_seq + 1
 
         # NOTE: this mjpeg_headings is required to add before each frame for VLC to render the video properly
@@ -178,15 +177,12 @@ FPS: {}
 
     @classmethod
     def take_image(cls, filename = '', resolution='normal'):
-        # folder_path = '/home/pi/WaterScope-RPi/water_test/timelapse/{}'.format(cls.starting_time)
-        folder_path = 'timelapse_data/{}'.format(cls.starting_time)
-        if not os.path.exists(folder_path):
-            os.mkdir(folder_path)
+        cls.initialise_data_folder()
         # NOTE: when file name is not specified, use a counter
         if filename == '':
-            filename = folder_path+'/{:04d}.jpg'.format(cls.image_seq)
+            filename = cls.folder_path+'/{:04d}.jpg'.format(cls.image_seq)
         else:
-            filename = folder_path+'/{:04d}-{}.jpg'.format(cls.image_seq, filename)
+            filename = cls.folder_path+'/{:04d}-{}.jpg'.format(cls.image_seq, filename)
         print('taking image')
         if resolution == 'normal':
             cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = False, use_video_port=True)

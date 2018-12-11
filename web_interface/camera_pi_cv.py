@@ -6,6 +6,7 @@ import datetime
 import sys
 import os
 import picamera
+import numpy as np
 # DEBUG: is this neccessary?
 # from threading import Condition
 import threading
@@ -18,7 +19,6 @@ from set_picamera_gain import set_analog_gain, set_digital_gain
 
 # opencv specific import
 import cv2
-import numpy as np
 from serial_communication import serial_controller_class
 
 
@@ -26,12 +26,18 @@ from serial_communication import serial_controller_class
 class Camera(BaseCamera):
     @classmethod
     def initialisation(cls):
+        # TODO: implement a higher camera resolution and then resize to lower resolution for streaming?
         cls.image_seq = 0
-        cls.fps = 30
+        cls.fps = 15
+        # reduce the fps for video recording to reduce the file size
+        cls.video_recording_fps = 3
         cls.stream_resolution = (1648,1232)
+        cls.video_resolution = (824, 616)
         cls.image_resolution = (3280,2464)
+        # how many seconds before we automatically stop recording
+        cls.record_timeout = 600
         # Change: 75 or 85 to see the streaming quality
-        cls.jpeg_quality = 75
+        cls.stream_quality = 85
         cls.starting_time = datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S')
 
     @classmethod
@@ -68,60 +74,142 @@ class Camera(BaseCamera):
         new_fov = (centre[0] - size/2, centre[1] - size/2, size, size)
         cls.camera.zoom = new_fov
 
+    @classmethod
+    def initialise_data_folder(cls):
+        if not os.path.exists('timelapse_data'):
+            os.mkdir('timelapse_data')
+        cls.folder_path = 'timelapse_data/{}'.format(cls.starting_time)
+        if not os.path.exists(cls.folder_path):
+            os.mkdir(cls.folder_path)
+        
+    @classmethod
+    def record_video_with_splitter_channel(cls, filename=''):
+        ''' This method directly use another splitter channel to record the video to local files
+        it allows video to be recorded at different  resolution, but it is slow''' 
+        time_start = time.time()
+        cls.initialise_data_folder()
+        if filename == '':
+            filename = cls.folder_path+'/{:04d}.h264'.format(cls.image_seq)
+        else:
+            filename = cls.folder_path+'/{:04d}-{}.h264'.format(cls.image_seq, filename)
+        cls.image_seq = cls.image_seq + 1
+
+        cls.camera.start_recording(filename, splitter_port=3, resize=cls.video_resolution, quality=25)
+
+        while True:
+            # Use a thread to sniff for the flag change and stop the video recording?
+            if time.time() - time_start > cls.record_timeout:
+                cls.recording_flag = False
+
+            if cls.recording_flag is False:
+                cls.camera.stop_recording(splitter_port=1)
+                time.sleep(0.5)
+                cls.camera.stop_recording(splitter_port=3)
+                time.sleep(0.5)
+                # Warning: be careful about the cls.camera.start_recording. 'bgr' for opencv and 'mjpeg' for picamera
+                cls.camera.start_recording(cls.stream, format='mjpeg', quality = cls.stream_quality, splitter_port=1)
+                # cls.camera.start_recording(cls.stream, format='bgr', splitter_port=1)
+                break
+
+
+        
 
     @classmethod
-    def record_video(cls, stop = False):
-        if stop is True:
-            cls.camera.stop_recording(splitter_port=2)
-            print('stop recording')
-        else: 
-            # https://picamera.readthedocs.io/en/release-1.10/api_camera.html#picamera.camera.PiCamera.start_recording
-            # CHange: whether h264 is better than mjpeg
-            cls.camera.start_recording('capture_video_port.h264', splitter_port=2, resize=None, quality=20)
-            # cls.camera.start_recording('capture_video_port.mjpeg', splitter_port=2, resize=None, quality=cls.jpeg_quality)
+    def capture_video_from_stream(cls, filename=''):
+        ''' This method directly save the stream into a local file, so it should consume less computing power ''' 
+        cls.initialise_data_folder()
+        time_start = time.time()
+        if filename == '':
+            filename = cls.folder_path+'/{:04d}.mjpeg'.format(cls.image_seq)
+        else:
+            filename = cls.folder_path+'/{:04d}-{}.mjpeg'.format(cls.image_seq, filename)
+        cls.image_seq = cls.image_seq + 1
+
+        # NOTE: this mjpeg_headings is required to add before each frame for VLC to render the video properly
+        mjpeg_headings = b'''
+
+--myboundary
+Content Type: image/jpeg
+FPS: {}
+'''.format(cls.video_recording_fps)
+
+        # open the file and append new frames
+        with open(filename, 'a+') as f:
+            while True:
+                time_now = time.time()
+                try:
+                    if cls.frame_to_capture:
+                        f.write(mjpeg_headings)
+                        time.sleep(0)
+                        f.write(str(cls.frame_to_capture))
+                        # after capturing it, destorying the frame
+                        del(cls.frame_to_capture)
+                        # use a lower fps than the stream to reduce the file size
+                        time.sleep(1/cls.video_recording_fps)
+                # when there is no frame, just wait for a bit
+                except AttributeError:
+                    time.sleep(1/cls.fps*0.05)
+
+                # after certain time of recording, automatically close
+                if time_now - time_start > cls.record_timeout:
+                    cls.recording_flag = False
+
+                # close the thread with the flag
+                if cls.recording_flag is False:
+                    break
+
+
+    @classmethod
+    def video_recording_thread(cls, video_record_method='capture_video_from_stream', recording_flag = True, filename=''):
+        if recording_flag is True:
+            # first stop the recording
+            cls.recording_flag = False
+            time.sleep(1)
+            # then resume
+            cls.recording_flag = True
+            if video_record_method == 'record_video_with_splitter_channel':
+                cls.threading_recording = threading.Thread(target=cls.record_video_with_splitter_channel, args=[filename])
+            elif video_record_method == 'capture_video_from_stream':
+                cls.threading_recording = threading.Thread(target=cls.capture_video_from_stream, args=[filename])
+            cls.threading_recording.daemon = True
+            cls.threading_recording.start()
             print('start recording')
-            # DEBUG: is this wait_recording needed
-            cls.camera.wait_recording(500, splitter_port=2)
-            cls.camera.stop_recording(splitter_port=2)
+        else:
+            cls.recording_flag = False
+            print('stop recording')
+
+
 
     @classmethod
-    def take_image(cls):
-        # folder_path = '/home/pi/WaterScope-RPi/water_test/timelapse/{}'.format(cls.starting_time)
-        folder_path = 'timelapse_data/{}'.format(cls.starting_time)
-        if not os.path.exists(folder_path):
-            os.mkdir(folder_path)
-        filename = folder_path+'/{:04d}.jpg'.format(cls.image_seq)
+    def take_image(cls, filename = '', resolution='normal'):
+        cls.initialise_data_folder()
+        # NOTE: when file name is not specified, use a counter
+        if filename == '':
+            filename = cls.folder_path+'/{:04d}.jpg'.format(cls.image_seq)
+        else:
+            filename = cls.folder_path+'/{:04d}-{}.jpg'.format(cls.image_seq, filename)
         print('taking image')
-        #cls.camera.capture(filename, format = 'jpeg', bayer = True)
-        # Change: remove bayer = Ture if dont care
-        cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = False, use_video_port=True)
-        # reduce the resolution for video streaming
+        if resolution == 'normal':
+            cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = False, use_video_port=True)
+        elif resolution == 'high_res':
+            print('taking high_res image')
+            # when taking photos at high res, need to stop the video channel first
+            cls.camera.stop_recording(splitter_port=1)
+            time.sleep(0)
+            cls.camera.resolution = cls.image_resolution
+            # Remove bayer = Ture if dont care about RAW
+            cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = False)
+            time.sleep(0)
+            # reduce the resolution for video streaming
+            cls.camera.resolution = cls.stream_resolution
+            # resume the video channel
+            # Warning: be careful about the cls.camera.start_recording. 'bgr' for opencv and 'mjpeg' for picamera
+            # cls.camera.start_recording(cls.stream, format='mjpeg', quality = cls.stream_quality, splitter_port=1)
+            cls.camera.start_recording(cls.stream, format='bgr', splitter_port=1)
+
         cls.image_seq = cls.image_seq + 1
 
-    @classmethod
-    def take_image_high_res(cls):
-        # when taking photos, increase the resolution and everything
-        # need to stop the video channel first
-        cls.camera.stop_recording()
-        cls.camera.resolution = cls.image_resolution
-        # folder_path = '/home/pi/WaterScope-RPi/water_test/timelapse/{}'.format(cls.starting_time)
-        folder_path = 'timelapse_data/{}'.format(cls.starting_time)
-        if not os.path.exists(folder_path):
-            os.mkdir(folder_path)
-        filename = folder_path+'/{:04d}.jpg'.format(cls.image_seq)
-        print('taking image')
-        #cls.camera.capture(filename, format = 'jpeg', bayer = True)
-        # Change: remove bayer = Ture if dont care
-        cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = True)
-        # reduce the resolution for video streaming
-        cls.camera.resolution = cls.stream_resolution
-        # Warning: be careful about the cls.camera.start_recording. 'bgr' for opencv and 'mjpeg' for picamera
-        # resume the video channel
-        # cls.camera.start_recording(cls.stream, format='mjpeg', quality = cls.jpeg_quality)
-        cls.camera.start_recording(cls.stream, format='bgr')
-        cls.image_seq = cls.image_seq + 1
-
-
+    
     # Change:  Sync above 
     @classmethod
     def init_cv(cls):
