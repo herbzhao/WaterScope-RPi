@@ -7,14 +7,13 @@ from flask import Flask, render_template, Response, redirect, request, jsonify
 import yaml
 import numpy as np
 
-from serial_communication import serial_controller_class
+from serial_communication import serial_controller_class, Arduinos
 
 # Raspberry Pi camera module (requires picamera package)
 from camera_pi import Camera
+Camera.stream_method = 'PiCamera'
 
 app = Flask(__name__)
-
-
 
 
 def gen(camera):
@@ -27,42 +26,12 @@ def gen(camera):
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
 
-def swap_stream_method(option='swap'):
-    # DEBUG: why do I need the global Camera?
-    global Camera
-    if option == 'OpenCV':
-        # only change the stream method if the current one is not right
-        if Camera.stream_method == 'PiCamera':
-            Camera.stop_stream()
-            from camera_pi_cv import Camera
-            Camera.stream_method = 'OpenCV'
-            Camera.start_stream()
-            time.sleep(0.1)
-    
-    elif option == 'PiCamera':
-        # only change the stream method if the current one is not right
-        if Camera.stream_method == 'OpenCV':
-            Camera.stop_stream()
-            from camera_pi import Camera
-            Camera.stream_method = 'PiCamera'
-            Camera.start_stream()
-            time.sleep(0.1)
-            
-    if option == 'swap':
-        Camera.stop_stream()
-        if Camera.stream_method =='PiCamera':
-            from camera_pi_cv import Camera
-        elif Camera.stream_method == 'opencv' :
-            from camera_pi import Camera
-        Camera.start_stream()
-        time.sleep(0.1)
-
 
 def initialse_serial_connection():
     ''' all the arduino connection is done via this function''' 
     try:
         # print(' serial connections already exist')
-        Camera.serial_controllers
+        Arduinos.serial_controllers
     except AttributeError:
         print('''
         
@@ -73,29 +42,29 @@ def initialse_serial_connection():
         ''')
         with open('config_serial.yaml') as config_serial_file:
             serial_controllers_config = yaml.load(config_serial_file)
-        Camera.available_arduino_boards = []
+        Arduinos.available_arduino_boards = []
 
         for board_name in serial_controllers_config:
             if serial_controllers_config[board_name]['connect'] is True:
-                Camera.available_arduino_boards.append(board_name)
+                Arduinos.available_arduino_boards.append(board_name)
 
-        print(Camera.available_arduino_boards)
+        print(Arduinos.available_arduino_boards)
         # initialise the serial port if it does not exist yet.
         #print('initialising the serial connections')
-        Camera.serial_controllers = {}
-        for name in Camera.available_arduino_boards:
-            Camera.serial_controllers[name] = serial_controller_class()
-            Camera.serial_controllers[name].serial_connect(
+        Arduinos.serial_controllers = {}
+        for name in Arduinos.available_arduino_boards:
+            Arduinos.serial_controllers[name] = serial_controller_class()
+            Arduinos.serial_controllers[name].serial_connect(
                 port_names=serial_controllers_config[name]['port_names'], 
                 baudrate=serial_controllers_config[name]['baudrate'])
-            Camera.serial_controllers[name].serial_read_threading(options=serial_controllers_config[name]['serial_read_options'])
+            Arduinos.serial_controllers[name].serial_read_threading(options=serial_controllers_config[name]['serial_read_options'])
 
 def parse_serial_time_temp():
     # synchronise the arduino_time
     initialse_serial_connection()
     try:
-        time_value = Camera.serial_controllers['waterscope'].log['time'][-1]
-        temp_value = Camera.serial_controllers['waterscope'].log['temp'][-1]
+        time_value = Arduinos.serial_controllers['waterscope'].log['time'][-1]
+        temp_value = Arduinos.serial_controllers['waterscope'].log['temp'][-1]
         print('temp: {}'.format(temp_value) )
 
     except (IndexError, KeyError, AttributeError): 
@@ -126,21 +95,22 @@ def video_feed():
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
+
+
 # DEBUG: combine the info with this page?
 @app.route('/settings/')
 def settings_io():
     ''' swap between opencv and picamera for streaming'''
-    #  default value
-    Camera.stream_method = 'PiCamera'
-    stream_method = request.args.get('stream_method', 'PiCamera')
+    try:
+        Camera.stream_method
+
+    except AttributeError:
+        Camera.stream_method = 'PiCamera'
+
     zoom_value = request.args.get('zoom_value', '')
     config_update = request.args.get('config_update', '')
     stop_flag = request.args.get('stop', '')
 
-    if stream_method == 'PiCamera':
-        swap_stream_method(option='PiCamera')
-    elif stream_method == 'OpenCV':
-        swap_stream_method(option='OpenCV')
     if zoom_value is not '':
         # only change zoom when passing an arg
         Camera.change_zoom(zoom_value)
@@ -151,10 +121,40 @@ def settings_io():
 
     settings = {
         'stream_method': Camera.stream_method, 
-        'available_arduino_boards': Camera.available_arduino_boards,
+        'available_arduino_boards': Arduinos.available_arduino_boards,
         }
 
     return jsonify(settings)
+
+
+@app.route('/change_stream_method/')
+def change_stream_method(option='OpenCV'):
+    # DEBUG: why do I need the global Camera?
+    global Camera
+    new_stream_method = request.args.get('stream_method', 'PiCamera')
+
+    option = new_stream_method
+
+    if option == 'OpenCV':
+        print('Change the stream method to OpenCV')
+        # only change the stream method if the current one is not right
+        if Camera.stream_method == 'PiCamera':
+            Camera.stop_stream()
+            from camera_pi_cv import Camera
+            Camera.stream_method = 'OpenCV'
+            Camera.start_stream()
+            time.sleep(0.1)
+    
+    elif option == 'PiCamera':
+        print('Change the stream method to Picamera')
+        # only change the stream method if the current one is not right
+        if Camera.stream_method == 'OpenCV':
+            Camera.stop_stream()
+            from camera_pi import Camera
+            Camera.stream_method = 'PiCamera'
+            Camera.start_stream()
+            time.sleep(0.1)
+
 
 
 # DEBUG: join the serial window and serial send 
@@ -169,7 +169,7 @@ def send_serial():
     serial_command_value = request.args.get('value', '')
 
     try:
-        Camera.serial_controllers[serial_board].serial_write(serial_command_value, parser=serial_board)
+        Arduinos.serial_controllers[serial_board].serial_write(serial_command_value, parser=serial_board)
     except KeyError:
         print('cannot find this board')
     
@@ -196,7 +196,7 @@ def serial_time_temp():
 @app.route('/af')
 def auto_focus():
     # swap to opencv and then start the auto focusing
-    swap_stream_method(option='OpenCV')
+    change_stream_method(option='OpenCV')
     initialse_serial_connection()
     # start auto focusing
     Camera.auto_focus_thread()
@@ -228,7 +228,22 @@ def take_image():
         Camera.video_recording_thread(recording_flag=False)
     # image capture
     elif option == 'high_res':
+        Camera.take_image(resolution='high_res', filename=filename)
+    # waterscope_timelapse_nohup_100
+    elif 'waterscope_timelapse_nohup' in option:
+        # Camera.stop_stream()
+        timelapse_interval = int(option.replace('waterscope_timelapse_nohup_', ''))
+        while True:
+            Arduinos.serial_controllers['waterscope'].serial_write('led_on', parser='waterscope')
+            time.sleep(2)
             Camera.take_image(resolution='high_res', filename=filename)
+            time.sleep(2)
+            Arduinos.serial_controllers['waterscope'].serial_write('led_off', parser='waterscope')
+            time.sleep(timelapse_interval)
+
+
+
+        
     else:
             Camera.take_image(resolution='normal', filename=filename)
 

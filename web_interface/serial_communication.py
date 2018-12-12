@@ -10,6 +10,11 @@ import os
 # regex for parsing the output
 import re
 
+# empty Arduino class which will attach more properties later
+class Arduinos():
+    def __init__(self):
+        pass
+
 
 class serial_controller_class():
     def __init__(self):

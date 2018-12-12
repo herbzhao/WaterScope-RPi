@@ -21,13 +21,13 @@ var app = new Vue({
         alert_window_2: false,
         alert_window_2_timeout: 1000,
         alert_content_2: '',
-        offset_temp:0,
-        Tprep:21,
-        Theat:26,
-        T0:20,
-        T1:19,
-        T2:18,
-        T3:17
+        offset_temp: 0,
+        Tprep: 21,
+        Theat: 26,
+        T0: 20,
+        T1: 19,
+        T2: 18,
+        T3: 17
     }),
 
     // watch when data change 
@@ -45,9 +45,9 @@ var app = new Vue({
         },
         recording_switch: function () {
             if (this.recording_switch == "true") {
-                this.record_video(recording=true, filename='rasbperry_pi_time')
+                this.record_video(recording = true, filename = 'rasbperry_pi_time')
             } else if (this.recording_switch == null) {
-                this.record_video(recording=false)
+                this.record_video(recording = false)
             }
             this.alert_window = true
         },
@@ -62,10 +62,12 @@ var app = new Vue({
         timelapse_switch: function () {
             // always stop the timelapse first
             this.stop_timelapse()
-            if (this.timelapse_switch == 'waterscope_timelapse') {
-                this.start_waterscope_timelapse()
-            } else if (this.timelapse_switch == 'timelapse') {
+            if (this.timelapse_switch == 'timelapse') {
                 this.start_timelapse()
+            } else if (this.timelapse_switch == 'waterscope_timelapse') {
+                this.start_waterscope_timelapse()
+            } else if (this.timelapse_switch == 'waterscope_timelapse_nohup') {
+                this.start_waterscope_timelapse(option='nohup')
             } else if (this.timelapse_switch == null) {}
             this.alert_window = true
         },
@@ -93,6 +95,7 @@ var app = new Vue({
     mounted: function () {
         this.read_server_info()
         this.LED_switch = "true"
+        this.led_on()
     },
 
     methods: {
@@ -115,31 +118,45 @@ var app = new Vue({
             clearInterval(this.config_loop)
         },
 
-        start_waterscope_timelapse: function () {
+        start_waterscope_timelapse: function (option = '') {
             // NOTE: a safety precaution to set a interval not too low
             // TODO: Can move this into watch then we have no problem.
-            if (this.timelapse_interval < 5) {
-                this.timelapse_interval = 5
-            }
-            timelapse_interval_ms = this.timelapse_interval * 1000
-            console.log('Starting waterscope timelapse')
-            this.led_on()
-            setTimeout(() => {
-                this.take_image()
-            }, 1000)
-            setTimeout(() => {
-                this.led_off()
-            }, 3000)
-            // NOTE: arrow function very important to prevent misunderstanding of this.
-            this.timelapse_loop = setInterval(() => {
+
+            if (option == 'nohup') {
+                console.log('Starting waterscope timelapse in background, you can close the brwoser now')
+                if (this.timelapse_interval < 5) {
+                    this.timelapse_interval = 5
+                }
+                axios.get('/take_image/?option=waterscope_timelapse_nohup_{0}&filename=raspberry_pi_time'.format(this.timelapse_interval))
+
+            } else {
+                if (this.timelapse_interval < 5) {
+                    this.timelapse_interval = 5
+                }
+                timelapse_interval_ms = this.timelapse_interval * 1000
+                console.log('Starting waterscope timelapse')
                 this.led_on()
                 setTimeout(() => {
-                    this.take_image()
-                }, 1000)
+                    this.take_image(option = 'high_res')
+                }, 3000)
                 setTimeout(() => {
                     this.led_off()
-                }, 3000)
-            }, timelapse_interval_ms);
+                }, 5000)
+                // NOTE: arrow function very important to prevent misunderstanding of this.
+                this.timelapse_loop = setInterval(() => {
+                    this.led_on()
+                    setTimeout(() => {
+                        this.take_image(option = 'high_res')
+                    }, 3000)
+                    setTimeout(() => {
+                        this.led_off()
+                    }, 5000)
+                }, timelapse_interval_ms);
+            }
+        },
+
+        start_waterscope_timelapse_nohup: function () {
+            axios.get('/change_stream_method/?stream_method=PiCamera')
         },
 
         start_timelapse: function () {
@@ -149,9 +166,9 @@ var app = new Vue({
             timelapse_interval_ms = this.timelapse_interval * 1000
             console.log('Starting timelapse')
             // first take one image then start the loop
-            this.take_image();
+            this.take_image('high_res');
             this.timelapse_loop = setInterval(() => {
-                this.take_image();
+                this.take_image('high_res');
             }, timelapse_interval_ms);
         },
 
@@ -167,16 +184,16 @@ var app = new Vue({
         change_stream_method: function () {
             // have a slight delay for the stream_method to change
             setTimeout(() => {
-                if (this.stream_method == 'PiCamera' || this.stream_method==null) {
+                if (this.stream_method == 'PiCamera' || this.stream_method == null) {
                     console.log('changing streaming: {0}'.format(this.stream_method))
-                    axios.get('/settings/?stream_method=PiCamera')
+                    axios.get('/change_stream_method/?stream_method=PiCamera')
                     console.log('change to picamera')
                     // TODO: maybe we can refresh the jpg elements
                     this.refresh()
 
                 } else if (this.stream_method == 'OpenCV') {
                     console.log('changing streaming: {0}'.format(this.stream_method))
-                    axios.get('/settings/?stream_method=OpenCV')
+                    axios.get('/change_stream_method/?stream_method=OpenCV')
                     console.log('change to opencv')
                     this.refresh()
                 }
@@ -199,15 +216,15 @@ var app = new Vue({
         },
 
         // a special function to record the current offset temperature
-        measure_offset_temp: function(){
-            if(this.serial_command.includes('offset=') == true){
+        measure_offset_temp: function () {
+            if (this.serial_command.includes('offset=') == true) {
                 offset_temp = parseFloat(this.serial_command.substring(7))
-                this.Tprep = 21+offset_temp
-                this.Theat = 25+offset_temp
-                this.T0 = 20+offset_temp
-                this.T1 = 19+offset_temp
-                this.T2 = 18+offset_temp
-                this.T3 = 17+offset_temp
+                this.Tprep = 21 + offset_temp
+                this.Theat = 25 + offset_temp
+                this.T0 = 20 + offset_temp
+                this.T1 = 19 + offset_temp
+                this.T2 = 18 + offset_temp
+                this.T3 = 17 + offset_temp
             }
         },
 
@@ -242,7 +259,7 @@ var app = new Vue({
             axios.get("/settings/?stop=true");
             this.stop_config_update()
             this.stop_timelapse()
-            this.record_video(recording=false)
+            this.record_video(recording = false)
         },
         auto_focus: function () {
             window.location = "/auto_focus";
@@ -252,14 +269,14 @@ var app = new Vue({
             console.log("taking image: option: {0}, time: {1}".format(option, filename))
             this.alert_window_2 = true
             this.alert_content_2 = 'taking image..'
-            if (this.recording_switch != null){
+            if (this.recording_switch != null) {
                 this.alert_content_2 = 'recording video, taking image'
                 setTimeout(() => {
                     this.alert_content_2 = 'recording video...'
                 }, 1000);
             }
         },
-        record_video: function (recording = true, filename = 'raspberry_pi_time' ) {
+        record_video: function (recording = true, filename = 'raspberry_pi_time') {
             if (recording == true) {
                 this.take_image(option = '', filename = 'raspberry_pi_time_start_recording')
                 axios.get("/take_image/?option=start_recording&filename={0}".format(filename))
