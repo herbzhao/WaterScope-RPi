@@ -60,7 +60,7 @@
 
                         <v-tooltip top>
                             <!-- slot is needed for tooltip to work? -->
-                            <v-btn slot="activator" color="primary" fab @click='take_image()'>
+                            <v-btn slot="activator" color="primary" fab @click='take_image("normal", "raspberry_pi_time")'>
                                 <v-icon>photo_camera</v-icon>
                             </v-btn>
                             <span>Take a low-res image (hkey: G) </span>
@@ -68,7 +68,7 @@
 
                         <v-tooltip top>
                             <!-- slot is needed for tooltip to work? -->
-                            <v-btn slot="activator" color="success" fab @click='take_image("high_res", "raspberry_pi_time")'>
+                            <v-btn slot="activator" color="success" fab @click='take_image("high_res_image", "raspberry_pi_time")'>
                                 <v-icon>camera_enhance</v-icon>
                             </v-btn>
                             <span>Take a raw image (hkey: H)</span>

@@ -1,11 +1,16 @@
-import serial
 import time
+import threading
 
-with serial.Serial() as ser:
-    ser.baudrate = 9600
-    ser.port = '/dev/ttyUSB0'
-    ser.open()
-    while True:
-        if ser.in_waiting:
-        # time.sleep(0.5)
-            print(ser.readline())
+def print_with_sleep():
+    for i in range(10):
+        time.sleep(1)
+        print(i)
+
+print_thread = threading.Thread(target=print_with_sleep)
+print_thread.daemon = False
+print_thread.start()
+
+
+for i in range(10):
+    time.sleep(0.5)
+    print(i)
