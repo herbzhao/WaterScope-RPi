@@ -212,7 +212,7 @@ FPS: {}
     
     # Change:  Sync above 
     @classmethod
-    def init_cv(cls):
+    def initialise_cv(cls):
         ''' which functions to use during the opencv stream''' 
         cls.ROI = []
         cls.cv_libraries = [
@@ -236,7 +236,8 @@ FPS: {}
         cv2.putText(
             cls.image,focus_text,
             (int(cls.image.shape[0]*0.2), int(cls.image.shape[1]*0.1)), 
-            font, 1,(255,255,255))
+            font, 5,(100,100,100))
+        # TODO: Add a box with dark colour?
 
 
     @classmethod
@@ -273,6 +274,7 @@ FPS: {}
     @classmethod
     def thresholding(cls, image):
         # do some modification
+        # NOTE: it seems like the thresholding is better to do not in RGB scale
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         ret,thresh1 = cv2.threshold(gray,127,255,cv2.THRESH_BINARY)
         ret,thresh2 = cv2.threshold(gray,127,255,cv2.THRESH_BINARY_INV)
@@ -423,6 +425,7 @@ FPS: {}
         threading_af.daemon = True
         threading_af.start()
     
+
     stream_method = 'OpenCV'
     @staticmethod
     def frames(cls):
@@ -433,11 +436,9 @@ FPS: {}
         with picamera.PiCamera() as cls.camera:
             # let camera warm up
             time.sleep(0.1)
-            fps = 24
             # opencv is much slower, so the resolution is limited
-            cls.camera.resolution = cls.stream_resolution
-
-            cls.camera.framerate = fps
+            cls.camera.resolution = cls.stream_resolution_opencv
+            cls.camera.framerate = cls.fps
             # read configs
             cls.update_camera_setting()
 

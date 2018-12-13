@@ -28,22 +28,18 @@ Mousetrap.bind('o f f', function () {
     app.LED_switch = null
 });
 
+// auto focus
+Mousetrap.bind('a f', function () {
+    app.auto_focus()
+});
 
 // image capture
 Mousetrap.bind(['c'], function () {
     app.take_image(option='', filename = 'raspberry_pi_time')
 });
-
 Mousetrap.bind(['g'], function () {
     app.take_image(option='high_res', filename = 'raspberry_pi_time')
 });
-Mousetrap.bind(['h'], function () {
-    app.take_high_res_image()
-});
-Mousetrap.bind(['j'], function () {
-    app.take_image()
-});
-
 
 var direction_key;
 // Move fergboard
@@ -55,6 +51,7 @@ Mousetrap.bind('s', function () {
     console.log('pressed s');
     direction_key = 's';
 });
+// use q, e to change step??
 Mousetrap.bind('q', function () {
     direction_key = 'q';
     console.log('pressed q');
@@ -70,9 +67,9 @@ Mousetrap.bind('e', function () {
 function direction_key_loop() { //  create a loop function
     setTimeout(function () {
         if (direction_key == 'w') {
-            fetch('/ser/?value=move(-500)&board=waterscope');
+            fetch('/send_serial/?value=move(-500)&board=waterscope');
         } else if (direction_key == 's') {
-            fetch('/ser/?value=move(500)&board=waterscope');
+            fetch('/send_serial/?value=move(500)&board=waterscope');
         }
         direction_key = '';
         direction_key_loop(); //  ..  again which will trigger another 

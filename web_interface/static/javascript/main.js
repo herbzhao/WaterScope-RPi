@@ -66,9 +66,9 @@ var app = new Vue({
                 this.start_timelapse()
             } else if (this.timelapse_switch == 'waterscope_timelapse') {
                 this.start_waterscope_timelapse()
-            } else if (this.timelapse_switch == 'waterscope_timelapse_thread') {
-                this.start_waterscope_timelapse(option='nohup')
-            } else if (this.timelapse_switch == null) {}
+            } else if (this.timelapse_switch == null) {
+                this.stop_timelapse()
+            }
             this.alert_window = true
         },
     },
@@ -101,11 +101,11 @@ var app = new Vue({
     methods: {
         led_on: function () {
             console.log('turn on LED')
-            axios.get("/ser/?value=led_on&board={0}".format(this.chosen_arduino_board));
+            axios.get("/send_serial/?value=led_on&board={0}".format(this.chosen_arduino_board));
         },
         led_off: function () {
             console.log('turn off LED')
-            axios.get("/ser/?value=led_off&board={0}".format(this.chosen_arduino_board))
+            axios.get("/send_serial/?value=led_off&board={0}".format(this.chosen_arduino_board))
         },
         start_config_update: function () {
             console.log('start updating config')
@@ -122,17 +122,17 @@ var app = new Vue({
             if (this.timelapse_interval < 1.5) {
                 this.timelapse_interval = 1.5
             }
-            axios.get('/take_image/?option=high_res_timelapse_{0}&filename=raspberry_pi_time'.format(this.timelapse_interval))            
-            // axios.get('/take_image/?option=normal_timelapse_{0}&filename=raspberry_pi_time'.format(this.timelapse_interval))            
+            axios.get('/acquire_data/?option=high_res_timelapse_{0}&filename=raspberry_pi_time'.format(this.timelapse_interval))            
+            // axios.get('/acquire_data/?option=normal_timelapse_{0}&filename=raspberry_pi_time'.format(this.timelapse_interval))            
         },
         start_waterscope_timelapse: function () {
             if (this.timelapse_interval < 10) {
                 this.timelapse_interval = 10
             }
-            axios.get('/take_image/?option=waterscope_timelapse_{0}&filename=raspberry_pi_time'.format(this.timelapse_interval))            
+            axios.get('/acquire_data/?option=waterscope_timelapse_{0}&filename=raspberry_pi_time'.format(this.timelapse_interval))            
         },
         stop_timelapse: function () {
-            axios.get('/take_image/?option=stop_timelapse')                        
+            axios.get('/acquire_data/?option=stop_timelapse')                        
         },
 
         change_stream_method: function () {
@@ -157,7 +157,7 @@ var app = new Vue({
 
         send_serial_command: function () {
             console.log('Sending serial command {0}'.format(this.serial_command))
-            axios.get('/ser/?value={0}&board={1}'.format(this.serial_command, this.chosen_arduino_board))
+            axios.get('/send_serial/?value={0}&board={1}'.format(this.serial_command, this.chosen_arduino_board))
             // alert('Sending serial command \n {0}'.format(this.serial_command))
             // remove focus of the text field
             app.$refs.serial_command_field.blur()
@@ -216,10 +216,10 @@ var app = new Vue({
             this.record_video(recording = false)
         },
         auto_focus: function () {
-            window.location = "/auto_focus";
+            axios.get('/auto_focus')
         },
         take_image: function (option = '', filename = 'raspberry_pi_time') {
-            axios.get("/take_image/?option={0}&filename={1}".format(option, filename))
+            axios.get("/acquire_data/?option={0}&filename={1}".format(option, filename))
             console.log("taking image: option: {0}, time: {1}".format(option, filename))
             this.alert_window_2 = true
             this.alert_content_2 = 'taking image..'
@@ -234,7 +234,7 @@ var app = new Vue({
             if (recording == true) {
                 // Take an image before recording to note the time
                 this.take_image(option = '', filename = 'raspberry_pi_time_start_recording')
-                axios.get("/take_image/?option=start_recording_video&filename={0}".format(filename))
+                axios.get("/acquire_data/?option=start_recording_video&filename={0}".format(filename))
                 console.log("recording video")
                 this.alert_window_2 = true
                 this.alert_content_2 = 'recording video...'
@@ -243,7 +243,7 @@ var app = new Vue({
                 // Take an image after recording to note the time
                 this.take_image(option = '', filename = 'raspberry_pi_time_stop_recording')
                 console.log('stop recording')
-                axios.get("/take_image/?option=stop_recording_video")
+                axios.get("/acquire_data/?option=stop_recording_video")
                 this.photo_capture_status = ''
                 this.alert_window_2 = false
                 this.alert_window_2_timeout = 1000

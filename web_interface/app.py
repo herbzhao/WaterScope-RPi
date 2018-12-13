@@ -28,19 +28,12 @@ def gen(camera):
 
 
 
-def initialse_serial_connection():
+def initialise_serial_connection():
     ''' all the arduino connection is done via this function''' 
     try:
         # print(' serial connections already exist')
         Arduinos.serial_controllers
     except AttributeError:
-        print('''
-        
-        
-        Connecting serial connection
-        
-        
-        ''')
         with open('config_serial.yaml') as config_serial_file:
             serial_controllers_config = yaml.load(config_serial_file)
         Arduinos.available_arduino_boards = []
@@ -62,7 +55,7 @@ def initialse_serial_connection():
 
 def parse_serial_time_temp():
     # synchronise the arduino_time
-    initialse_serial_connection()
+    initialise_serial_connection()
     try:
         time_value = Arduinos.serial_controllers['waterscope'].log['time'][-1]
         temp_value = Arduinos.serial_controllers['waterscope'].log['temp'][-1]
@@ -84,7 +77,7 @@ def parse_serial_time_temp():
 def index():
     """Video streaming home page."""
     Camera.start_stream()
-    initialse_serial_connection()
+    initialise_serial_connection()
     return render_template('index.html')
 
 
@@ -133,7 +126,6 @@ def change_stream_method(option='OpenCV'):
     # DEBUG: why do I need the global Camera?
     global Camera
     new_stream_method = request.args.get('stream_method', 'PiCamera')
-
     option = new_stream_method
 
     if option == 'OpenCV':
@@ -160,10 +152,9 @@ def change_stream_method(option='OpenCV'):
 
 # DEBUG: join the serial window and serial send 
 ''' general serial command url'''
-@app.route('/serial/')
-@app.route('/ser/')
+@app.route('/send_serial/')
 def send_serial():
-    initialse_serial_connection()
+    initialise_serial_connection()
     # choose the arduino board and parser - ferg, waterscope, para
     serial_board = request.args.get('board', 'waterscope')
     # the value is obtained from the input_form
@@ -193,19 +184,19 @@ def serial_time_temp():
 
 
 # TODO: have a fine focus and coarse focus
-@app.route('/autofocus')
-@app.route('/af')
+@app.route('/auto_focus')
 def auto_focus():
     # swap to opencv and then start the auto focusing
+    # NOTE: Do we need to use the URL rather than calling the function directly
     change_stream_method(option='OpenCV')
-    initialse_serial_connection()
+    initialise_serial_connection()
     # start auto focusing
     Camera.auto_focus_thread()
     return render_template('index.html')
 
 # take one image
-@app.route('/take_image/')
-def take_image():
+@app.route('/acquire_data/')
+def acquire_data():
     # the filename is consist of user defined value and the time stamp
     # arduino_time is the seconds from the booting up 
     # raspberry_time is the absolute time
@@ -245,7 +236,6 @@ def take_image():
         timelapse_thread.daemon = True
         timelapse_thread.start()
     
-
     elif option == 'stop_timelapse':
         # a flag that will terminate all the timelapse
         Camera.stop_timelapse = True
@@ -255,8 +245,6 @@ def take_image():
         Camera.video_recording_thread(filename=filename, recording_flag=True)
     elif option == 'stop_recording_video':
         Camera.video_recording_thread(recording_flag=False)
-
-
 
     def take_timelapse(timelapse_interval=10, method='normal'):
         while True:
