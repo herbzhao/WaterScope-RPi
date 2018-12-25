@@ -66,9 +66,10 @@ var app = new Vue({
                 this.start_timelapse()
             } else if (this.timelapse_switch == 'waterscope_timelapse') {
                 this.start_waterscope_timelapse()
-            } else if (this.timelapse_switch == null) {
+            } else if (this.timelapse_switch == null || this.timelapse_switch == 'stop_timelapse') {
                 this.stop_timelapse()
             }
+            
             this.alert_window = true
         },
     },

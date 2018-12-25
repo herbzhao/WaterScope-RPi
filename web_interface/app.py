@@ -217,22 +217,46 @@ def acquire_data():
         
     # the option determines whether it is the video recording, high_resolution image, or timelapse
     option = request.args.get('option', '')
-    # image capture
-    if option == '':
+    # Note: args: image capture - option='normal' or 'high_res'
+    if option == '' or option == 'normal':
         Camera.take_image(resolution='normal', filename=filename)
-    elif option == 'high_res_image':
+    elif option == 'high_res':
         Camera.take_image(resolution='high_res', filename=filename)
 
-    elif 'timelapse' in option:
+    elif 'timelapse_' in option:
         # this method allows the timelapse to be taken when the browser is closed, but the terminal needs to be open
-        # high_res_timelapse_100, normal_timelapse, waterscope_timelapse
+        # NOTE: args: high_res_timelapse_10, normal_timelapse_10, waterscope_timelapse_10
 
         # parse the timelapse_interval and method from the option arg 
-        timelapse_interval = int(option.replace('normal_timelapse_','').replace('high_res_timelapse_','').replace('waterscope_timelapse_', ''))
-        method = option.split('_timelapse', '')[0]
+        print(option)
+        timelapse_interval = int(option.split('timelapse_')[1])
+        # the method "waterscope" or "normal" is string before _timelapse
+        method = option.split('_timelapse_')[0]
+
+        # a function to take timelapse depending on the method
+        def take_timelapse(timelapse_interval=10, method='normal'):
+            while True:
+                if method == 'normal':
+                    Camera.take_image(resolution='normal', filename=filename)
+                elif method == 'high_res':
+                    Camera.take_image(resolution='high_res', filename=filename)
+                elif method == 'waterscope':
+                    # waterscope method requires LED to be only on when taking images
+                    Arduinos.serial_controllers['waterscope'].serial_write('led_on', parser='waterscope')
+                    time.sleep(2)
+                    Camera.take_image(resolution='high_res', filename=filename)
+                    time.sleep(2)
+                    Arduinos.serial_controllers['waterscope'].serial_write('led_off', parser='waterscope')
+
+                time.sleep(timelapse_interval)
+                # a flag that determines whether to stop timelapse
+                if Camera.stop_timelapse == True:
+                    break
+
+        # NOTE: a flag that help to terminate the threading later
         Camera.stop_timelapse = False
         timelapse_thread = threading.Thread(target=take_timelapse, args=[timelapse_interval, method])
-        # DEBUG: Check whether the daemon is needed/
+        # DEBUG: Check whether the daemon is needed
         timelapse_thread.daemon = True
         timelapse_thread.start()
     
@@ -246,24 +270,6 @@ def acquire_data():
     elif option == 'stop_recording_video':
         Camera.video_recording_thread(recording_flag=False)
 
-    def take_timelapse(timelapse_interval=10, method='normal'):
-        while True:
-            if method == 'normal':
-                Camera.take_image(resolution='normal', filename=filename)
-            elif method == 'high_res':
-                Camera.take_image(resolution='high_res', filename=filename)
-            elif method == 'waterscope':
-                # waterscope method requires LED to be only on when taking images
-                Arduinos.serial_controllers['waterscope'].serial_write('led_on', parser='waterscope')
-                time.sleep(2)
-                Camera.take_image(resolution='high_res', filename=filename)
-                time.sleep(2)
-                Arduinos.serial_controllers['waterscope'].serial_write('led_off', parser='waterscope')
-
-            time.sleep(timelapse_interval)
-            # a flag that determines whether to stop timelapse
-            if Camera.stop_timelapse == True:
-                break
 
 
     return render_template('index.html')

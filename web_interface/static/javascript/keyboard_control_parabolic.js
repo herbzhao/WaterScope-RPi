@@ -225,8 +225,6 @@ Mousetrap.bind(['3 0'], function () {
 });
 }
 
-
-
 var direction_key;
 // Move fergboard
 Mousetrap.bind('w', function () {

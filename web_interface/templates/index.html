@@ -68,7 +68,7 @@
 
                         <v-tooltip top>
                             <!-- slot is needed for tooltip to work? -->
-                            <v-btn slot="activator" color="success" fab @click='take_image("high_res_image", "raspberry_pi_time")'>
+                            <v-btn slot="activator" color="success" fab @click='take_image("high_res", "raspberry_pi_time")'>
                                 <v-icon>camera_enhance</v-icon>
                             </v-btn>
                             <span>Take a raw image (hkey: H)</span>
@@ -181,10 +181,19 @@
                         <v-tooltip top>
                             <v-btn-toggle v-model="timelapse_switch" slot="activator">
                                 <v-btn flat color="blue" large value="waterscope_timelapse">
-                                    <span>WaterScope timelapse</span>
+                                    <span>WS TL</span>
                                 </v-btn>
                             </v-btn-toggle>
-                            <span>WaterScope timelapse which turns on/off LED before/after image taking</span>
+                            <span>Timelapse which turns on/off LED before/after image taking</span>
+                        </v-tooltip>
+
+                        <v-tooltip top>
+                            <v-btn-toggle v-model="timelapse_switch" slot="activator">
+                                <v-btn flat color="red" large value="stop_timelapse">
+                                    <span>Stop timelapse</span>
+                                </v-btn>
+                            </v-btn-toggle>
+                            <span> Stop the running timelapse</span>
                         </v-tooltip>
 
 

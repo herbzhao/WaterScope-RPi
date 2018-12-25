@@ -41,6 +41,7 @@ Mousetrap.bind(['g'], function () {
     app.take_image(option='high_res', filename = 'raspberry_pi_time')
 });
 
+
 var direction_key;
 // Move fergboard
 Mousetrap.bind('w', function () {
