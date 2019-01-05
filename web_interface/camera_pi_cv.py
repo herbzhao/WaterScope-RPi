@@ -431,7 +431,6 @@ FPS: {}
     def frames(cls):
         # run this initialisation method
         cls.initialisation()
-        cls.init_cv()
         
         with picamera.PiCamera() as cls.camera:
             # let camera warm up

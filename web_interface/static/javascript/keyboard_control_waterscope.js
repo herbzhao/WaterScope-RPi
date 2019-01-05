@@ -43,6 +43,8 @@ Mousetrap.bind(['g'], function () {
 
 
 var direction_key;
+// a variable to store the focus movement size
+var step_size = 150;
 // Move fergboard
 Mousetrap.bind('w', function () {
     console.log('pressed w');
@@ -53,13 +55,21 @@ Mousetrap.bind('s', function () {
     direction_key = 's';
 });
 // use q, e to change step??
-Mousetrap.bind('q', function () {
-    direction_key = 'q';
-    console.log('pressed q');
-});
 Mousetrap.bind('e', function () {
     direction_key = 'e';
-    console.log('pressed e');
+    step_size = step_size+100;
+    if (step_size >= 950){
+        step_size = 950
+    }
+    console.log('focus step size is: {0}'.format(step_size));
+});
+Mousetrap.bind('q', function () {
+    direction_key = 'q';
+    step_size = step_size-100;
+    if (step_size <= 50){
+        step_size = 50
+    }
+    console.log('focus step size is: {0}'.format(step_size));
 });
 
 
@@ -68,13 +78,25 @@ Mousetrap.bind('e', function () {
 function direction_key_loop() { //  create a loop function
     setTimeout(function () {
         if (direction_key == 'w') {
-            fetch('/send_serial/?value=move(-500)&board=waterscope');
+            fetch('/send_serial/?value=move(-{0})&board=waterscope'.format(step_size));
         } else if (direction_key == 's') {
-            fetch('/send_serial/?value=move(500)&board=waterscope');
+            fetch('/send_serial/?value=move({0}})&board=waterscope'.format(step_size));
         }
         direction_key = '';
         direction_key_loop(); //  ..  again which will trigger another 
-    }, 50)
+    }, 1)
 }
 
 direction_key_loop();
+
+
+
+
+// NOTE: python-like string format method https://coderwall.com/p/flonoa/simple-string-format-in-javascript
+String.prototype.format = function () {
+    var str = this;
+    for (var i in arguments) {
+        str = str.replace(new RegExp("\\{" + i + "\\}", 'g'), arguments[i]);
+    }
+    return str
+}

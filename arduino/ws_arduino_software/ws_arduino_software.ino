@@ -2,9 +2,9 @@
 double PID_setpoint, PID_input, PID_output;
 //Define the aggressive and conservative Tuning Parameters
 // https://robotics.stackexchange.com/questions/9786/how-do-the-pid-parameters-kp-ki-and-kd-affect-the-heading-of-a-differential
-double Kp=18, Ki=20, Kd=1;
+double Kp=4, Ki=5, Kd=1;
 //Specify the links and initial tuning parameters
-PID myPID(&PID_input, &PID_output, &PID_setpoint, Kp, Ki, Kd, REVERSE);
+PID myPID(&PID_input, &PID_output, &PID_setpoint, Kp, Ki, Kd, DIRECT);
 
 
 #include <OneWire.h>
@@ -14,7 +14,6 @@ OneWire oneWire(ONE_WIRE_BUS);
 //OneWire oneWire1(ONE_WIRE_BUS_2);
 // Pass our oneWire reference to Dallas Temperature.
 DallasTemperature sensors(&oneWire);
-int delayval = 500; // delay for half a second
 
 
 // LEDs
@@ -44,7 +43,7 @@ float temperature;
 unsigned long time;
 float starting_time;
 // gap between each measurment and adjustment in seconds
-#define delay_time 0.1
+#define delay_time 0.02
 
 
 void setup(void){

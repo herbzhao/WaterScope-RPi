@@ -23,7 +23,7 @@ var layout = {
   },
   yaxis: {
     title: 'temperature (°c)',
-    range: [15, 35]
+    range: [10, 40]
   }
 }
 
@@ -78,12 +78,12 @@ function real_time_plotting(x_value, y_value) {
   }
 
   // automatically change temperature range
-  if (y_value > 25) {
-    layout.yaxis.range = [20, 35]
-  } else if (y_value < 25 && y_value > 15) {
-    layout.yaxis.range = [15, 25]
-  } else if (y_value < 15) {
-    layout.yaxis.range = [10, 25]
+  if (y_value > 30) {
+    layout.yaxis.range = [30, 40]
+  } else if (y_value < 30 && y_value > 20) {
+    layout.yaxis.range = [20, 30]
+  } else if (y_value < 20) {
+    layout.yaxis.range = [5, 20]
   }
 
   Plotly.relayout(plotting_element_ID, layout);

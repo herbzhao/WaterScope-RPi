@@ -141,20 +141,23 @@ class serial_controller_class():
             try:
                 self.log
             except AttributeError:
-                self.log = {'temp':[], 'time':[]}
+                self.log = {'temp':[], 'time':[], 'heating_effort':[]}
                 # use regex to match the arduino output: 18.57 *C  4.05 s
                 self.temp_re = re.compile('\d+.\d+\s\*C')
                 self.time_re = re.compile('\d+.\d+\ss')
+                # Heating effort is: 11.00
+                self.heating_effort_re = re.compile("Heating effort")
             # extract time and temperature value
             if self.temp_re.findall(self.serial_output):
                 self.log['temp'].append(float(self.serial_output.replace(' *C','')))
                 self.last_logged_temp = self.log['temp'][-1]
+                # print(self.last_logged_temp)
             elif self.time_re.findall(self.serial_output):
                 self.log['time'].append(float(self.serial_output.replace(' s','')))
-            # verify the results
-            # if len(self.log['time'])>0 and len(self.log['temp'])>0:
-            #     print(self.log['time'][-1])
-            #     print(self.log['temp'][-1])
+            elif self.heating_effort_re.findall(self.serial_output):
+                self.log['heating_effort'].append(float(self.serial_output.replace('Heating effort is:','')))
+                self.last_logged_heating_effort = self.log['heating_effort'][-1]
+
 
     def serial_read(self, options=['quiet'], parser_option=['motor', 'temperature']):
         self.stop_threading = False
@@ -193,15 +196,21 @@ class serial_controller_class():
                                 os.mkdir("timelapse_data")
                             if not os.path.exists("timelapse_data/arduino"):
                                 os.mkdir("timelapse_data/arduino")
-                            log_file_location = "timelapse_data/arduino/{}.txt".format(self.starting_time)
+                            log_file_location = "timelapse_data/arduino/{}.csv".format(self.starting_time)
                             with open(log_file_location, 'a+') as log_file:
                                 now = datetime.datetime.now()
                                 time_value_formatted = now.strftime("%Y-%m-%d %H:%M:%S.%f")
+                                # heating effort: Heating effort is: 11.00
+                                
                                 try:
-                                    if self.last_logged_temp:
-                                        log_file.write(time_value_formatted+'\n')
-                                        log_file.write(str(self.last_logged_temp)+'\n')
+                                    if self.last_logged_temp and self.last_logged_heating_effort:
+                                    # if self.last_logged_temp and self.last_logged_heating_effort:
+                                        log_file.write(time_value_formatted+',')
+                                        log_file.write(str(self.last_logged_temp)+',')
+                                        log_file.write(str(self.last_logged_heating_effort))
+                                        log_file.write('\n')
                                         del(self.last_logged_temp)
+                                        del(self.last_logged_heating_effort)
                                 except AttributeError:
                                     pass
                     except UnicodeDecodeError:
@@ -229,7 +238,7 @@ if __name__ == '__main__':
     serial_controller = serial_controller_class()
     serial_controller.serial_connect(port_names=['Serial'], baudrate=9600)
     #serial_controller.serial_connect(port_names=['Micro'], baudrate=115200)
-    serial_controller.serial_read_threading(options=['quiet'])
+    serial_controller.serial_read_threading(options=['logging_time_temp'])
 
     # accept user input
     while True:
