@@ -96,7 +96,7 @@ var app = new Vue({
     mounted: function () {
         this.read_server_info()
         this.LED_switch = "true"
-        this.led_on()
+        setTimeout(() => {this.led_on()}, 1000)
     },
 
     methods: {

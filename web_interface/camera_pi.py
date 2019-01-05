@@ -27,6 +27,8 @@ class Camera(BaseCamera):
         # reduce the fps for video recording to reduce the file size
         cls.video_recording_fps = 3
         cls.stream_resolution = (1648,1232)
+        # NOTE: for OPENCV we use a lower resolution
+        # cls.stream_resolution = (824,616)
         cls.video_resolution = (824, 616)
         cls.image_resolution = (3280,2464)
         # how many seconds before we automatically stop recording
