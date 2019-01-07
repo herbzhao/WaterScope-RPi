@@ -78,9 +78,12 @@ Mousetrap.bind('q', function () {
 function direction_key_loop() { //  create a loop function
     setTimeout(function () {
         if (direction_key == 'w') {
+            // NOTE: replace with axios
             fetch('/send_serial/?value=move(-{0})&board=waterscope'.format(step_size));
+            // axios.get("/acquire_data/?option=stop_recording_video");
         } else if (direction_key == 's') {
             fetch('/send_serial/?value=move({0}})&board=waterscope'.format(step_size));
+            // axios.get("/acquire_data/?option=stop_recording_video")
         }
         direction_key = '';
         direction_key_loop(); //  ..  again which will trigger another 

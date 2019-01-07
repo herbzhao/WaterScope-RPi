@@ -11,6 +11,8 @@ import numpy as np
 # from threading import Condition
 import threading
 import yaml
+# use requests to send command for arduino via the web interface
+import requests
 
 # custom library
 from base_camera import BaseCamera
@@ -206,6 +208,12 @@ FPS: {}
 
         cls.image_seq = cls.image_seq + 1
 
+    @classmethod
+    def move_stage(cls, distance=100):
+        # DEBUG: the bracket will be parsed into %28 and mess up with the code
+        url = "http://10.0.0.1:5000/send_serial/?value=move({0})&board=waterscope".format(distance)
+        requested_url = requests.get(url)
+        # print(requested_url.url)
     
     # Change:  Sync bove 
     @staticmethod

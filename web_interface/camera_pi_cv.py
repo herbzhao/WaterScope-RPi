@@ -11,6 +11,9 @@ import numpy as np
 # from threading import Condition
 import threading
 import yaml
+# use requests to send command for arduino via the web interface
+import requests
+
 
 # custom library
 from base_camera import BaseCamera
@@ -19,7 +22,8 @@ from set_picamera_gain import set_analog_gain, set_digital_gain
 
 # opencv specific import
 import cv2
-from serial_communication import serial_controller_class
+import math
+
 
 
 
@@ -210,6 +214,17 @@ FPS: {}
 
         cls.image_seq = cls.image_seq + 1
 
+    @classmethod
+    def move_stage(cls, distance=100):
+        # DEBUG: the bracket will be parsed into %28 and mess up with the code
+        if distance == 'home':
+            url = "http://10.0.0.1:5000/send_serial/?value=home&board=waterscope"
+            cls.absolute_z = 0
+        else:
+            url = "http://10.0.0.1:5000/send_serial/?value=move({0})&board=waterscope".format(distance)
+            time.sleep(distance/50)
+        requested_url = requests.get(url)
+        # print(requested_url.url)
     
     # Change:  Sync above 
     @classmethod
@@ -218,30 +233,12 @@ FPS: {}
         cls.ROI = []
         cls.cv_libraries = [
             cls.define_ROI,
-            cls.edge_detection,
+            # cls.edge_detection,
             # cls.thresholding,
             cls.variance_of_laplacian, 
         ]
 
     # openCV functions
-    @classmethod
-    def variance_of_laplacian(cls):
-        ''' focus detection ''' 
-        if cls.ROI == []:
-            cls.ROI = cls.image
-        # compute the Laplacian of the image and then return the focus
-        # measure, which is simply the variance of the Laplacian
-        cls.focus_value = cv2.Laplacian(cls.ROI, cv2.CV_64F).var()
-        focus_text = 'f: {}'.format(cls.focus_value)
-        # CV font
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        cv2.putText(
-            cls.image,focus_text,
-            (int(cls.image.shape[0]*0.2), int(cls.image.shape[1]*0.1)), 
-            font, 5,(100,100,100))
-        # TODO: Add a box with dark colour?
-
-
     @classmethod
     def edge_detection(cls):
         # do some modification
@@ -286,16 +283,100 @@ FPS: {}
         cls.image = thresh5
     
 
+    @classmethod
+    def variance_of_laplacian(cls):
+        ''' focus detection ''' 
+        if cls.ROI == []:
+            cls.ROI = cls.image
+        # compute the Laplacian of the image and then return the focus
+        # measure, which is simply the variance of the Laplacian
+        cls.focus_value = cv2.Laplacian(cls.ROI, cv2.CV_64F).var()
+        focus_text = 'f: {:.4}'.format(cls.focus_value)
+        # CV font
+        font = cv2.FONT_HERSHEY_DUPLEX
+        cv2.putText(
+            cls.image,focus_text,
+            (int(cls.image.shape[0]*0.2), int(cls.image.shape[1]*0.1)), 
+            font, 2, (0, 0, 255))
+        # TODO: Add a box with dark colour?
 
+        
     @classmethod
     def auto_focus(cls):
-        pass
 
-    
+        def gss(f, a, b, tolerance):
+            """     Golden section search.
+
+            Algorithm for finding the interval within which the mode (focus point) lies,
+            minimizing the number of function (focus_measure) evaluations.
+
+            We start with an interval [a,b]=[zmin,zmax] and return an interval [c,d] such
+            that d-c<=tol=sweep_threshold.
+
+            https://en.wikipedia.org/wiki/Golden-section_search """
+
+            (a,b)=(min(a,b),max(a,b))
+            h = b - a
+            if h <= tolerance: return (a,b)
+
+            # required steps to achieve tolerance
+            n = int(math.ceil(math.log(tolerance/h)/math.log(invphi)))
+
+            c = a + invphi2 * h
+            d = a + invphi * h
+            yc = f(c)
+            yd = f(d)
+
+            for k in np.xrange(n-1):
+                if yc < yd:
+                    b = d
+                    d = c
+                    yd = yc
+                    h = invphi*h
+                    c = a + invphi2 * h
+                    yc = f(c)
+                else:
+                    a = c
+                    c = d
+                    yc = yd
+                    h = invphi*h
+                    d = a + invphi * h
+                    yd = f(d)
+
+            if yc < yd:
+                return (a,d)
+            else:
+                return (c,b)
+
+        def move_stage_to_z(new_z):
+            # move to the absolute z
+            distance = new_z - cls.absolute_z
+            cls.move_stage(new_z)
+            cls.absolute_z = new_z
+
+        def focus_measure_at_z(new_z):
+            move_stage_to_z(new_z)
+            focus_value =  cls.focus_value
+            return focus_value
+
+        # NOTE: code runs from here
+        # smaller z value =  higher the stage
+        # the focus is roughly around 5000
+        # the total travel is 7000
+        zmin = 4000
+        zmax = 6000
+        sweep_threshold = 200
+
+        invphi = (math.sqrt(5) - 1) / 2 # 1/phi
+        invphi2 = (3 - math.sqrt(5)) / 2 # 1/phi^2
+
+        # coarse scan using gss - output the smaller region for fine focusing
+        (sweep_start, sweep_end) = gss(focus_measure_at_z, zmin, zmax, sweep_threshold)
+
+        # fine sweep - existing code?
 
     @classmethod
-    def auto_focus_thread(cls):
-        cls.initialise_focusing()
+    def start_auto_focus_thread(cls):
         # threading for auto focusing    
         threading_af = threading.Thread(target=cls.auto_focus)
         threading_af.daemon = True
@@ -308,6 +389,7 @@ FPS: {}
         # run this initialisation method
         cls.initialisation()
         cls.initialise_cv()
+        cls.start_auto_focus_thread()
         
         with picamera.PiCamera() as cls.camera:
             # let camera warm up

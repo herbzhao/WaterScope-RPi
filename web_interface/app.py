@@ -59,7 +59,7 @@ def parse_serial_time_temp():
     try:
         time_value = Arduinos.serial_controllers['waterscope'].log['time'][-1]
         temp_value = Arduinos.serial_controllers['waterscope'].log['temp'][-1]
-        print('temp: {}'.format(temp_value) )
+        # print('temp: {}'.format(temp_value) )
 
     except (IndexError, KeyError, AttributeError): 
         time_value = 0
