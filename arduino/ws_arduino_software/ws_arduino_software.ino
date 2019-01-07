@@ -32,7 +32,7 @@ int r=20, g=20, b=20;
 #define END_STOP_PIN A0
 int end_stop = 0;
 Stepper small_stepper(32, 6, 8, 7, 9);
-int speed = 1000;
+int speed = 500;
 // DEBUG: this is wrong
 int absolute_pos = 0;
 
@@ -107,25 +107,6 @@ void loop(void){
   delay(delay_time*1000);
 }
 
-// TODO:  Create a function to calculate the motor moving time?
-// https://forum.arduino.cc/index.php?topic=83211.0
-void motor_moving_time(void (*function)()){
-  // a  tag to stall python when moving the motor
-    float time_start;
-    float time_spent;
-    // in python, using this line to start sleep
-    Serial.println("Moving the motor, stop accepting commands")
-    time_start = float(millis())/float(1000);
-
-    (*function)();
-
-    // this sentence indicated the motor has finished movement
-    //  use this line to break the sleep
-    Serial.print("Finished the movement in ");
-    Serial.print(time_spent);
-    Serial.println(" s");
-}
-
 void serial_condition(String serial_input){
   //Serial.println(serial_input);
   // trim is needed as there is blank space and line break
@@ -147,19 +128,11 @@ void serial_condition(String serial_input){
     int distance = serial_input.substring(5).toFloat();
     Serial.print("Move by: ");
     Serial.println(distance);
-    
-    // a  tag to stall python when moving the motor
-    float time_start;
-    float time_spent;
     // in python, using this line to start sleep
-    Serial.println("Moving the motor, stop accepting commands")
-    time_start = float(millis())/float(1000);
+    Serial.println("Moving the motor, stop accepting commands");
     move_stage(distance, speed);
     // this sentence indicated the motor has finished movement
-    //  use this line to break the sleep
-    Serial.print("Finished the movement in ");
-    Serial.print(time_spent);
-    Serial.println(" s");
+    Serial.println("Finished the movement");
   }
 
   // speed=500
@@ -174,7 +147,7 @@ void serial_condition(String serial_input){
   }
 
   else if(serial_input == "pos"){
-    Serial.print("Current position is: ");
+    Serial.print("Absolute position: ");
     Serial.println(absolute_pos);
   }
 
@@ -183,21 +156,13 @@ void serial_condition(String serial_input){
       small_stepper.step(0);
   }
 
-  //
   else if(serial_input == "home"){
-    Serial.println("Homing ...")
-    // a  tag to stall python when moving the motor
-    float time_start;
-    float time_spent;
+    Serial.println("Homing ...");
     // in python, using this line to start sleep
-    Serial.println("Moving the motor, stop accepting commands")
-    time_start = float(millis())/float(1000);
+    Serial.println("Moving the motor, stop accepting commands");
     home_stage();
     // this sentence indicated the motor has finished movement
-    //  use this line to break the sleep
-    Serial.print("Finished the movement in");
-    Serial.print(time_spent);
-    Serial.println(" s");
+    Serial.println("Finished the movement");
   }
 
   // LED_RGB=255,255,255
@@ -260,6 +225,8 @@ void home_stage() {
   // after hitting the end_stop, reset the absolute position
   move_stage(0,speed); //default position
   absolute_pos = 0;
+  Serial.print("Absolute position: ");
+  Serial.println(absolute_pos);
 }
 
 // sammy's home made code

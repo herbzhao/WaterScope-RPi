@@ -51,7 +51,9 @@ def initialise_serial_connection():
             Arduinos.serial_controllers[name].serial_connect(
                 port_names=serial_controllers_config[name]['port_names'], 
                 baudrate=serial_controllers_config[name]['baudrate'])
-            Arduinos.serial_controllers[name].serial_read_threading(options=serial_controllers_config[name]['serial_read_options'])
+            Arduinos.serial_controllers[name].serial_read_threading(
+                options=serial_controllers_config[name]['serial_read_options'], 
+                parsers=serial_controllers_config[name]['serial_read_parsers'])
 
 def parse_serial_time_temp():
     # synchronise the arduino_time
@@ -59,7 +61,6 @@ def parse_serial_time_temp():
     try:
         time_value = Arduinos.serial_controllers['waterscope'].log['time'][-1]
         temp_value = Arduinos.serial_controllers['waterscope'].log['temp'][-1]
-        # print('temp: {}'.format(temp_value) )
 
     except (IndexError, KeyError, AttributeError): 
         time_value = 0
@@ -181,9 +182,17 @@ def serial_time_temp():
     # return jsonify({'time_value':time_value, 'temp_value':temp_value})
     return jsonify({'x':time_value_formatted, 'date': str(date), 'hour':hour, 'minute': minute, 'second': second, 'y':temp_value})
 
+''' Used to identify whether motor is busy ''' 
+@app.route('/waterscope_motor_status')
+def check_waterscope_motor_status():
+    # synchronise the arduino_time
+    initialise_serial_connection()
+    motor_idle = Arduinos.serial_controllers['waterscope'].motor_idle
+    absolute_pos = Arduinos.serial_controllers['waterscope'].absolute_pos
+    # NOTE: initilaise the motor_idle to be true
+    return jsonify({'motor_idle':motor_idle, 'absolute_pos': absolute_pos})
 
-
-# TODO: have a fine focus and coarse focus
+# TODO: have a fine focus and coarse focus t
 @app.route('/auto_focus')
 def auto_focus():
     # swap to opencv and then start the auto focusing

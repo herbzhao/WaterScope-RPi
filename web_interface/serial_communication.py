@@ -131,10 +131,31 @@ class serial_controller_class():
 
     def serial_output_parse(self, options=[]):
         ''' parsing the arduino output for logging. motor control purposes'''
-        if 'motor' in options:
+        if 'fergboard_motor' in options:
             # a 'FIN' flag is used to indicate the motor movement is finished, this needs to be specified in Arduino
             if 'FIN' in self.serial_output:
                 self.fin_flag.append('FIN')
+
+        if 'waterscope_motor' in options:
+            try: 
+                self.motor_idle
+            except AttributeError:
+                self.motor_idle = True
+            try: 
+                self.absolute_pos
+            except AttributeError:
+                self.absolute_pos = 0
+                
+            # "Moving the motor, stop accepting commands"
+            # "Finished the movement in"
+            #  waterscope_moving tag can be used to determine the sleep duration
+            if 'Moving the motor' in self.serial_output:
+                self.motor_idle = False
+            elif 'Finished the movement' in self.serial_output:
+                self.motor_idle = True
+            elif 'Absolute position' in self.serial_output:
+                # Absolute position: 1500
+                self.absolute_pos = float(self.serial_output.replace('Absolute position: ', ''))
 
         if 'temperature' in options:
             # store temperature and time in a log dict
@@ -159,7 +180,7 @@ class serial_controller_class():
                 self.last_logged_heating_effort = self.log['heating_effort'][-1]
 
 
-    def serial_read(self, options=['quiet'], parser_option=['motor', 'temperature']):
+    def serial_read(self, options=['quiet'], parsers=['motor', 'temperature', 'waterscope_motor']):
         self.stop_threading = False
         # set a default tag
         while True:
@@ -173,7 +194,7 @@ class serial_controller_class():
                     try:
                         self.serial_output = self.ser.readline().decode()                        
                         # parse the output directly for other purposes
-                        self.serial_output_parse(options = parser_option)
+                        self.serial_output_parse(options = parsers)
                         # decide whether to print the output or store in a txt file
                         if options[0] == 'quiet':
                             pass
@@ -217,10 +238,10 @@ class serial_controller_class():
                         # when arduino serial boots up, it sometimes have error
                         pass
                 
-    def serial_read_threading(self, options=['quiet']):
+    def serial_read_threading(self, options=['quiet'], parsers=['motor', 'temperature', 'waterscope_motor']):
         ''' used to start threading for reading the serial'''
         # now threading1 runs regardless of user input
-        self.threading_ser_read = threading.Thread(target=self.serial_read, args=[options])
+        self.threading_ser_read = threading.Thread(target=self.serial_read, args=[options, parsers])
         self.threading_ser_read.daemon = True
         self.threading_ser_read.start()
         time.sleep(0)

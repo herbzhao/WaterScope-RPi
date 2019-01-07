@@ -44,6 +44,8 @@ class Camera(BaseCamera):
         # Change: 75 or 85 to see the streaming quality
         cls.stream_quality = 85
         cls.starting_time = datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S')
+        # default motor Z value
+        cls.absolute_z = 0
 
     @classmethod
     def update_camera_setting(cls):
@@ -217,13 +219,18 @@ FPS: {}
     @classmethod
     def move_stage(cls, distance=100):
         # DEBUG: the bracket will be parsed into %28 and mess up with the code
-        if distance == 'home':
-            url = "http://10.0.0.1:5000/send_serial/?value=home&board=waterscope"
-            cls.absolute_z = 0
-        else:
-            url = "http://10.0.0.1:5000/send_serial/?value=move({0})&board=waterscope".format(distance)
-            time.sleep(distance/50)
-        requested_url = requests.get(url)
+        # send serial command to move the motor
+        move_motor_url = "http://10.0.0.1:5000/send_serial/?value=move({0})&board=waterscope".format(distance)
+        requests.get(move_motor_url)
+        while True:
+            time.sleep(50)
+            print("HELLO")
+            waterscope_motor_status_url = "http://10.0.0.1:5000/waterscope_motor_status"
+            waterscope_motor_status = requests.get(waterscope_motor_status_url)
+            print(waterscope_motor_status)
+            if waterscope_motor_status['motor_idle'] is True:
+                break
+                
         # print(requested_url.url)
     
     # Change:  Sync above 
@@ -237,6 +244,8 @@ FPS: {}
             # cls.thresholding,
             cls.variance_of_laplacian, 
         ]
+        cls.move_stage(2000)
+        cls.move_stage(-500)
 
     # openCV functions
     @classmethod
