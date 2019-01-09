@@ -218,20 +218,25 @@ FPS: {}
 
     @classmethod
     def move_stage(cls, distance=100):
-        # DEBUG: the bracket will be parsed into %28 and mess up with the code
         # send serial command to move the motor
-        move_motor_url = "http://10.0.0.1:5000/send_serial/?value=move({0})&board=waterscope".format(distance)
+        # DEBUG: the bracket will be parsed into %28 and mess up with the code        
+        if distance == 'home':
+            move_motor_url = "http://10.0.0.1:5000/send_serial/?value=home&board=waterscope"
+        else:
+            move_motor_url = "http://10.0.0.1:5000/send_serial/?value=move({0})&board=waterscope".format(distance)
         requests.get(move_motor_url)
+        # a delay to allow serial command to be executed
+        time.sleep(1)
         while True:
-            time.sleep(50)
-            print("HELLO")
+            # print('waiting for motor to finish movement')
             waterscope_motor_status_url = "http://10.0.0.1:5000/waterscope_motor_status"
-            waterscope_motor_status = requests.get(waterscope_motor_status_url)
-            print(waterscope_motor_status)
+            waterscope_motor_status = requests.get(waterscope_motor_status_url).json()
+            cls.absolute_z = waterscope_motor_status['absolute_z']
+            time.sleep(0.1)
             if waterscope_motor_status['motor_idle'] is True:
+                # print('motor is ready')
                 break
                 
-        # print(requested_url.url)
     
     # Change:  Sync above 
     @classmethod
@@ -244,8 +249,7 @@ FPS: {}
             # cls.thresholding,
             cls.variance_of_laplacian, 
         ]
-        cls.move_stage(2000)
-        cls.move_stage(-500)
+
 
     # openCV functions
     @classmethod
@@ -294,25 +298,22 @@ FPS: {}
 
     @classmethod
     def variance_of_laplacian(cls):
-        ''' focus detection ''' 
+        ''' focus calculation ''' 
         if cls.ROI == []:
             cls.ROI = cls.image
         # compute the Laplacian of the image and then return the focus
         # measure, which is simply the variance of the Laplacian
         cls.focus_value = cv2.Laplacian(cls.ROI, cv2.CV_64F).var()
-        focus_text = 'f: {:.4}'.format(cls.focus_value)
+        focus_text = 'f: {:.2f}'.format(cls.focus_value)
         # CV font
         font = cv2.FONT_HERSHEY_DUPLEX
         cv2.putText(
-            cls.image,focus_text,
-            (int(cls.image.shape[0]*0.2), int(cls.image.shape[1]*0.1)), 
+            cls.image, focus_text,
+            (int(cls.image.shape[0]*0.1), int(cls.image.shape[1]*0.1)), 
             font, 2, (0, 0, 255))
-        # TODO: Add a box with dark colour?
+    
 
-        
-    @classmethod
-    def auto_focus(cls):
-
+    def gss_method():
         def gss(f, a, b, tolerance):
             """     Golden section search.
 
@@ -357,18 +358,6 @@ FPS: {}
             else:
                 return (c,b)
 
-        def move_stage_to_z(new_z):
-            # move to the absolute z
-            distance = new_z - cls.absolute_z
-            cls.move_stage(new_z)
-            cls.absolute_z = new_z
-
-        def focus_measure_at_z(new_z):
-            move_stage_to_z(new_z)
-            focus_value =  cls.focus_value
-            return focus_value
-
-        # NOTE: code runs from here
         # smaller z value =  higher the stage
         # the focus is roughly around 5000
         # the total travel is 7000
@@ -382,7 +371,53 @@ FPS: {}
         # coarse scan using gss - output the smaller region for fine focusing
         (sweep_start, sweep_end) = gss(focus_measure_at_z, zmin, zmax, sweep_threshold)
 
-        # fine sweep - existing code?
+    @classmethod
+    def auto_focus(cls):
+        def move_stage_to_z(new_z):
+            distance = new_z - cls.absolute_z
+            cls.move_stage(distance)
+
+        def focus_measure_at_z(new_z):
+            move_stage_to_z(new_z)
+            # wait for 1 second to stablise the mechanical stage
+            time.sleep(2)
+            focus_value =  cls.focus_value
+            print("Focus value at {0} is: {1}".format(new_z, focus_value))
+            return focus_value
+
+        def create_z_scan_map(central_point = 5000, range = 1000, nubmer_of_points = 10):
+            " using a central point and scan up and down with half of the range"
+            z_scan_map = np.linspace(central_point-range/2, central_point+range/2, nubmer_of_points)
+            for new_z in z_scan_map:
+                focus_value = focus_measure_at_z(new_z)
+                # use 2 arrays to keep record of z and focus
+                cls.z_scan_values.append(new_z)
+                cls.z_scan_focus_values.append(focus_value)
+
+        def iterate_z_scan_map(starting_z=5000):
+            ' automatically create several scan map from coarse to fine, using first guess and next best focus point' 
+            start_time = time.time()
+            # first scan is based on the best guess
+            create_z_scan_map(starting_z, 1000, 5)
+            # Then finer scan  use the best focus value as the index for the z value
+            for z_scan_range in [500, 250, 100]:
+                local_optimal_z = cls.z_scan_values[cls.z_scan_focus_values.index(max(cls.z_scan_focus_values))]
+                create_z_scan_map(local_optimal_z, z_scan_range, 5)
+            
+            global_optimal_z = cls.z_scan_values[cls.z_scan_focus_values.index(max(cls.z_scan_focus_values))]
+            move_stage_to_z(global_optimal_z)
+            print('find the focus in {:.2f} seconds at Z: {}'.format(time.time() - start_time), global_optimal_z)
+
+        # NOTE: Autofocus code runs from here
+        # allow some time for system to be ready
+        time.sleep(5)
+        # home the stage for absolute_z
+        cls.move_stage('home')
+        #  a dictionary to record different z with its corresponding focus value
+        cls.z_scan_values = []
+        cls.z_scan_focus_values = []
+        iterate_z_scan_map()
+        print('you are at the best focus now')
 
     @classmethod
     def start_auto_focus_thread(cls):
@@ -398,8 +433,8 @@ FPS: {}
         # run this initialisation method
         cls.initialisation()
         cls.initialise_cv()
-        cls.start_auto_focus_thread()
-        
+        # cls.start_auto_focus_thread()
+
         with picamera.PiCamera() as cls.camera:
             # let camera warm up
             time.sleep(0.1)

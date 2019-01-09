@@ -142,9 +142,9 @@ class serial_controller_class():
             except AttributeError:
                 self.motor_idle = True
             try: 
-                self.absolute_pos
+                self.absolute_z
             except AttributeError:
-                self.absolute_pos = 0
+                self.absolute_z = 0
                 
             # "Moving the motor, stop accepting commands"
             # "Finished the movement in"
@@ -155,7 +155,7 @@ class serial_controller_class():
                 self.motor_idle = True
             elif 'Absolute position' in self.serial_output:
                 # Absolute position: 1500
-                self.absolute_pos = float(self.serial_output.replace('Absolute position: ', ''))
+                self.absolute_z = float(self.serial_output.replace('Absolute position: ', ''))
 
         if 'temperature' in options:
             # store temperature and time in a log dict

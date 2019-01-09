@@ -123,11 +123,13 @@ def settings_io():
 
 
 @app.route('/change_stream_method/')
-def change_stream_method(option='OpenCV'):
+def change_stream_method(option=''):
     # DEBUG: why do I need the global Camera?
     global Camera
-    new_stream_method = request.args.get('stream_method', 'PiCamera')
-    option = new_stream_method
+    # when not specify option, use the request
+    if option is '':
+        new_stream_method = request.args.get('stream_method', 'PiCamera')
+        option = new_stream_method
 
     if option == 'OpenCV':
         print('Change the stream method to OpenCV')
@@ -188,9 +190,10 @@ def check_waterscope_motor_status():
     # synchronise the arduino_time
     initialise_serial_connection()
     motor_idle = Arduinos.serial_controllers['waterscope'].motor_idle
-    absolute_pos = Arduinos.serial_controllers['waterscope'].absolute_pos
+    absolute_z = Arduinos.serial_controllers['waterscope'].absolute_z
     # NOTE: initilaise the motor_idle to be true
-    return jsonify({'motor_idle':motor_idle, 'absolute_pos': absolute_pos})
+    return jsonify({'motor_idle':motor_idle, 'absolute_z': absolute_z})
+
 
 # TODO: have a fine focus and coarse focus t
 @app.route('/auto_focus')
@@ -200,7 +203,7 @@ def auto_focus():
     change_stream_method(option='OpenCV')
     initialise_serial_connection()
     # start auto focusing
-    Camera.auto_focus_thread()
+    Camera.start_auto_focus_thread()
     return render_template('index.html')
 
 

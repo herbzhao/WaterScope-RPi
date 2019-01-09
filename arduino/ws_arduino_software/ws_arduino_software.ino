@@ -22,7 +22,7 @@ DallasTemperature sensors(&oneWire);
 #define NUMPIXELS  12
 Adafruit_NeoPixel LED = Adafruit_NeoPixel(NUMPIXELS, LED_PIN, NEO_GRB + NEO_KHZ800);
 // starting LED colour
-int r=20, g=20, b=20;
+int r=5, g=5, b=5;
 
 
 //motor controls

@@ -1,2 +1,2 @@
-sudo date --set '2018-01-05 18:09:00 GMT'
+sudo date --set '2018-01-09 10:49:00 IST'
 
