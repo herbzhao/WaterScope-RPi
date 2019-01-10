@@ -44,8 +44,8 @@ class Camera(BaseCamera):
         # Change: 75 or 85 to see the streaming quality
         cls.stream_quality = 85
         cls.starting_time = datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S')
-        # default motor Z value
-        cls.absolute_z = 0
+        # URL for requests
+        cls.base_URL = "http://localhost:5000"
 
     @classmethod
     def update_camera_setting(cls):
@@ -221,15 +221,15 @@ FPS: {}
         # send serial command to move the motor
         # DEBUG: the bracket will be parsed into %28 and mess up with the code        
         if distance == 'home':
-            move_motor_url = "http://10.0.0.1:5000/send_serial/?value=home&board=waterscope"
+            move_motor_url = cls.base_URL + "/send_serial/?value=home&board=waterscope"
         else:
-            move_motor_url = "http://10.0.0.1:5000/send_serial/?value=move({0})&board=waterscope".format(distance)
+            move_motor_url = cls.base_URL + "/send_serial/?value=move({0})&board=waterscope".format(distance)
         requests.get(move_motor_url)
         # a delay to allow serial command to be executed
         time.sleep(1)
         while True:
             # print('waiting for motor to finish movement')
-            waterscope_motor_status_url = "http://10.0.0.1:5000/waterscope_motor_status"
+            waterscope_motor_status_url = cls.base_URL+ "/waterscope_motor_status"
             waterscope_motor_status = requests.get(waterscope_motor_status_url).json()
             cls.absolute_z = waterscope_motor_status['absolute_z']
             time.sleep(0.1)
@@ -418,6 +418,9 @@ FPS: {}
         cls.z_scan_focus_values = []
         iterate_z_scan_map()
         print('you are at the best focus now')
+        auto_focus_URL = cls.base_URL + '/auto_focus/?status=done'
+        requests.get(auto_focus_URL)
+
 
     @classmethod
     def start_auto_focus_thread(cls):

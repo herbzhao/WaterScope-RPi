@@ -195,16 +195,21 @@ def check_waterscope_motor_status():
     return jsonify({'motor_idle':motor_idle, 'absolute_z': absolute_z})
 
 
-# TODO: have a fine focus and coarse focus t
-@app.route('/auto_focus')
+@app.route('/auto_focus/')
 def auto_focus():
     # swap to opencv and then start the auto focusing
     # NOTE: Do we need to use the URL rather than calling the function directly
-    change_stream_method(option='OpenCV')
-    initialise_serial_connection()
-    # start auto focusing
-    Camera.start_auto_focus_thread()
-    return render_template('index.html')
+    status = request.args.get('status', '')
+    if status == 'start':
+        change_stream_method(option='OpenCV')
+        initialise_serial_connection()
+        # start auto focusing
+        Camera.start_auto_focus_thread()
+        return render_template('index.html')
+    elif status == 'finished':
+        return jsonify({'status': 'done'})
+    else:
+        return render_template('index.html')
 
 
 # input filename and filename options and method
@@ -222,6 +227,7 @@ def parse_filename_and_acquire_data(filename, method):
     # to set pi's time: sudo date -s '2017-02-05 15:30:00'
     elif 'raspberry_pi_time' in filename:
         time_value_formatted, temp_value = parse_serial_time_temp()
+        # DEBUG: alfred says this is a problem
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         # allowing other appendix
     filename = now + '_T{}'.format(temp_value) + filename.replace('raspberry_pi_time', '')
