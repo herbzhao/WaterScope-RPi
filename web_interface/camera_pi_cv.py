@@ -398,15 +398,17 @@ FPS: {}
             ' automatically create several scan map from coarse to fine, using first guess and next best focus point' 
             start_time = time.time()
             # first scan is based on the best guess
-            create_z_scan_map(starting_z, 1000, 5)
+            create_z_scan_map(starting_z, 1000, 1)
             # Then finer scan  use the best focus value as the index for the z value
-            for z_scan_range in [500, 250, 100]:
+            # for z_scan_range in [500, 250, 100]:
+            for z_scan_range in [100]:
+
                 local_optimal_z = cls.z_scan_values[cls.z_scan_focus_values.index(max(cls.z_scan_focus_values))]
                 create_z_scan_map(local_optimal_z, z_scan_range, 5)
             
             global_optimal_z = cls.z_scan_values[cls.z_scan_focus_values.index(max(cls.z_scan_focus_values))]
             move_stage_to_z(global_optimal_z)
-            print('find the focus in {:.2f} seconds at Z: {}'.format(time.time() - start_time), global_optimal_z)
+            print('find the focus in {0:.2f} seconds at Z: {1}'.format(time.time() - start_time, global_optimal_z))
 
         # NOTE: Autofocus code runs from here
         # allow some time for system to be ready
@@ -418,7 +420,7 @@ FPS: {}
         cls.z_scan_focus_values = []
         iterate_z_scan_map()
         print('you are at the best focus now')
-        auto_focus_URL = cls.base_URL + '/auto_focus/?status=done'
+        auto_focus_URL = cls.base_URL + '/auto_focus/?command=done'
         requests.get(auto_focus_URL)
 
 

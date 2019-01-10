@@ -199,17 +199,25 @@ def check_waterscope_motor_status():
 def auto_focus():
     # swap to opencv and then start the auto focusing
     # NOTE: Do we need to use the URL rather than calling the function directly
-    status = request.args.get('status', '')
-    if status == 'start':
+    command = request.args.get('command', '')
+    try:
+        Camera.auto_focus_status
+    except AttributeError:
+        Camera.auto_focus_status = 'Waiting for auto focusing'
+
+    if command == 'start':
         change_stream_method(option='OpenCV')
         initialise_serial_connection()
         # start auto focusing
         Camera.start_auto_focus_thread()
+        Camera.auto_focus_status = 'auto focusing...'
+        return render_template('index.html') 
+    elif command == 'done':
+        Camera.auto_focus_status = 'auto focus completed'
         return render_template('index.html')
-    elif status == 'finished':
-        return jsonify({'status': 'done'})
     else:
-        return render_template('index.html')
+        return jsonify({'auto_focus_status': Camera.auto_focus_status})
+
 
 
 # input filename and filename options and method
@@ -228,7 +236,7 @@ def parse_filename_and_acquire_data(filename, method):
     elif 'raspberry_pi_time' in filename:
         time_value_formatted, temp_value = parse_serial_time_temp()
         # DEBUG: alfred says this is a problem
-        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        now = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
         # allowing other appendix
     filename = now + '_T{}'.format(temp_value) + filename.replace('raspberry_pi_time', '')
 
