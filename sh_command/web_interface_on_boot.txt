@@ -1,0 +1,2 @@
+crontab -u pi -e
+@reboot bash /home/pi/WaterScope-RPi/sh_command/start_interface.sh

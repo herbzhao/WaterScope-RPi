@@ -2,9 +2,9 @@
 double PID_setpoint, PID_input, PID_output;
 //Define the aggressive and conservative Tuning Parameters
 // https://robotics.stackexchange.com/questions/9786/how-do-the-pid-parameters-kp-ki-and-kd-affect-the-heading-of-a-differential
-double Kp=18, Ki=20, Kd=1;
+double Kp=18, Ki=1, Kd=1;
 //Specify the links and initial tuning parameters
-PID myPID(&PID_input, &PID_output, &PID_setpoint, Kp, Ki, Kd, REVERSE);
+PID myPID(&PID_input, &PID_output, &PID_setpoint, Kp, Ki, Kd, DIRECT);
 
 
 #include <OneWire.h>
@@ -14,7 +14,6 @@ OneWire oneWire(ONE_WIRE_BUS);
 //OneWire oneWire1(ONE_WIRE_BUS_2);
 // Pass our oneWire reference to Dallas Temperature.
 DallasTemperature sensors(&oneWire);
-int delayval = 500; // delay for half a second
 
 
 // LEDs
@@ -23,7 +22,7 @@ int delayval = 500; // delay for half a second
 #define NUMPIXELS  12
 Adafruit_NeoPixel LED = Adafruit_NeoPixel(NUMPIXELS, LED_PIN, NEO_GRB + NEO_KHZ800);
 // starting LED colour
-int r=20, g=20, b=20;
+int r=5, g=5, b=5;
 
 
 //motor controls
@@ -108,8 +107,6 @@ void loop(void){
   delay(delay_time*1000);
 }
 
-
-
 void serial_condition(String serial_input){
   //Serial.println(serial_input);
   // trim is needed as there is blank space and line break
@@ -128,10 +125,14 @@ void serial_condition(String serial_input){
   // move=600 
   // positive is toward the camera, negative is toward the endstop
   else if (serial_input.substring(0,4) == "move"){
-    Serial.print("Move by: ");
-    Serial.println(serial_input.substring(5).toFloat());
     int distance = serial_input.substring(5).toFloat();
+    Serial.print("Move by: ");
+    Serial.println(distance);
+    // in python, using this line to start sleep
+    Serial.println("Moving the motor, stop accepting commands");
     move_stage(distance, speed);
+    // this sentence indicated the motor has finished movement
+    Serial.println("Finished the movement");
   }
 
   // speed=500
@@ -146,7 +147,7 @@ void serial_condition(String serial_input){
   }
 
   else if(serial_input == "pos"){
-    Serial.print("Current position is: ");
+    Serial.print("Absolute position: ");
     Serial.println(absolute_pos);
   }
 
@@ -155,10 +156,13 @@ void serial_condition(String serial_input){
       small_stepper.step(0);
   }
 
-  //
   else if(serial_input == "home"){
-    Serial.println("homing");
+    Serial.println("Homing ...");
+    // in python, using this line to start sleep
+    Serial.println("Moving the motor, stop accepting commands");
     home_stage();
+    // this sentence indicated the motor has finished movement
+    Serial.println("Finished the movement");
   }
 
   // LED_RGB=255,255,255
@@ -206,29 +210,24 @@ void move_stage(float distance, float speed) {
     else {
       small_stepper.setSpeed(speed);
       small_stepper.step(distance);
+      absolute_pos = absolute_pos + distance;
     }
-    absolute_pos = absolute_pos + distance;
-    Serial.println("done");
     Serial.print("Absolute position: ");
     Serial.println(absolute_pos);
 }
 
-
-
-void home_stage() {
+void home_stage() {                              
   while (digitalRead(END_STOP_PIN) == HIGH) {
       // home at a defined speed?
-      Serial.println("Homing stage, please wait ");
       move_stage(-500, 1000);
   }
   Serial.println("Stage homed, reset the absolute position");
   // after hitting the end_stop, reset the absolute position
   move_stage(0,speed); //default position
   absolute_pos = 0;
+  Serial.print("Absolute position: ");
+  Serial.println(absolute_pos);
 }
-
-
-
 
 // sammy's home made code
 String getValue(String data, char separator, int index)

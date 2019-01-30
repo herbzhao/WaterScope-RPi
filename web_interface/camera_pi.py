@@ -11,12 +11,17 @@ import numpy as np
 # from threading import Condition
 import threading
 import yaml
+# use requests to send command for arduino via the web interface
+import requests
 
 # custom library
 from base_camera import BaseCamera
 # Richard's fix gain
 from set_picamera_gain import set_analog_gain, set_digital_gain
 
+# opencv specific import
+# import cv2
+# import math
 
 class Camera(BaseCamera):
     @classmethod
@@ -26,6 +31,7 @@ class Camera(BaseCamera):
         cls.fps = 15
         # reduce the fps for video recording to reduce the file size
         cls.video_recording_fps = 3
+        # for OPENCV we use a lower resolution
         cls.stream_resolution = (1648,1232)
         cls.video_resolution = (824, 616)
         cls.image_resolution = (3280,2464)
@@ -34,6 +40,8 @@ class Camera(BaseCamera):
         # Change: 75 or 85 to see the streaming quality
         cls.stream_quality = 85
         cls.starting_time = datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S')
+        # URL for requests
+        cls.base_URL = "http://localhost:5000"
 
     @classmethod
     def update_camera_setting(cls):
@@ -189,7 +197,8 @@ FPS: {}
         elif resolution == 'high_res':
             print('taking high_res image')
             # when taking photos at high res, need to stop the video channel first
-            cls.camera.stop_recording(splitter_port=1)
+            # cls.camera.stop_recording(splitter_port=1)
+            cls.camera.stop_recording()
             time.sleep(0)
             cls.camera.resolution = cls.image_resolution
             # Remove bayer = Ture if dont care about RAW
@@ -204,6 +213,26 @@ FPS: {}
 
         cls.image_seq = cls.image_seq + 1
 
+    @classmethod
+    def move_stage(cls, distance=100):
+        # send serial command to move the motor
+        # DEBUG: the bracket will be parsed into %28 and mess up with the code        
+        if distance == 'home':
+            move_motor_url = cls.base_URL + "/send_serial/?value=home&board=waterscope"
+        else:
+            move_motor_url = cls.base_URL + "/send_serial/?value=move({0})&board=waterscope".format(distance)
+        requests.get(move_motor_url)
+        # a delay to allow serial command to be executed
+        time.sleep(1)
+        while True:
+            # print('waiting for motor to finish movement')
+            waterscope_motor_status_url = cls.base_URL+ "/waterscope_motor_status"
+            waterscope_motor_status = requests.get(waterscope_motor_status_url).json()
+            cls.absolute_z = waterscope_motor_status['absolute_z']
+            time.sleep(0.1)
+            if waterscope_motor_status['motor_idle'] is True:
+                # print('motor is ready')
+                break
     
     # Change:  Sync bove 
     @staticmethod

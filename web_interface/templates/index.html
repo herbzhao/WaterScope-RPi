@@ -60,7 +60,7 @@
 
                         <v-tooltip top>
                             <!-- slot is needed for tooltip to work? -->
-                            <v-btn slot="activator" color="primary" fab @click='take_image()'>
+                            <v-btn slot="activator" color="primary" fab @click='take_image("normal", "raspberry_pi_time")'>
                                 <v-icon>photo_camera</v-icon>
                             </v-btn>
                             <span>Take a low-res image (hkey: G) </span>
@@ -135,7 +135,16 @@
                             </v-btn-toggle>
                             <span>Use OpenCV (Slow, incorporated other functions)</span>
                         </v-tooltip>
-                    </v-flex>
+
+
+                    <v-tooltip top>
+                            <v-btn slot="activator"  @click='auto_focus' >
+                                <span>Auto focus</span>
+                            </v-btn>
+                        <span>Start auto focus in opencv mode</span>
+                    </v-tooltip>
+                </v-flex>
+
 
                     <v-flex xs3>
                         <!-- NOTE: zoom slider -->
@@ -169,14 +178,6 @@
 
                     <!-- NOTE: sharing the same v-model can ensure only one toggle at a time-->
                     <v-flex xs4>
-                        <v-tooltip top>
-                            <v-btn-toggle v-model="timelapse_switch" slot="activator">
-                                <v-btn flat color="black" large value="timelapse">
-                                    <span>Timelapse</span>
-                                </v-btn>
-                            </v-btn-toggle>
-                            <span> Normal timelapse</span>
-                        </v-tooltip>
 
                         <v-tooltip top>
                             <v-btn-toggle v-model="timelapse_switch" slot="activator">
@@ -184,16 +185,26 @@
                                     <span>WaterScope timelapse</span>
                                 </v-btn>
                             </v-btn-toggle>
-                            <span>WaterScope timelapse which turns on/off LED before/after image taking</span>
+                            <span>Timelapse which turns on/off LED before/after image taking</span>
                         </v-tooltip>
 
                         <v-tooltip top>
                             <v-btn-toggle v-model="timelapse_switch" slot="activator">
-                                <v-btn flat color="blue" large value="waterscope_timelapse_nohup">
-                                    <span>ws nohup</span>
+                                <v-btn flat color="black" large value="timelapse">
+                                    <span>TL</span>
                                 </v-btn>
                             </v-btn-toggle>
-                            <span>WaterScope timelapse which turns on/off LED before/after image taking in background</span>
+                            <span> Normal timelapse</span>
+                        </v-tooltip>
+
+
+                        <v-tooltip top>
+                            <v-btn-toggle v-model="timelapse_switch" slot="activator">
+                                <v-btn flat color="red" large value="stop_timelapse">
+                                    <span>Stop timelapse</span>
+                                </v-btn>
+                            </v-btn-toggle>
+                            <span> Stop the running timelapse</span>
                         </v-tooltip>
 
 
@@ -248,5 +259,7 @@
 <script type=text/javascript src="{{url_for('static', filename='javascript/main.js') }}"></script>
 <!-- Change: this is for serial plot window -->
 <script   type=text/javascript src="{{url_for('static', filename='javascript/plotting.js') }}"></script>
+<script   type=text/javascript src="{{url_for('static', filename='javascript/get_user_time.js') }}"></script>
+
 
 </html>

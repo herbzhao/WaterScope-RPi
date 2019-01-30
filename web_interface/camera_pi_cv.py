@@ -11,6 +11,8 @@ import numpy as np
 # from threading import Condition
 import threading
 import yaml
+# use requests to send command for arduino via the web interface
+import requests
 
 # custom library
 from base_camera import BaseCamera
@@ -19,9 +21,7 @@ from set_picamera_gain import set_analog_gain, set_digital_gain
 
 # opencv specific import
 import cv2
-from serial_communication import serial_controller_class
-
-
+import math
 
 class Camera(BaseCamera):
     @classmethod
@@ -31,6 +31,7 @@ class Camera(BaseCamera):
         cls.fps = 15
         # reduce the fps for video recording to reduce the file size
         cls.video_recording_fps = 3
+        # for OPENCV we use a lower resolution
         cls.stream_resolution = (1648,1232)
         cls.video_resolution = (824, 616)
         cls.image_resolution = (3280,2464)
@@ -39,6 +40,8 @@ class Camera(BaseCamera):
         # Change: 75 or 85 to see the streaming quality
         cls.stream_quality = 85
         cls.starting_time = datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S')
+        # URL for requests
+        cls.base_URL = "http://localhost:5000"
 
     @classmethod
     def update_camera_setting(cls):
@@ -194,7 +197,8 @@ FPS: {}
         elif resolution == 'high_res':
             print('taking high_res image')
             # when taking photos at high res, need to stop the video channel first
-            cls.camera.stop_recording(splitter_port=1)
+            # cls.camera.stop_recording(splitter_port=1)
+            cls.camera.stop_recording()
             time.sleep(0)
             cls.camera.resolution = cls.image_resolution
             # Remove bayer = Ture if dont care about RAW
@@ -209,36 +213,42 @@ FPS: {}
 
         cls.image_seq = cls.image_seq + 1
 
+    @classmethod
+    def move_stage(cls, distance=100):
+        # send serial command to move the motor
+        # DEBUG: the bracket will be parsed into %28 and mess up with the code        
+        if distance == 'home':
+            move_motor_url = cls.base_URL + "/send_serial/?value=home&board=waterscope"
+        else:
+            move_motor_url = cls.base_URL + "/send_serial/?value=move({0})&board=waterscope".format(distance)
+        requests.get(move_motor_url)
+        # a delay to allow serial command to be executed
+        time.sleep(1)
+        while True:
+            # print('waiting for motor to finish movement')
+            waterscope_motor_status_url = cls.base_URL+ "/waterscope_motor_status"
+            waterscope_motor_status = requests.get(waterscope_motor_status_url).json()
+            cls.absolute_z = waterscope_motor_status['absolute_z']
+            time.sleep(0.1)
+            if waterscope_motor_status['motor_idle'] is True:
+                # print('motor is ready')
+                break
+                
     
     # Change:  Sync above 
     @classmethod
-    def init_cv(cls):
+    def initialise_cv(cls):
         ''' which functions to use during the opencv stream''' 
         cls.ROI = []
         cls.cv_libraries = [
             cls.define_ROI,
-            #cv_stream.edge_detection,
+            # cls.edge_detection,
+            # cls.thresholding,
             cls.variance_of_laplacian, 
         ]
 
+
     # openCV functions
-    @classmethod
-    def variance_of_laplacian(cls):
-        ''' focus detection ''' 
-        if cls.ROI == []:
-            cls.ROI = cls.image
-        # compute the Laplacian of the image and then return the focus
-        # measure, which is simply the variance of the Laplacian
-        cls.focus_value = cv2.Laplacian(cls.ROI, cv2.CV_64F).var()
-        focus_text = 'f: {}'.format(cls.focus_value)
-        # CV font
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        cv2.putText(
-            cls.image,focus_text,
-            (int(cls.image.shape[0]*0.2), int(cls.image.shape[1]*0.1)), 
-            font, 1,(255,255,255))
-
-
     @classmethod
     def edge_detection(cls):
         # do some modification
@@ -271,173 +281,167 @@ FPS: {}
 
 
     @classmethod
-    def thresholding(cls, image):
+    def thresholding(cls):
         # do some modification
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        # NOTE: it seems like the thresholding is better to do not in RGB scale
+        gray = cv2.cvtColor(cls.image, cv2.COLOR_BGR2GRAY)
         ret,thresh1 = cv2.threshold(gray,127,255,cv2.THRESH_BINARY)
         ret,thresh2 = cv2.threshold(gray,127,255,cv2.THRESH_BINARY_INV)
         ret,thresh3 = cv2.threshold(gray,127,255,cv2.THRESH_TRUNC)
         ret,thresh4 = cv2.threshold(gray,127,255,cv2.THRESH_TOZERO)
         ret,thresh5 = cv2.threshold(gray,127,255,cv2.THRESH_TOZERO_INV)
-        image = thresh5
-        return image
-
-    @classmethod
-    def initialise_focusing(cls):
-        # numpy array to store everything
-        cls.motor_moving_time = 2
-        cls.step = 0
-        cls.focus_value = 0
-        cls.focus_values = np.array([])
-        cls.z_values = np.array([])
-        
-        # a plan for mapping
-        cls.define_steps_plan()
-
-        ''' arduino '''
-        # connect to serial
-        #global ser
-        cls.serial_controller = serial_controller_class()
-        cls.serial_controller.serial_read_threading()
-        # turn on the light
-        cls.serial_controller.send_arduino_command('66')
-        time.sleep(1)
-
-    # TODO: move the lists to another file
-    @classmethod
-    def define_steps_plan(cls):
-        cls.steps_plan = []
-        # first move up to the end stop and go back to centre
-        cls.steps_plan += [-8000, 4000]
-
-        # first plan: 2000
-        cls.steps_plan += [0]
-        cls.steps_plan += [500]*4
-        cls.steps_plan += [-4*500]
-        cls.steps_plan += [-500]*4
-        cls.steps_plan.append('phase 1 complete')
-
-
-        # first plan: 2000
-        cls.steps_plan += [200]*3
-        cls.steps_plan += [-3*200]
-        cls.steps_plan += [-200]*3
-        cls.steps_plan.append('phase 1 complete')
-
-        # finer plan : 800
-        cls.steps_plan += [100]*3
-        cls.steps_plan += [-3*100]
-        cls.steps_plan += [-100]*3
-        cls.steps_plan.append('phase 2 complete')
-
-        # finest plan: 400
-        cls.steps_plan += [50]*3
-        cls.steps_plan += [-3*50]
-        cls.steps_plan += [-50]*3
-        cls.steps_plan.append('phase 3 complete')
-
-
-        # finest plan: 200
-        cls.steps_plan += [25]*3
-        cls.steps_plan += [-3*25]
-        cls.steps_plan += [-25]*3
-        cls.steps_plan.append('phase 4 complete')
-        cls.steps_plan.append('auto-focusing complete')
+        cls.image = thresh5
     
-    @classmethod
-    def retrieve_mapping_step(cls):
-        cls.step = cls.steps_plan[0]
-        cls.steps_plan = cls.steps_plan[1:]
 
     @classmethod
-    def wait_for_motor_movement(cls):
-        ''' in the future can be something smarter '''
-        # change the waiting time based on step size
-        if abs(cls.step) >= 500:
-            cls.motor_moving_time = abs(cls.step)/100
-        elif abs(cls.step) <= 100:
-            cls.motor_moving_time = 2
-        else:
-            cls.motor_moving_time = abs(cls.step)/50
+    def variance_of_laplacian(cls):
+        ''' focus calculation ''' 
+        if cls.ROI == []:
+            cls.ROI = cls.image
+        # compute the Laplacian of the image and then return the focus
+        # measure, which is simply the variance of the Laplacian
+        cls.focus_value = cv2.Laplacian(cls.ROI, cv2.CV_64F).var()
+        focus_text = 'f: {:.2f}'.format(cls.focus_value)
+        # CV font
+        font = cv2.FONT_HERSHEY_DUPLEX
+        cv2.putText(
+            cls.image, focus_text,
+            (int(cls.image.shape[0]*0.1), int(cls.image.shape[1]*0.1)), 
+            font, 2, (0, 0, 255))
+    
 
-        print('waiting for {} seconds'.format(cls.motor_moving_time))
-        time.sleep(cls.motor_moving_time)
-        print('waiting finished')
+    def gss_method():
+        def gss(f, a, b, tolerance):
+            """     Golden section search.
+
+            Algorithm for finding the interval within which the mode (focus point) lies,
+            minimizing the number of function (focus_measure) evaluations.
+
+            We start with an interval [a,b]=[zmin,zmax] and return an interval [c,d] such
+            that d-c<=tol=sweep_threshold.
+
+            https://en.wikipedia.org/wiki/Golden-section_search """
+
+            (a,b)=(min(a,b),max(a,b))
+            h = b - a
+            if h <= tolerance: return (a,b)
+
+            # required steps to achieve tolerance
+            n = int(math.ceil(math.log(tolerance/h)/math.log(invphi)))
+
+            c = a + invphi2 * h
+            d = a + invphi * h
+            yc = f(c)
+            yd = f(d)
+
+            for k in np.xrange(n-1):
+                if yc < yd:
+                    b = d
+                    d = c
+                    yd = yc
+                    h = invphi*h
+                    c = a + invphi2 * h
+                    yc = f(c)
+                else:
+                    a = c
+                    c = d
+                    yc = yd
+                    h = invphi*h
+                    d = a + invphi * h
+                    yd = f(d)
+
+            if yc < yd:
+                return (a,d)
+            else:
+                return (c,b)
+
+        # smaller z value =  higher the stage
+        # the focus is roughly around 5000
+        # the total travel is 7000
+        zmin = 4000
+        zmax = 6000
+        sweep_threshold = 200
+
+        invphi = (math.sqrt(5) - 1) / 2 # 1/phi
+        invphi2 = (3 - math.sqrt(5)) / 2 # 1/phi^2
+
+        # coarse scan using gss - output the smaller region for fine focusing
+        (sweep_start, sweep_end) = gss(focus_measure_at_z, zmin, zmax, sweep_threshold)
 
     @classmethod
     def auto_focus(cls):
-        while True:
-            try: 
-                # wait for the imaging system to boot up
-                cls.image
-            # DEBUG: check if this will cause any problem that we move the except uphere
-            except AttributeError:
-                # wait for the imaging system to boot up
-                time.sleep(2)
+        def move_stage_to_z(new_z):
+            distance = new_z - cls.absolute_z
+            cls.move_stage(distance)
 
-                # start to change step when the system is boot up (focus value is non 0)
-                # when there are more planned steps, retrieve one by one and measure the focus
-                cls.retrieve_mapping_step()
-                # otherwise we just continue with mapping
-                if type(cls.step) is not str:   
-                    pass
+        def focus_measure_at_z(new_z):
+            move_stage_to_z(new_z)
+            # wait for 1 second to stablise the mechanical stage
+            time.sleep(2)
+            focus_value =  cls.focus_value
+            print("Focus value at {0} is: {1}".format(new_z, focus_value))
+            return focus_value
+
+        def create_z_scan_map(central_point = 5000, range = 1000, nubmer_of_points = 10):
+            " using a central point and scan up and down with half of the range"
+            z_scan_map = np.linspace(central_point-range/2, central_point+range/2, nubmer_of_points)
+            for new_z in z_scan_map:
+                focus_value = focus_measure_at_z(new_z)
+                # use 2 arrays to keep record of z and focus
+                cls.z_scan_values.append(new_z)
+                cls.z_scan_focus_values.append(focus_value)
+
+        def iterate_z_scan_map(starting_z=5000):
+            ' automatically create several scan map from coarse to fine, using first guess and next best focus point' 
+            start_time = time.time()
+            # first scan is based on the best guess
+            create_z_scan_map(starting_z, 1000, 5)
+            # Then finer scan  use the best focus value as the index for the z value
+            for z_scan_range in [500, 250, 100]:
+
+                local_optimal_z = cls.z_scan_values[cls.z_scan_focus_values.index(max(cls.z_scan_focus_values))]
+                create_z_scan_map(local_optimal_z, z_scan_range, 5)
             
-                # a string is sent when each phase finished.
-                # then we update the steps by going to local optimal
-                elif type(cls.step) is str:
-                    if cls.step != 'auto-focusing complete':
-                        z_max_focus = cls.z_values[np.argmax(cls.focus_values)]
-                        print('now moving to the local maxima: focus:{} , z: {}'.format(max(cls.focus_values), z_max_focus))
-                        cls.step = z_max_focus - cls.z_values[-1]
-                
-                    elif cls.step == 'auto-focusing complete':
-                        print('focus done! the optimal focus value is {}'.format(cls.focus_value))
-                        break 
+            global_optimal_z = cls.z_scan_values[cls.z_scan_focus_values.index(max(cls.z_scan_focus_values))]
+            move_stage_to_z(global_optimal_z)
+            print('find the focus in {0:.2f} seconds at Z: {1}'.format(time.time() - start_time, global_optimal_z))
 
-                # move
-                print('Z move: {}'.format(cls.step))
-                cls.serial_controller.send_arduino_command('move {}'.format(cls.step))
-                cls.wait_for_motor_movement()
-
-                # record the new position - initialisation
-                if len(cls.z_values) == 0:
-                    cls.z_values = np.append(cls.z_values, 0)
-                else:
-                    cls.z_values = np.append(cls.z_values, cls.z_values[-1]+cls.step)
-                
-                # record the new focus value at new z_value
-                # the focus_value is calculated in the main thread
-                cls.focus_values = np.append(cls.focus_values, cls.focus_value)
-
-                print('current position: {}'.format(cls.z_values[-1]))
-                print('focus: {}'.format(cls.focus_values[-1]))
-                print('')
-
+        # NOTE: Autofocus code runs from here
+        # allow some time for system to be ready
+        time.sleep(5)
+        # home the stage for absolute_z
+        cls.move_stage('home')
+        #  a dictionary to record different z with its corresponding focus value
+        cls.z_scan_values = []
+        cls.z_scan_focus_values = []
+        iterate_z_scan_map()
+        print('you are at the best focus now')
+        # send requests to change the status to done
+        requests.get(cls.base_URL + '/auto_focus/?command=done' )
 
 
     @classmethod
-    def auto_focus_thread(cls):
-        cls.initialise_focusing()
+    def start_auto_focus_thread(cls):
         # threading for auto focusing    
         threading_af = threading.Thread(target=cls.auto_focus)
         threading_af.daemon = True
         threading_af.start()
     
+
     stream_method = 'OpenCV'
     @staticmethod
     def frames(cls):
         # run this initialisation method
         cls.initialisation()
-        cls.init_cv()
-        
+        cls.initialise_cv()
+        # cls.start_auto_focus_thread()
+
         with picamera.PiCamera() as cls.camera:
             # let camera warm up
             time.sleep(0.1)
-            fps = 24
             # opencv is much slower, so the resolution is limited
             cls.camera.resolution = cls.stream_resolution
-
-            cls.camera.framerate = fps
+            cls.camera.framerate = cls.fps
             # read configs
             cls.update_camera_setting()
 
@@ -452,7 +456,7 @@ FPS: {}
                 cls.stream.truncate()
                 # to stream, read the new frame
                 # it has to generate frames faster than displaying the frames, otherwise some random bug will occur
-                time.sleep(1/fps*0.2)
+                time.sleep(1/cls.fps*0.2)
                 # yield the result to be read
                 frame = cls.stream.getvalue()
                 ''' ensure the size of package is right''' 

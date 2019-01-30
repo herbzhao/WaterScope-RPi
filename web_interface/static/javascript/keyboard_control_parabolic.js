@@ -225,8 +225,6 @@ Mousetrap.bind(['3 0'], function () {
 });
 }
 
-
-
 var direction_key;
 // Move fergboard
 Mousetrap.bind('w', function () {
@@ -256,7 +254,7 @@ Mousetrap.bind('e', function () {
 
 
 function reset_direction_key() {
-    fetch('/ser/?value=reset&board=fergboard');
+    fetch('/send_serial/?value=reset&board=fergboard');
 }
 
 Mousetrap.bind('r', function () {
@@ -268,17 +266,17 @@ Mousetrap.bind('r', function () {
 function direction_key_loop() { //  create a loop function
     setTimeout(function () {
         if (direction_key == 'w') {
-            fetch('/ser/?value=jog(0,-1,0)&board=fergboard');
+            fetch('/send_serial/?value=jog(0,-1,0)&board=fergboard');
         } else if (direction_key == 's') {
-            fetch('/ser/?value=jog(0,1,0)&board=fergboard');
+            fetch('/send_serial/?value=jog(0,1,0)&board=fergboard');
         } else if (direction_key == 'a') {
-            fetch('/ser/?value=jog(-1,0,0)&board=fergboard');
+            fetch('/send_serial/?value=jog(-1,0,0)&board=fergboard');
         } else if (direction_key == 'd') {
-            fetch('/ser/?type=jog&value=jog(1,0,0)&board=fergboard');
+            fetch('/send_serial/?type=jog&value=jog(1,0,0)&board=fergboard');
         } else if (direction_key == 'q') {
-            fetch('/ser/?type=jog&value=jog(0,0,1)&board=fergboard');
+            fetch('/send_serial/?type=jog&value=jog(0,0,1)&board=fergboard');
         } else if (direction_key == 'e') {
-            fetch('/ser/?type=jog&value=jog(0,0,-1)&board=fergboard');
+            fetch('/send_serial/?type=jog&value=jog(0,0,-1)&board=fergboard');
         }
         direction_key = '';
         direction_key_loop(); //  ..  again which will trigger another 
