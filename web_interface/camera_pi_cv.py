@@ -416,8 +416,8 @@ FPS: {}
         cls.z_scan_focus_values = []
         iterate_z_scan_map()
         print('you are at the best focus now')
-        # send requests to change the status to done
-        requests.get(cls.base_URL + '/auto_focus/?command=done' )
+        auto_focus_URL = cls.base_URL + '/auto_focus/?command=done'
+        requests.get(auto_focus_URL)
 
 
     @classmethod

@@ -69,7 +69,6 @@ var app = new Vue({
             } else if (this.timelapse_switch == null || this.timelapse_switch == 'stop_timelapse') {
                 this.stop_timelapse()
             }
-
             this.alert_window = true
         },
     },
