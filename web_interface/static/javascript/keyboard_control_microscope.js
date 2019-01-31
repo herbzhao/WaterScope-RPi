@@ -59,18 +59,11 @@ Mousetrap.bind(',', function () {
 });
 
 // image capture
-Mousetrap.bind(['c'], function () {
+Mousetrap.bind(['g'], function () {
     app.take_image(option='', filename = 'raspberry_pi_time')
 });
-
-Mousetrap.bind(['g'], function () {
-    app.take_image(option='high_res', filename = 'raspberry_pi_time')
-});
 Mousetrap.bind(['h'], function () {
-    app.take_high_res_image()
-});
-Mousetrap.bind(['j'], function () {
-    app.take_image()
+    app.take_image(option='high_res', filename = 'raspberry_pi_time')
 });
 
 // video switch

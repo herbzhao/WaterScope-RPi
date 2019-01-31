@@ -34,13 +34,12 @@ Mousetrap.bind('a f', function () {
 });
 
 // image capture
-Mousetrap.bind(['c'], function () {
-    app.take_image(option = '', filename = 'raspberry_pi_time')
-});
 Mousetrap.bind(['g'], function () {
-    app.take_image(option = 'high_res', filename = 'raspberry_pi_time')
+    app.take_image(option='', filename = 'raspberry_pi_time')
 });
-
+Mousetrap.bind(['h'], function () {
+    app.take_image(option='high_res', filename = 'raspberry_pi_time')
+});
 
 var direction_key;
 // a variable to store the focus movement size

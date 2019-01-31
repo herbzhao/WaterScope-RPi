@@ -1,3 +1,6 @@
+# Default LED brightness
+default_LED_RGB: [15,15,15]
+
 # exposure mode
 exposure_mode: 'off'
 
@@ -22,4 +25,7 @@ saturation: 0
 # ISO Valid values are between 0 (auto) and 800 (1600 is not available?). 
 # ISO value is not used anyway as we are fixing the gains
 iso: 500
+
+
+
 

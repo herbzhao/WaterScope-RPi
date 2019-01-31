@@ -126,9 +126,15 @@ def settings_io():
     if stop_flag == 'true':
         Camera.stop_stream()
 
+    with open('config_picamera.yaml') as config_file:
+        config = yaml.load(config_file)
+        default_LED_RGB = config['default_LED_RGB']
+        print(default_LED_RGB)
+
     settings = {
         'stream_method': Camera.stream_method, 
         'available_arduino_boards': Arduinos.available_arduino_boards,
+        'default_LED_RGB': default_LED_RGB
         }
 
     return jsonify(settings)
@@ -259,7 +265,7 @@ def parse_filename_and_acquire_data(filename, method):
     elif method == 'waterscope':
         # waterscope method requires LED to be only on when taking images
         Arduinos.serial_controllers['waterscope'].serial_write('led_on', parser='waterscope')
-        time.sleep(5)
+        time.sleep(2)
         Camera.take_image(resolution='high_res', filename=filename)
         time.sleep(2)
         Arduinos.serial_controllers['waterscope'].serial_write('led_off', parser='waterscope')
@@ -314,6 +320,8 @@ def acquire_data():
         Camera.video_recording_thread(recording_flag=False)
 
     return render_template('index.html')
+
+
 
 
 

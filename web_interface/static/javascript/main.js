@@ -22,6 +22,7 @@ var app = new Vue({
         alert_window_2_timeout: 1000,
         alert_content_2: '',
         offset_temp: 0,
+        default_LED_RGB: (30,30,30),
         Tprep: 21,
         Theat: 26,
         T0: 20,
@@ -69,6 +70,7 @@ var app = new Vue({
             } else if (this.timelapse_switch == null || this.timelapse_switch == 'stop_timelapse') {
                 this.stop_timelapse()
             }
+
             this.alert_window = true
         },
     },
@@ -96,9 +98,10 @@ var app = new Vue({
         this.read_server_info()
         this.LED_switch = "true"
         setTimeout(() => {
-            this.led_on()
-            this.set_pi_time_with_user_time()
-        }, 1000)
+            this.serial_command = 'LED_RGB={0}'.format(this.default_LED_RGB);
+            this.send_serial_command();
+            this.set_pi_time_with_user_time();
+        }, 2000)
     },
 
     methods: {
@@ -192,6 +195,7 @@ var app = new Vue({
                 .then(response => {
                     this.stream_method = response.data.stream_method;
                     this.available_arduino_boards = response.data.available_arduino_boards;
+                    this.default_LED_RGB = response.data.default_LED_RGB;
                 })
         },
         set_pi_time_with_user_time: function () {

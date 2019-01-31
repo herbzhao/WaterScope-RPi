@@ -240,13 +240,24 @@ FPS: {}
     def initialise_cv(cls):
         ''' which functions to use during the opencv stream''' 
         cls.ROI = []
+        cls.annotation_text = ''
         cls.cv_libraries = [
             cls.define_ROI,
             # cls.edge_detection,
             # cls.thresholding,
             cls.variance_of_laplacian, 
+            cls.annotating
         ]
 
+    # openCV functions
+    @classmethod
+    def annotating(cls):
+        # CV font
+        font = cv2.FONT_HERSHEY_DUPLEX
+        cv2.putText(
+            cls.image, cls.annotation_text,
+            (int(cls.image.shape[0]*0.9), int(cls.image.shape[1]*0.1)), 
+            font, 2, (0, 0, 255))
 
     # openCV functions
     @classmethod
@@ -308,65 +319,7 @@ FPS: {}
             cls.image, focus_text,
             (int(cls.image.shape[0]*0.1), int(cls.image.shape[1]*0.1)), 
             font, 2, (0, 0, 255))
-    
 
-    def gss_method():
-        def gss(f, a, b, tolerance):
-            """     Golden section search.
-
-            Algorithm for finding the interval within which the mode (focus point) lies,
-            minimizing the number of function (focus_measure) evaluations.
-
-            We start with an interval [a,b]=[zmin,zmax] and return an interval [c,d] such
-            that d-c<=tol=sweep_threshold.
-
-            https://en.wikipedia.org/wiki/Golden-section_search """
-
-            (a,b)=(min(a,b),max(a,b))
-            h = b - a
-            if h <= tolerance: return (a,b)
-
-            # required steps to achieve tolerance
-            n = int(math.ceil(math.log(tolerance/h)/math.log(invphi)))
-
-            c = a + invphi2 * h
-            d = a + invphi * h
-            yc = f(c)
-            yd = f(d)
-
-            for k in np.xrange(n-1):
-                if yc < yd:
-                    b = d
-                    d = c
-                    yd = yc
-                    h = invphi*h
-                    c = a + invphi2 * h
-                    yc = f(c)
-                else:
-                    a = c
-                    c = d
-                    yc = yd
-                    h = invphi*h
-                    d = a + invphi * h
-                    yd = f(d)
-
-            if yc < yd:
-                return (a,d)
-            else:
-                return (c,b)
-
-        # smaller z value =  higher the stage
-        # the focus is roughly around 5000
-        # the total travel is 7000
-        zmin = 4000
-        zmax = 6000
-        sweep_threshold = 200
-
-        invphi = (math.sqrt(5) - 1) / 2 # 1/phi
-        invphi2 = (3 - math.sqrt(5)) / 2 # 1/phi^2
-
-        # coarse scan using gss - output the smaller region for fine focusing
-        (sweep_start, sweep_end) = gss(focus_measure_at_z, zmin, zmax, sweep_threshold)
 
     @classmethod
     def auto_focus(cls):
@@ -407,18 +360,22 @@ FPS: {}
             print('find the focus in {0:.2f} seconds at Z: {1}'.format(time.time() - start_time, global_optimal_z))
 
         # NOTE: Autofocus code runs from here
+
         # allow some time for system to be ready
         time.sleep(5)
         # home the stage for absolute_z
         cls.move_stage('home')
+
         #  a dictionary to record different z with its corresponding focus value
         cls.z_scan_values = []
         cls.z_scan_focus_values = []
         iterate_z_scan_map()
         print('you are at the best focus now')
-        auto_focus_URL = cls.base_URL + '/auto_focus/?command=done'
-        requests.get(auto_focus_URL)
-
+        # send requests to change the status to done
+        requests.get(cls.base_URL + '/auto_focus/?command=done' )
+        
+        #  annotate when auto focus finish to notify the user
+        cls.annotation_text = 'Focus ready'
 
     @classmethod
     def start_auto_focus_thread(cls):

@@ -138,7 +138,7 @@
 
 
                     <v-tooltip top>
-                            <v-btn slot="activator"  @click='auto_focus' >
+                            <v-btn color="warning" slot="activator"  @click='auto_focus' >
                                 <span>Auto focus</span>
                             </v-btn>
                         <span>Start auto focus in opencv mode</span>
@@ -259,5 +259,7 @@
 <script type=text/javascript src="{{url_for('static', filename='javascript/main.js') }}"></script>
 <!-- Change: this is for serial plot window -->
 <script   type=text/javascript src="{{url_for('static', filename='javascript/plotting.js') }}"></script>
+<script   type=text/javascript src="{{url_for('static', filename='javascript/get_user_time.js') }}"></script>
+
 
 </html>
