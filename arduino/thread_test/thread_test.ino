@@ -1,5 +1,9 @@
 #include <Thread.h>
 #include <ThreadController.h>
+#include <AccelStepper.h>
+AccelStepper stepper_optics(AccelStepper::FULL4WIRE, 11, 13, 12, 10);
+AccelStepper stepper_carousel(AccelStepper::FULL4WIRE, 7, 9, 8, 6);
+
 
 // ThreadController that will controll all threads
 ThreadController controll = ThreadController();
@@ -21,9 +25,11 @@ void niceCallback(){
 //  Serial.print(serial_input);
 //  Serial.println(millis());
 
-float time = (millis() - starting_time) / 1000.0;
-Serial.print("time: ");
-Serial.println(time);
+String test_string = "move_opt=600";
+Serial.println(test_string.substring(0, 4));
+Serial.println(test_string.substring(5, 8));
+Serial.println(test_string.substring(9));
+
   
 }
 
@@ -35,9 +41,14 @@ void blinkLed(){
 
   digitalWrite(LED_BUILTIN, ledStatus);
   int j = 5;
+  Serial.println("Average sensor: " + String(123) + "°C");
+  Serial.println(char(194));
 
-//  Serial.print("blinking: " + String(j) + " : ");
-//  Serial.println(ledStatus);
+    stepper_carousel.setAcceleration(2000);
+    stepper_carousel.setMaxSpeed(500.0);
+    stepper_carousel.move(500);
+    stepper_carousel.run();
+
  }
 
 
@@ -52,12 +63,14 @@ void setup(){
   myThread.setInterval(800);
 
   // Configure myThread
-  hisThread.onRun(blinkLed);
-  hisThread.setInterval(500);
+  //hisThread.onRun(blinkLed);
+  //hisThread.setInterval(500);
 
   // Adds both threads to the controller
   controll.add(&myThread);
-  controll.add(&hisThread); // & to pass the pointer to it
+  //controll.add(&hisThread); // & to pass the pointer to it
+
+
 }
 
 void loop(){
@@ -67,12 +80,15 @@ void loop(){
   // readString is slow
   serial_input = Serial.readStringUntil('\n');
   }
-    
+
+     
   // run ThreadController
   // this will check every thread inside ThreadController,
   // if it should run. If yes, he will run it;
   
   controll.run();
-
+  blinkLed();
+  delay(5000);
+      
 
 }

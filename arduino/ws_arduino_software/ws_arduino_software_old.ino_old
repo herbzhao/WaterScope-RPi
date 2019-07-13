@@ -18,7 +18,6 @@ OneWire oneWire(ONE_WIRE_BUS);
 // multiple sensors https://lastminuteengineers.com/multiple-ds18b20-arduino-tutorial/
 DallasTemperature sensors(&oneWire);
 int sensor_counts;
-#define HEATER_PIN 3
 
 // LEDs
 #include <Adafruit_NeoPixel.h>
@@ -29,30 +28,32 @@ Adafruit_NeoPixel LED = Adafruit_NeoPixel(NUMPIXELS, LED_PIN, NEO_GRB + NEO_KHZ8
 int r = 5, g = 5, b = 5;
 
 //motor controls
-#include <AccelStepper.h>
-AccelStepper stepper_optics(AccelStepper::FULL4WIRE, 11, 13, 12, 10);
-AccelStepper stepper_carousel(AccelStepper::FULL4WIRE, 7, 9, 8, 6);
-
-// use this value to convert the motor movement to the angles
-float stepper_optics_ratio = 1;
-float stepper_carousel_ratio = 1;
-
+#include <Stepper.h>
+// controls the heating
+#define HEATER_PIN 3
 #define END_STOP_PIN_OPT A0
 #define END_STOP_PIN_CAR A0
+int end_stop = 0;
+// the carousel rotatry motor
+Stepper stepper_optics(32, 11, 13, 12, 10);
+float stepper_optics_ratio = 5;
+//  the optics stage motor pins
+Stepper stepper_carousel(32, 7, 9, 8, 6);
+// use this value to convert the motor movement to the angles
+float stepper_carousel_ratio = 6;
 
-int speed_optics = 300;
-int speed_carousel = 300;
+int speed_optics = 1000;
+int speed_carousel = 1000;
 // DEBUG: this is wrong
 float absolute_pos_optics = 0;
-float absolute_pos_carousel = 0;
+int absolute_pos_carousel = 0;
 
 // Threading
 #include <Thread.h>
 #include <ThreadController.h>
 // ThreadController that will controll all threads
 ThreadController thread_controller = ThreadController();
-Thread read_temp_adjust_heating_thread = Thread();
-Thread check_motor_status_thread = Thread();
+Thread temp_thread = Thread();
 Thread read_serial_thread = Thread();
 Thread led_thread = Thread();
 Thread optics_motor_thread = Thread();
@@ -83,22 +84,14 @@ void setup(void)
     PID_setpoint = 0; //set the temperature
     myPID.SetOutputLimits(1, 255);
 
-    // for the motor, needs to set an acceleration
-    stepper_optics.setAcceleration(2000);
-    stepper_carousel.setAcceleration(2000);
-
     // Configure Threads
-    read_temp_adjust_heating_thread.onRun(read_temp_adjust_heating);
-    read_temp_adjust_heating_thread.setInterval(5000);
-    check_motor_status_thread.onRun(check_motor_status);
-    check_motor_status_thread.setInterval(500);
+    temp_thread.onRun(read_temp_adjust_heating);
+    temp_thread.setInterval(2000);
     read_serial_thread.onRun(read_serial);
     read_serial_thread.setInterval(200);
     // Adds  threads to the controller
-    //thread_controller.add(&read_serial_thread);
-    thread_controller.add(&read_temp_adjust_heating_thread); // & to pass the pointer to it
-    thread_controller.add(&check_motor_status_thread); // & to pass the pointer to it
-
+    thread_controller.add(&read_serial_thread);
+    thread_controller.add(&temp_thread); // & to pass the pointer to it
 
     Serial.println("Recommand to home the stage if this is the first run");
     // DEBUG: uncomment on deployment
@@ -111,12 +104,9 @@ void setup(void)
 
 void loop(void)
 {
-    read_serial();
+    //read_serial();
     // run the threads
     thread_controller.run();
-    // the motor will execute whenever a command is waiting
-    stepper_carousel.run();
-    stepper_optics.run();
 }
 
 void read_serial(void)
@@ -260,11 +250,13 @@ void serial_condition(String serial_input)
         Serial.print(absolute_pos_carousel);
         Serial.println("°");
     }
-    
+
     else if (serial_input == "stop")
     {
-        stepper_optics.stop();
-        stepper_carousel.stop();
+        stepper_optics.setSpeed(250);
+        stepper_optics.step(0);
+        stepper_carousel.setSpeed(250);
+        stepper_carousel.step(0);
     }
 
     // home_opt and home_car
@@ -286,23 +278,6 @@ void serial_condition(String serial_input)
         Serial.print("Temperature is set to ");
         Serial.print(PID_setpoint);
         Serial.println(" C");
-    }
-}
-// a thread that runs every 500ms to check motor is busy or not
-void check_motor_status(){
-    Serial.print("stepper_optics: ");
-    if (stepper_optics.isRunning()){
-        Serial.println("busy");
-    }
-    else{
-        Serial.println("ready");
-    }
-    Serial.print("stepper_carousel: ");
-    if (stepper_carousel.isRunning()){
-        Serial.println("busy");
-    }
-    else{
-        Serial.println("ready");
     }
 }
 
@@ -334,13 +309,14 @@ void move_stage(String motor_type, float distance)
         }
         else
         {
-            stepper_optics.setMaxSpeed(speed_optics);
+            stepper_optics.setSpeed(speed_optics);
             // in python, using this line to start sleep
             Serial.println("Moving the motor, stop accepting commands");
             // convert distance in um  to steps
             int motor_steps = distance * stepper_optics_ratio;
-            stepper_optics.move(motor_steps);
+            stepper_optics.step(motor_steps);
             // in Python,  this sentence indicated the motor has finished movement
+
             Serial.println("Finished the movement");
 
             absolute_pos_optics = absolute_pos_optics + distance;
@@ -351,14 +327,13 @@ void move_stage(String motor_type, float distance)
     }
     else if (motor_type == "car")
     {
-        stepper_carousel.setMaxSpeed(speed_carousel);
+        stepper_carousel.setSpeed(speed_carousel);
         // convert degrees to steps
         int motor_steps = distance * stepper_carousel_ratio;
         // in python, using this line to start sleep
         Serial.println("Moving the motor, stop accepting commands..");
 
-        stepper_carousel.move(motor_steps);
-        stepper_carousel.run();
+        stepper_carousel.step(motor_steps);
         // in Python,  this sentence indicated the motor has finished movement
         Serial.println("Finished the movement");
         // the range of degree - 0 to 360
