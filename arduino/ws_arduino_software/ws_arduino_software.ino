@@ -30,18 +30,24 @@ int r = 5, g = 5, b = 5;
 
 //motor controls
 #include <AccelStepper.h>
+// https://groups.google.com/forum/#!topic/accelstepper/tIL5XN3WLVE
+// AccelStepper doesn't know the steps/revolution
 AccelStepper stepper_optics(AccelStepper::FULL4WIRE, 11, 13, 12, 10);
 AccelStepper stepper_carousel(AccelStepper::FULL4WIRE, 7, 9, 8, 6);
 
-// use this value to convert the motor movement to the angles
-float stepper_optics_ratio = 1;
-float stepper_carousel_ratio = 1;
+// use this value to convert the um movement to steps
+float stepper_optics_ratio = 0.5;
+// use this value to convert the angles to steps
+float stepper_carousel_ratio = 6;
 
 #define END_STOP_PIN_OPT A0
 #define END_STOP_PIN_CAR A0
 
+int max_speed_optics = 500;
+int max_speed_carousel = 500;
 int speed_optics = 300;
 int speed_carousel = 300;
+
 // DEBUG: this is wrong
 float absolute_pos_optics = 0;
 float absolute_pos_carousel = 0;
@@ -80,7 +86,8 @@ void setup(void)
     pinMode(HEATER_PIN, OUTPUT);
     // PID control for heater
     myPID.SetMode(AUTOMATIC);
-    PID_setpoint = 0; //set the temperature
+    // DEBUG: disable heating temporarily
+    PID_setpoint = 0; 
     myPID.SetOutputLimits(1, 255);
 
     // for the motor, needs to set an acceleration
@@ -228,26 +235,32 @@ void serial_condition(String serial_input)
         int speed = serial_input.substring(10).toFloat();
         if (motor_type == "opt")
         {
-            Serial.print("Changing the stepper_optics speed to: ");
-            Serial.println(serial_input.substring(6).toFloat());
-            if (speed == 0)
+            if (speed <= 50)
             {
-                speed = 250;
+                speed = 50;
             }
+            else if (speed >=max_speed_optics)
+            {
+                speed = max_speed_optics;
+            }
+            
             speed_optics = speed;
-            stepper_optics.setSpeed(speed_optics);
+            Serial.println("Changing the stepper_optics speed to: " + String(speed));
         }
 
         else if (motor_type == "car")
         {
-            Serial.print("Changing the stepper_carousel speed to: ");
-            Serial.println(serial_input.substring(6).toFloat());
-            if (speed == 0)
+            if (speed <= 50)
             {
-                speed = 250;
+                speed = 50;
             }
+            else if (speed >=max_speed_carousel)
+            {
+                speed = max_speed_optics;
+            }
+            
             speed_carousel = speed;
-            stepper_optics.setSpeed(speed_carousel);
+            Serial.println("Changing the stepper_carousel speed to: " + String(speed));
         }
     }
 
@@ -260,6 +273,19 @@ void serial_condition(String serial_input)
         Serial.print(absolute_pos_carousel);
         Serial.println("°");
     }
+    
+    // set_home_opt  or set_home_car
+    else if (serial_input.substring(0, 8) == "set_home")
+    {
+        String motor_type = serial_input.substring(9);
+        if (motor_type == "opt")
+        {
+            absolute_pos_optics = 0;
+        }
+        else if (motor_type == "car"){
+            absolute_pos_carousel = 0;
+        }
+    }  
     
     else if (serial_input == "stop")
     {
