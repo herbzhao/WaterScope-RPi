@@ -60,7 +60,7 @@ class serial_controller_class():
 
     def parsing_command_waterscope(self, serial_command):
         ''' parsing the command from interface for WaterScope water testing kit (Sammy code)'''
-        # move(500) --> move=500
+        # move_car(500) --> move_car=500
         # LED_RGB(5,6,7) --> LED_RGB=5,6,7
         serial_command = serial_command.replace(' ','').replace('(','=').replace(')','')
         return serial_command
@@ -137,10 +137,13 @@ class serial_controller_class():
                 self.fin_flag.append('FIN')
 
         if 'waterscope_motor' in options:
+            # initialise the motor status and absolute position 
             try: 
-                self.motor_idle
+                self.stepper_optics_busy
+                self.stepper_carousel_busy
             except AttributeError:
-                self.motor_idle = True
+                self.stepper_optics_busy = False
+                self.stepper_carousel_busy = False
             try: 
                 self.absolute_z
             except AttributeError:
@@ -149,10 +152,15 @@ class serial_controller_class():
             # "Moving the motor, stop accepting commands"
             # "Finished the movement in"
             #  waterscope_moving tag can be used to determine the sleep duration
-            if 'Moving the motor' in self.serial_output:
-                self.motor_idle = False
-            elif 'Finished the movement' in self.serial_output:
-                self.motor_idle = True
+            if 'stepper_optics is busy' in self.serial_output:
+                self.stepper_optics_busy = True
+            elif 'stepper_optics is free' in self.serial_output:
+                self.stepper_optics_busy = False
+            if 'stepper_carousel is busy' in self.serial_output:
+                self.stepper_carousel_busy = True
+            elif 'stepper_carousel is free' in self.serial_output:
+                self.stepper_carousel_busy = False
+
             elif 'Absolute position' in self.serial_output:
                 # Absolute position: 1500
                 self.absolute_z = float(self.serial_output.replace('Absolute position: ', ''))
@@ -163,14 +171,16 @@ class serial_controller_class():
                 self.log
             except AttributeError:
                 self.log = {'temp':[], 'time':[], 'heating_effort':[]}
-                # use regex to match the arduino output: 18.57 *C  4.05 s
-                self.temp_re = re.compile('\d+.\d+\s\*C')
+                # use regex to match the arduino output:
+                # 50 s
                 self.time_re = re.compile('\d+.\d+\ss')
+                # Average sensor: 37.5 *C
+                self.temp_re = re.compile('Average sensor:\s\d+.\d+\s\*C')
                 # Heating effort is: 11.00
                 self.heating_effort_re = re.compile("Heating effort")
             # extract time and temperature value
             if self.temp_re.findall(self.serial_output):
-                self.log['temp'].append(float(self.serial_output.replace(' *C','')))
+                self.log['temp'].append(float(self.serial_output.replace(' *C','').replace('Average sensor: ','')))
                 self.last_logged_temp = self.log['temp'][-1]
                 # print(self.last_logged_temp)
             elif self.time_re.findall(self.serial_output):

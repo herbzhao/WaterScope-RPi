@@ -34,6 +34,8 @@ int r = 5, g = 5, b = 5;
 // AccelStepper doesn't know the steps/revolution
 AccelStepper stepper_optics(AccelStepper::FULL4WIRE, 11, 13, 12, 10);
 AccelStepper stepper_carousel(AccelStepper::FULL4WIRE, 7, 9, 8, 6);
+bool stepper_optics_busy = false;
+bool stepper_carousel_busy = false;
 
 // use this value to convert the um movement to steps
 float stepper_optics_ratio = 0.5;
@@ -87,12 +89,14 @@ void setup(void)
     // PID control for heater
     myPID.SetMode(AUTOMATIC);
     // DEBUG: disable heating temporarily
-    PID_setpoint = 0; 
+    PID_setpoint = 0;
     myPID.SetOutputLimits(1, 255);
 
     // for the motor, needs to set an acceleration
     stepper_optics.setAcceleration(2000);
     stepper_carousel.setAcceleration(2000);
+    Serial.println("stepper_optics is free");
+    Serial.println("stepper_carousel is free");
 
     // Configure Threads
     read_temp_adjust_heating_thread.onRun(read_temp_adjust_heating);
@@ -104,8 +108,7 @@ void setup(void)
     // Adds  threads to the controller
     //thread_controller.add(&read_serial_thread);
     thread_controller.add(&read_temp_adjust_heating_thread); // & to pass the pointer to it
-    thread_controller.add(&check_motor_status_thread); // & to pass the pointer to it
-
+    thread_controller.add(&check_motor_status_thread);       // & to pass the pointer to it
 
     Serial.println("Recommand to home the stage if this is the first run");
     // DEBUG: uncomment on deployment
@@ -164,7 +167,7 @@ void read_temp_adjust_heating(void)
         temperature_sum += sensors_temp[i];
     }
     ave_temperature = temperature_sum / sensor_counts;
-    Serial.println("Average sensor: " + String(ave_temperature) + "°C");
+    Serial.println("Average sensor: " + String(ave_temperature) + "*C");
 
     for (int i = 0; i < sensor_counts; i++)
     {
@@ -239,11 +242,11 @@ void serial_condition(String serial_input)
             {
                 speed = 50;
             }
-            else if (speed >=max_speed_optics)
+            else if (speed >= max_speed_optics)
             {
                 speed = max_speed_optics;
             }
-            
+
             speed_optics = speed;
             Serial.println("Changing the stepper_optics speed to: " + String(speed));
         }
@@ -254,11 +257,11 @@ void serial_condition(String serial_input)
             {
                 speed = 50;
             }
-            else if (speed >=max_speed_carousel)
+            else if (speed >= max_speed_carousel)
             {
                 speed = max_speed_optics;
             }
-            
+
             speed_carousel = speed;
             Serial.println("Changing the stepper_carousel speed to: " + String(speed));
         }
@@ -266,14 +269,9 @@ void serial_condition(String serial_input)
 
     else if (serial_input == "pos")
     {
-        Serial.print("Absolute optic stage position: ");
-        Serial.print(absolute_pos_optics);
-        Serial.println(" um");
-        Serial.print("Absolute optic carousel position: ");
-        Serial.print(absolute_pos_carousel);
-        Serial.println("°");
+        print_absolute_positions();
     }
-    
+
     // set_home_opt  or set_home_car
     else if (serial_input.substring(0, 8) == "set_home")
     {
@@ -282,11 +280,13 @@ void serial_condition(String serial_input)
         {
             absolute_pos_optics = 0;
         }
-        else if (motor_type == "car"){
+        else if (motor_type == "car")
+        {
             absolute_pos_carousel = 0;
         }
-    }  
-    
+        print_absolute_positions();
+    }
+
     else if (serial_input == "stop")
     {
         stepper_optics.stop();
@@ -312,23 +312,6 @@ void serial_condition(String serial_input)
         Serial.print("Temperature is set to ");
         Serial.print(PID_setpoint);
         Serial.println(" C");
-    }
-}
-// a thread that runs every 500ms to check motor is busy or not
-void check_motor_status(){
-    Serial.print("stepper_optics: ");
-    if (stepper_optics.isRunning()){
-        Serial.println("busy");
-    }
-    else{
-        Serial.println("ready");
-    }
-    Serial.print("stepper_carousel: ");
-    if (stepper_carousel.isRunning()){
-        Serial.println("busy");
-    }
-    else{
-        Serial.println("ready");
     }
 }
 
@@ -361,38 +344,28 @@ void move_stage(String motor_type, float distance)
         else
         {
             stepper_optics.setMaxSpeed(speed_optics);
-            // in python, using this line to start sleep
-            Serial.println("Moving the motor, stop accepting commands");
             // convert distance in um  to steps
             int motor_steps = distance * stepper_optics_ratio;
             stepper_optics.move(motor_steps);
-            // in Python,  this sentence indicated the motor has finished movement
-            Serial.println("Finished the movement");
 
             absolute_pos_optics = absolute_pos_optics + distance;
             Serial.println("Move by: " + String(distance) + "um");
         }
-        Serial.print("Optical stage absolute position: ");
-        Serial.println(absolute_pos_optics);
+        
     }
     else if (motor_type == "car")
     {
         stepper_carousel.setMaxSpeed(speed_carousel);
         // convert degrees to steps
         int motor_steps = distance * stepper_carousel_ratio;
-        // in python, using this line to start sleep
-        Serial.println("Moving the motor, stop accepting commands..");
 
         stepper_carousel.move(motor_steps);
         stepper_carousel.run();
-        // in Python,  this sentence indicated the motor has finished movement
-        Serial.println("Finished the movement");
         // the range of degree - 0 to 360
         absolute_pos_carousel += distance;
         absolute_pos_carousel = fmod(absolute_pos_carousel, 360);
 
-        Serial.println("Move by: " + String(distance) + "°");
-        Serial.println("Carousel absolute position: " + String(absolute_pos_carousel) + "°");
+        Serial.println("Move by: " + String(distance) + "*");
     }
 }
 
@@ -417,6 +390,48 @@ void home_stage(String motor_type)
         absolute_pos_carousel = 0;
     }
     Serial.println("Stage homed, reset the absolute position");
+}
+
+// a thread that runs every 500ms to check motor is busy or not
+void check_motor_status()
+{
+    // detect status change
+    if (stepper_optics_busy != stepper_optics.isRunning())
+    {
+        stepper_optics_busy = stepper_optics.isRunning();
+        if (stepper_optics_busy)
+        {
+            Serial.println("stepper_optics is busy.. wait");
+        }
+        else
+        {
+            Serial.println("stepper_optics is free");
+            print_absolute_positions();
+        }
+    }
+    // detect status change
+    if (stepper_carousel_busy != stepper_carousel.isRunning())
+    {
+        stepper_carousel_busy = stepper_carousel.isRunning();
+        if (stepper_carousel_busy)
+        {
+            Serial.println("stepper_carousel is busy.. wait");
+        }
+        else
+        {
+            Serial.println("stepper_carousel is free");
+            print_absolute_positions();
+        }
+    }
+}
+
+void print_absolute_positions(){
+    Serial.print("Absolute optic stage position: ");
+    Serial.print(absolute_pos_optics);
+    Serial.println(" um");
+    Serial.print("Absolute optic carousel position: ");
+    Serial.print(absolute_pos_carousel);
+    Serial.println("*");
 }
 
 // sammy's home made code to extract RGB value
