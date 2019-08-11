@@ -52,6 +52,7 @@ def initialise_serial_connection():
         for name in Arduinos.available_arduino_boards:
             Arduinos.serial_controllers[name] = serial_controller_class()
             Arduinos.serial_controllers[name].serial_connect(
+                port_address=serial_controllers_config[name]['port_address'],
                 port_names=serial_controllers_config[name]['port_names'], 
                 baudrate=serial_controllers_config[name]['baudrate'])
             Arduinos.serial_controllers[name].serial_read_threading(
@@ -205,12 +206,14 @@ def serial_time_temp():
 ''' Used to identify whether motor is busy ''' 
 @app.route('/waterscope_motor_status')
 def check_waterscope_motor_status():
-    # synchronise the arduino_time
-    initialise_serial_connection()
-    motor_idle = Arduinos.serial_controllers['waterscope'].motor_idle
+    # stop sending command when motor is busy
+    # initialise_serial_connection()
+    stepper_optics_busy = Arduinos.serial_controllers['waterscope'].stepper_optics_busy
     absolute_z = Arduinos.serial_controllers['waterscope'].absolute_z
-    # NOTE: initilaise the motor_idle to be true
-    return jsonify({'motor_idle':motor_idle, 'absolute_z': absolute_z})
+    # # NOTE: initilaise the motor_idle to be true
+    return jsonify({'stepper_optics_busy':stepper_optics_busy, 'absolute_z': absolute_z})
+    # return jsonify({'stepper_optics_busy': False, 'absolute_z': 0})
+    
 
 
 @app.route('/auto_focus/')
@@ -326,4 +329,4 @@ def acquire_data():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', threaded=True, debug=True)
+    app.run(host='0.0.0.0', port=5000, threaded=True, debug=True)

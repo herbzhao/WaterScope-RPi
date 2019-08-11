@@ -78,16 +78,16 @@ function direction_key_loop() { //  create a loop function
     setTimeout(function () {
         axios.get('/waterscope_motor_status').then(response => {
             // disable the keyboard control of the motor when it is busy
-            motor_idle = response.data.motor_idle
+            stepper_optics_busy = response.data.stepper_optics_busy
             // console.log(motor_idle)
         })
-        if (motor_idle == true) {
+        if (stepper_optics_busy == false) {
             if (direction_key == 'w') {
                 // NOTE: replace with axios
-                axios.get('/send_serial/?value=move(-{0})&board=waterscope'.format(step_size));
+                axios.get('/send_serial/?value=move_opt(-{0})&board=waterscope'.format(step_size));
                 // axios.get("/acquire_data/?option=stop_recording_video");
             } else if (direction_key == 's') {
-                axios.get('/send_serial/?value=move({0}})&board=waterscope'.format(step_size));
+                axios.get('/send_serial/?value=move_opt({0}})&board=waterscope'.format(step_size));
                 // axios.get("/acquire_data/?option=stop_recording_video")
             }
         }

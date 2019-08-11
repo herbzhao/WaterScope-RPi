@@ -54,7 +54,8 @@ int speed_carousel = 300;
 float absolute_pos_optics = 0;
 float absolute_pos_carousel = 0;
 
-// Threading
+// Threading library: ArduinoThread
+// https://github.com/ivanseidel/ArduinoThread
 #include <Thread.h>
 #include <ThreadController.h>
 // ThreadController that will controll all threads
@@ -452,3 +453,4 @@ String getValue(String data, char separator, int index)
     }
     return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
+

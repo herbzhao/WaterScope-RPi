@@ -1,9 +1,7 @@
-# regex for parsing the output
-import re
+import serial
+import time
 
-serial_output = 'Average sensor: 37.5 *C'
-
-temp_re = re.compile('Average sensor:\s\d+.\d+\s\*C')
-
-if temp_re.findall(serial_output):
-    print(float(serial_output.replace(' *C','').replace('Average sensor: ','')))
+ser = serial.Serial('/dev/ttyS0')
+while True:
+    time.sleep(0.5)
+    print(ser.readline())

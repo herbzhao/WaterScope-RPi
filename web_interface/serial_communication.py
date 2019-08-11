@@ -26,14 +26,18 @@ class serial_controller_class():
         self.time_elapsed = '{:.1f}'.format(time.time() - self.starting_time)
 
 
-    def serial_connect(self, port_names=['SERIAL'], baudrate=9600 ):
+    def serial_connect(self, port_address='', port_names=['SERIAL'], baudrate=9600 ):
         ''' automatically detect the Ardunio port and connect '''
         # Find Arduino serial port first
         available_ports = list(serial.tools.list_ports.comports())
-        for port in available_ports:
-            for name in port_names:
-                if name in port[1]:
-                    serial_port = port[0]
+        #  if the address is not specified, then we automatically find the port by names
+        if port_address == '':
+            for port in available_ports:
+                for name in port_names:
+                    if name in port[1]:
+                        serial_port = port[0]
+        else:
+            serial_port = port_address
 
         self.ser = serial.Serial()
         self.ser.port = serial_port
@@ -60,7 +64,7 @@ class serial_controller_class():
 
     def parsing_command_waterscope(self, serial_command):
         ''' parsing the command from interface for WaterScope water testing kit (Sammy code)'''
-        # move_car(500) --> move_car=500
+        # move_car(200) --> move_car=500
         # LED_RGB(5,6,7) --> LED_RGB=5,6,7
         serial_command = serial_command.replace(' ','').replace('(','=').replace(')','')
         return serial_command
@@ -175,12 +179,12 @@ class serial_controller_class():
                 # 50 s
                 self.time_re = re.compile('\d+.\d+\ss')
                 # Average sensor: 37.5 *C
-                self.temp_re = re.compile('Average sensor:\s\d+.\d+\s\*C')
+                self.temp_re = re.compile('Average sensor:\s\d+.\d+\*C')
                 # Heating effort is: 11.00
                 self.heating_effort_re = re.compile("Heating effort")
             # extract time and temperature value
             if self.temp_re.findall(self.serial_output):
-                self.log['temp'].append(float(self.serial_output.replace(' *C','').replace('Average sensor: ','')))
+                self.log['temp'].append(float(self.serial_output.replace('*C','').replace('Average sensor: ','')))
                 self.last_logged_temp = self.log['temp'][-1]
                 # print(self.last_logged_temp)
             elif self.time_re.findall(self.serial_output):
@@ -267,9 +271,9 @@ class serial_controller_class():
 # TODO: change this example 
 if __name__ == '__main__':
     serial_controller = serial_controller_class()
-    serial_controller.serial_connect(port_names=['Serial'], baudrate=9600)
+    serial_controller.serial_connect(port_address='/dev/ttyS0', baudrate=9600)
     #serial_controller.serial_connect(port_names=['Micro'], baudrate=115200)
-    serial_controller.serial_read_threading(options=['logging_time_temp'])
+    serial_controller.serial_read_threading(options=['logging'])
 
     # accept user input
     while True:
