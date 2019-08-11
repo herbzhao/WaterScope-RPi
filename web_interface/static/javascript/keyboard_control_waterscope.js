@@ -35,15 +35,17 @@ Mousetrap.bind('a f', function () {
 
 // image capture
 Mousetrap.bind(['g'], function () {
-    app.take_image(option='', filename = 'raspberry_pi_time')
+    app.take_image(option = '', filename = 'raspberry_pi_time')
 });
 Mousetrap.bind(['h'], function () {
-    app.take_image(option='high_res', filename = 'raspberry_pi_time')
+    app.take_image(option = 'high_res', filename = 'raspberry_pi_time')
 });
 
 var direction_key;
 // a variable to store the focus movement size
-var step_size = 150;
+var step_size_opt = 200;
+var step_size_car = 20;
+
 // Move fergboard
 Mousetrap.bind('w', function () {
     console.log('pressed w');
@@ -53,26 +55,50 @@ Mousetrap.bind('s', function () {
     console.log('pressed s');
     direction_key = 's';
 });
+Mousetrap.bind('a', function () {
+    console.log('pressed a');
+    direction_key = 'a';
+    // axios.get('/send_serial/?value=move_car(-{0}})&board=waterscope'.format(step_size_car));
+});
+Mousetrap.bind('d', function () {
+    console.log('pressed d');
+    direction_key = 'd';
+    // axios.get('/send_serial/?value=move_car({0}})&board=waterscope'.format(step_size_car));
+});
+
+
 // use q, e to change step??
 Mousetrap.bind('e', function () {
     direction_key = 'e';
-    step_size = step_size + 100;
-    if (step_size >= 950) {
-        step_size = 950
+    step_size_opt = step_size_opt * 1.2;
+    step_size_car = step_size_car * 1.2;
+    if (step_size_opt >= 1000) {
+        step_size_opt = 1000
     }
-    console.log('focus step size is: {0}'.format(step_size));
+    if (step_size_car >= 60) {
+        step_size_car = 60
+    }
+    console.log('focus step size is: {0}'.format(step_size_opt));
+    console.log('carousel step size is: {0}'.format(step_size_car));
 });
 Mousetrap.bind('q', function () {
     direction_key = 'q';
-    step_size = step_size - 100;
-    if (step_size <= 50) {
-        step_size = 50
+    step_size_opt = step_size_opt / 1.2;
+    step_size_car = step_size_car / 1.2;
+    if (step_size_opt <= 50) {
+        step_size_opt = 50
     }
-    console.log('focus step size is: {0}'.format(step_size));
+    if (step_size_car <= 5) {
+        step_size_car = 5
+    }
+    console.log('focus step size is: {0}'.format(step_size_opt));
+    console.log('carousel step size is: {0}'.format(step_size_car));
 });
 
 
-var motor_idle;
+
+var stepper_optics_busy;
+var stepper_carousel_busy;
 // some delay for the key input as it is too fast!
 function direction_key_loop() { //  create a loop function
     setTimeout(function () {
@@ -84,10 +110,20 @@ function direction_key_loop() { //  create a loop function
         if (stepper_optics_busy == false) {
             if (direction_key == 'w') {
                 // NOTE: replace with axios
-                axios.get('/send_serial/?value=move_opt(-{0})&board=waterscope'.format(step_size));
+                console.log('move upward')
+                axios.get('/send_serial/?value=move_opt({0})&board=waterscope'.format(step_size_opt));
                 // axios.get("/acquire_data/?option=stop_recording_video");
             } else if (direction_key == 's') {
-                axios.get('/send_serial/?value=move_opt({0}})&board=waterscope'.format(step_size));
+                console.log('move downward')
+                axios.get('/send_serial/?value=move_opt(-{0}})&board=waterscope'.format(step_size_opt));
+                // axios.get("/acquire_data/?option=stop_recording_video")
+            } else if (direction_key == 'a') {
+                console.log('move anticlockwise')
+                axios.get('/send_serial/?value=move_car(-{0}})&board=waterscope'.format(step_size_car));
+                // axios.get("/acquire_data/?option=stop_recording_video")
+            } else if (direction_key == 'd') {
+                console.log('move clockwise')
+                axios.get('/send_serial/?value=move_car({0}})&board=waterscope'.format(step_size_car));
                 // axios.get("/acquire_data/?option=stop_recording_video")
             }
         }
@@ -95,6 +131,7 @@ function direction_key_loop() { //  create a loop function
         direction_key_loop(); //  ..  again which will trigger another 
     }, 200)
 }
+
 
 direction_key_loop();
 

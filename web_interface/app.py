@@ -209,9 +209,10 @@ def check_waterscope_motor_status():
     # stop sending command when motor is busy
     # initialise_serial_connection()
     stepper_optics_busy = Arduinos.serial_controllers['waterscope'].stepper_optics_busy
+    stepper_carousel_busy = Arduinos.serial_controllers['waterscope'].stepper_carousel_busy
     absolute_z = Arduinos.serial_controllers['waterscope'].absolute_z
     # # NOTE: initilaise the motor_idle to be true
-    return jsonify({'stepper_optics_busy':stepper_optics_busy, 'absolute_z': absolute_z})
+    return jsonify({'stepper_optics_busy':stepper_optics_busy, 'stepper_carousel_busy': stepper_carousel_busy, 'absolute_z': absolute_z})
     # return jsonify({'stepper_optics_busy': False, 'absolute_z': 0})
     
 

@@ -164,7 +164,6 @@ class serial_controller_class():
                 self.stepper_carousel_busy = True
             elif 'stepper_carousel is free' in self.serial_output:
                 self.stepper_carousel_busy = False
-
             elif 'Absolute position' in self.serial_output:
                 # Absolute position: 1500
                 self.absolute_z = float(self.serial_output.replace('Absolute position: ', ''))
