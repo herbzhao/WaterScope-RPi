@@ -130,7 +130,6 @@ def settings_io():
     with open('config_picamera.yaml') as config_file:
         config = yaml.load(config_file)
         default_LED_RGB = config['default_LED_RGB']
-        print(default_LED_RGB)
 
     settings = {
         'stream_method': Camera.stream_method, 
@@ -334,6 +333,9 @@ def acquire_data():
     return render_template('index.html')
 
 
+
+change_stream_method(option='PiCamera')
+change_stream_method(option='OpenCV')
 
 
 

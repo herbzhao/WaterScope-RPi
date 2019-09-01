@@ -46,7 +46,8 @@ class Camera(BaseCamera):
         cls.stream_quality = 20
         cls.starting_time = datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S')
         # URL for requests
-        cls.base_URL = "http://localhost:5000"
+        # cls.base_URL = "http://localhost:5000"
+        cls.base_URL = "http://localhost"
 
     @classmethod
     def update_camera_setting(cls):
@@ -229,13 +230,15 @@ FPS: {}
         requests.get(move_motor_url)
         # DEBUG: a delay to allow serial command to be executed and motor becomes busy
         while True:
-            waterscope_motor_status_url = cls.base_URL+ "/waterscope_motor_status"
-            waterscope_motor_status = requests.get(waterscope_motor_status_url).json()
-            if waterscope_motor_status['stepper_optics_busy']:
-                break
-            else:
-                time.sleep(1)
-                break
+            
+            # NOTE: add a short sleep to ensure the motor starts to move, but after 1s default to move on
+            for i in range(20):
+                time.sleep(0.1)
+                waterscope_motor_status_url = cls.base_URL+ "/waterscope_motor_status"
+                waterscope_motor_status = requests.get(waterscope_motor_status_url).json()
+                if waterscope_motor_status['stepper_optics_busy']:
+                    break
+            break
 
         while True:
             # print('waiting for motor to finish movement')
@@ -340,32 +343,30 @@ FPS: {}
             # DEBUG: wait for 1 second to stablise the mechanical stage
             time.sleep(0.2)
             focus_value =  cls.focus_value
-            print("Focus value at {0} is: {1}".format(new_z, focus_value))
+            print("Focus value at {0:.0f} is: {1:.2f}".format(new_z, focus_value))
+            cls.focus_table.update({new_z: focus_value})
+            # print(cls.focus_table)
             return focus_value
 
-        def create_z_scan_map(central_point = 5000, range = 1000, nubmer_of_points = 10):
+        def scan_z_range(central_point = 5000, range = 1000, nubmer_of_points = 10):
             " using a central point and scan up and down with half of the range"
             z_scan_map = np.linspace(central_point-range/2, central_point+range/2, nubmer_of_points)
             for new_z in z_scan_map:
                 focus_value = focus_measure_at_z(new_z)
-                # use 2 arrays to keep record of z and focus
-                cls.z_scan_values.append(new_z)
-                cls.z_scan_focus_values.append(focus_value)
 
-        def iterate_z_scan_map(starting_z=2500):
+        def iterate_z_scan_map(starting_z=3000):
             ' automatically create several scan map from coarse to fine, using first guess and next best focus point' 
             start_time = time.time()
             # first scan is based on the best guess
-            create_z_scan_map(starting_z, 2000, 10)
+            scan_z_range(starting_z, 2000, 10)
             # this will refine the best focus within range/points*2 = 400
 
             # Then finer scan  use the best focus value as the index for the z value
             for z_scan_range in [400]:
-
-                local_optimal_z = cls.z_scan_values[cls.z_scan_focus_values.index(max(cls.z_scan_focus_values))]
-                create_z_scan_map(local_optimal_z, z_scan_range, 5)
+                optimal_focus_z = max(cls.focus_table, key=cls.focus_table.get)
+                scan_z_range(optimal_focus_z, z_scan_range, 5)
             
-            global_optimal_z = cls.z_scan_values[cls.z_scan_focus_values.index(max(cls.z_scan_focus_values))]
+            global_optimal_z = max(cls.focus_table, key=cls.focus_table.get)
             cls.move_to(global_optimal_z)
             print('find the focus in {0:.2f} seconds at Z: {1}'.format(time.time() - start_time, global_optimal_z))
 
@@ -379,15 +380,16 @@ FPS: {}
                 cls.focus_value
                 break
             except AttributeError:
-                print('waiting for the camera to be ready')
+                # print('waiting for the camera to be ready')
+                time.sleep(0)
 
         cls.annotation_text = 'Autofocusing'
         # home the stage for absolute_z
         cls.move_to('home')
 
         #  a dictionary to record different z with its corresponding focus value
-        cls.z_scan_values = []
-        cls.z_scan_focus_values = []
+        cls.focus_table = {}
+
         iterate_z_scan_map()
         print('you are at the best focus now')
 
@@ -444,17 +446,20 @@ FPS: {}
                     cls.camera_ready = True
                     # convert the stream string into np.arrry
                     ncols, nrows = cls.camera.resolution
+                    try: 
+                        data = np.fromstring(frame, dtype=np.uint8).reshape(nrows, ncols, 3)
 
-                    data = np.fromstring(frame, dtype=np.uint8).reshape(nrows, ncols, 3)
-                    # data = cv2.resize(data, None, fx=0.5, fy=0.5)
-                    cls.image = data
+                        # data = cv2.resize(data, None, fx=0.5, fy=0.5)
+                        cls.image = data
 
-                    # place to run some filters, calculations
-                    for library in cls.cv_libraries:
-                        library()
+                        # place to run some filters, calculations
+                        for library in cls.cv_libraries:
+                            library()
 
-                    # encode the frame into jpg for displaying in html
-                    cls.image = cv2.imencode('.jpg', cls.image)[1].tostring()
-                    # yield the result to be read
-                    yield cls.image
+                        # encode the frame into jpg for displaying in html
+                        cls.image = cv2.imencode('.jpg', cls.image)[1].tostring()
+                        # yield the result to be read
+                        yield cls.image
 
+                    except ValueError:
+                        pass

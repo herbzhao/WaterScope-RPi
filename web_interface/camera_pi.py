@@ -33,7 +33,7 @@ class Camera(BaseCamera):
         cls.video_recording_fps = 3
         # for OPENCV we use a lower resolution
         cls.stream_resolution = (1648,1232)
-        cls.stream_resolution = (656, 496)
+        # cls.stream_resolution = (656, 496)
 
         cls.video_resolution = (824, 616)
         cls.image_resolution = (3280,2464)
@@ -43,7 +43,8 @@ class Camera(BaseCamera):
         cls.stream_quality = 30
         cls.starting_time = datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S')
         # URL for requests
-        cls.base_URL = "http://localhost:5000"
+        # cls.base_URL = "http://localhost:5000"
+        cls.base_URL = "http://localhost"
 
     @classmethod
     def update_camera_setting(cls):

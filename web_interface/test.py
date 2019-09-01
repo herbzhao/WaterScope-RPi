@@ -1,7 +1,9 @@
 import serial
 import time
 
-ser = serial.Serial('/dev/ttyS0')
-while True:
-    time.sleep(0.5)
-    print(ser.readline())
+focus_table = {1000: 50, 2000: 100, 3000: 20}
+print(max(focus_table, key=focus_table.get))
+
+a = 123.4566677
+
+print('value: {0:.0f}'.format(a))

@@ -212,6 +212,20 @@ void serial_condition(String serial_input)
         LED_colour(0, 0, 0);
         Serial.println("lights off");
     }
+    
+    else if (serial_input == "defogger_on")
+    {
+        // change HEATER_PIN to defogger_pin
+        analogWrite(HEATER_PIN, 0);
+        Serial.println("defogger on");
+    }
+    else if (serial_input == "defogger_off")
+    {
+        // change HEATER_PIN to defogger_pin
+        analogWrite(HEATER_PIN, 1);
+        Serial.println("defogger off");
+    }
+    
     // LED_RGB=255,255,255
     else if (serial_input.substring(0, 7) == "LED_RGB" or serial_input.substring(0, 7) == "LED_rgb")
     {

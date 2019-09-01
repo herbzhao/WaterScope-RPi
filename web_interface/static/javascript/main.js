@@ -8,6 +8,7 @@ var app = new Vue({
         chosen_arduino_board: "waterscope",
         available_arduino_boards: ['waterscope'],
         LED_switch: 'false',
+        defogger_switch: 'false',
         stream_method: 'PiCamera',
         recording_switch: null,
         config_update_switch: null,
@@ -41,6 +42,14 @@ var app = new Vue({
                 this.led_on()
             } else if (this.LED_switch == null) {
                 this.led_off()
+            }
+            this.alert_window = true
+        },
+        defogger_switch: function () {
+            if (this.defogger_switch == "true") {
+                this.defogger_on()
+            } else if (this.defogger_switch == null) {
+                this.defogger_off()
             }
             this.alert_window = true
         },
@@ -81,6 +90,9 @@ var app = new Vue({
             if (this.LED_switch != null) {
                 alert_content.push("LED")
             }
+            if (this.defogger_switch != null) {
+                alert_content.push("defogger")
+            }
             if (this.config_update_switch != null) {
                 alert_content.push('Updating config')
             }
@@ -97,6 +109,7 @@ var app = new Vue({
     mounted: function () {
         this.read_server_info()
         this.LED_switch = "true"
+        this.defogger_switch = "true"
         setTimeout(() => {
             this.serial_command = 'LED_RGB={0}'.format(this.default_LED_RGB);
             this.send_serial_command();
@@ -116,6 +129,14 @@ var app = new Vue({
         led_off: function () {
             console.log('turn off LED')
             axios.get("/send_serial/?value=led_off&board={0}".format(this.chosen_arduino_board))
+        },
+        defogger_on: function () {
+            console.log('turn on defogger')
+            axios.get("/send_serial/?value=defogger_on&board={0}".format(this.chosen_arduino_board));
+        },
+        defogger_off: function () {
+            console.log('turn off defogger')
+            axios.get("/send_serial/?value=defogger_off&board={0}".format(this.chosen_arduino_board))
         },
         start_config_update: function () {
             console.log('start updating config')

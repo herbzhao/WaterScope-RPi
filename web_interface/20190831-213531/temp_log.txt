@@ -1,6 +1,0 @@
-4.95 s
-
-Average sensor:  NAN*C
-
-n
-

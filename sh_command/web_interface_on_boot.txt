@@ -1,2 +1,12 @@
 crontab -u pi -e
+# add following line to the bottom
 @reboot bash /home/pi/WaterScope-RPi/sh_command/start_interface.sh
+
+
+# alternative method - set up as a service
+sudo cp /home/pi/WaterScope-RPi/sh_command/waterscope.service.sh /etc/systemd/system/waterscope.service
+sudo systemctl start waterscope.service
+sudo systemctl enable waterscope.service
+
+# debug
+sudo journalctl -u waterscope

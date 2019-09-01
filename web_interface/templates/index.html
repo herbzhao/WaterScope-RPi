@@ -96,7 +96,7 @@
 
 
                         <!-- NOTE: recording -->
-                        <v-tooltip top>
+                        <!-- <v-tooltip top>
                             <v-btn-toggle v-model="recording_switch" slot="activator">
                                 <v-btn flat color="red" value="true">
                                     <span>Record</span>
@@ -104,7 +104,7 @@
                                 </v-btn>
                             </v-btn-toggle>
                             <span>Record a video</span>
-                        </v-tooltip>
+                        </v-tooltip> -->
 
                         <!-- NOTE: LED -->
                         <v-tooltip top>
@@ -116,6 +116,18 @@
                             </v-btn-toggle>
                             <span>Toggle LED (hkey: on/off)</span>
                         </v-tooltip>
+
+                        <!-- NOTE: LED -->
+                        <v-tooltip top>
+                            <v-btn-toggle v-model="defogger_switch" slot="activator">
+                                <v-btn color="#ff4400" value="true">
+                                    <span>Defogger</span>
+                                    <v-icon>wb_sunny</v-icon>
+                                </v-btn>
+                            </v-btn-toggle>
+                            <span>Toggle defogger</span>
+                        </v-tooltip>
+
 
                         <!-- NOTE: Stream selection -->
                         <v-tooltip top>
