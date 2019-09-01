@@ -15,7 +15,7 @@ var app = new Vue({
         timelapse_interval: 10,
         zoom: 1,
         max_zoom: 5,
-        temp_plot: true,
+        temp_plot: false,
         alert_window: false,
         alert_window_timeout: 5000,
         alert_window_2: false,
@@ -101,6 +101,10 @@ var app = new Vue({
             this.serial_command = 'LED_RGB={0}'.format(this.default_LED_RGB);
             this.send_serial_command();
             this.set_pi_time_with_user_time();
+        }, 2000)
+
+        setInterval(() => {
+            this.read_auto_focus_status();
         }, 2000)
     },
 
@@ -197,6 +201,17 @@ var app = new Vue({
                     this.available_arduino_boards = response.data.available_arduino_boards;
                     this.default_LED_RGB = response.data.default_LED_RGB;
                 })
+        },
+        read_auto_focus_status: function(){
+            axios.get('/auto_focus/?command=auto_focus_status').then(response => {
+                // disable the keyboard control of the motor when it is busy
+                auto_focus_status = response.data.auto_focus_status
+                console.log(auto_focus_status)
+            })
+            if (auto_focus_status == 'done'){
+                axios.get('/auto_focus/?command=reset')
+                this.refresh()
+            }
         },
         set_pi_time_with_user_time: function () {
             var user_time = new Date();

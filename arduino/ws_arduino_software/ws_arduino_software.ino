@@ -50,9 +50,6 @@ int max_speed_carousel = 500;
 int speed_optics = 300;
 int speed_carousel = 300;
 
-// DEBUG: this is wrong
-float absolute_pos_optics = 0;
-float absolute_pos_carousel = 0;
 
 // Threading library: ArduinoThread
 // https://github.com/ivanseidel/ArduinoThread
@@ -64,6 +61,7 @@ Thread read_temp_adjust_heating_thread = Thread();
 Thread check_motor_status_thread = Thread();
 Thread read_serial_thread = Thread();
 Thread led_thread = Thread();
+Thread home_stage_thread = Thread();
 Thread optics_motor_thread = Thread();
 Thread carousel_motor_thread = Thread();
 // Thread hisThread = Thread();
@@ -103,12 +101,13 @@ void setup(void)
     read_temp_adjust_heating_thread.onRun(read_temp_adjust_heating);
     read_temp_adjust_heating_thread.setInterval(5000);
     check_motor_status_thread.onRun(check_motor_status);
-    check_motor_status_thread.setInterval(500);
+    check_motor_status_thread.setInterval(50);
     read_serial_thread.onRun(read_serial);
-    read_serial_thread.setInterval(200);
+    read_serial_thread.setInterval(25);
     // Adds  threads to the controller
     //thread_controller.add(&read_serial_thread);
-    thread_controller.add(&read_temp_adjust_heating_thread); // & to pass the pointer to it
+    // we no longer cares about temperature
+    // thread_controller.add(&read_temp_adjust_heating_thread); // & to pass the pointer to it
     thread_controller.add(&check_motor_status_thread);       // & to pass the pointer to it
 
     Serial.println("Recommand to home the stage if this is the first run");
@@ -222,6 +221,16 @@ void serial_condition(String serial_input)
         b = (getValue(serial_input, ',', 2).toInt()); // turn the LED on (HIGH is the voltage level
         LED_colour(r, g, b);
     }
+    // move_to_opt=600
+    // move_to_car=30 (degrees)
+    // positive is toward the camera, negative is toward the endstop
+    else if (serial_input.substring(0, 7) == "move_to")
+    {
+        String motor_type = serial_input.substring(8, 11);
+        int distance = serial_input.substring(12).toFloat() - stepper_optics.currentPosition()/stepper_optics_ratio;
+        move_stage(motor_type, distance);
+    }
+    
     // move_opt=600
     // move_car=30 (degrees)
     // positive is toward the camera, negative is toward the endstop
@@ -279,11 +288,11 @@ void serial_condition(String serial_input)
         String motor_type = serial_input.substring(9);
         if (motor_type == "opt")
         {
-            absolute_pos_optics = 0;
+            stepper_optics.setCurrentPosition(0);
         }
         else if (motor_type == "car")
         {
-            absolute_pos_carousel = 0;
+            stepper_carousel.setCurrentPosition(0);
         }
         print_absolute_positions();
     }
@@ -334,13 +343,12 @@ void move_stage(String motor_type, float distance)
 
     if (motor_type == "opt")
     {
-        // DEBUG: the endstop was not connected, remove comment later
-        //if (distance < 0 && digitalRead(END_STOP_PIN) == LOW)
-        if (distance < 0 && digitalRead(END_STOP_PIN_OPT) == HIGH)
+        // NOTE: the positive direction has the endstop
+        if (distance < 0 && digitalRead(END_STOP_PIN_OPT) == LOW)
         {
             // if hit end_stop, and still trying to move towards end_stop
             Serial.println("already at the end stop");
-            absolute_pos_optics = 0;
+            stepper_optics.setCurrentPosition(0);
         }
         else
         {
@@ -348,8 +356,8 @@ void move_stage(String motor_type, float distance)
             // convert distance in um  to steps
             int motor_steps = distance * stepper_optics_ratio;
             stepper_optics.move(motor_steps);
-
-            absolute_pos_optics = absolute_pos_optics + distance;
+            stepper_optics.run();
+            
             Serial.println("Move by: " + String(distance) + "um");
         }
         
@@ -363,32 +371,38 @@ void move_stage(String motor_type, float distance)
         stepper_carousel.move(motor_steps);
         stepper_carousel.run();
         // the range of degree - 0 to 360
-        absolute_pos_carousel += distance;
-        absolute_pos_carousel = fmod(absolute_pos_carousel, 360);
-
         Serial.println("Move by: " + String(distance) + "*");
     }
 }
 
 void home_stage(String motor_type)
 {
+    int i = 1;
     if (motor_type == "opt")
-    {
+    {   
+        Serial.println("stepper_optics is busy.. wait");
+        stepper_optics.setCurrentPosition(0);
         while (digitalRead(END_STOP_PIN_OPT) == HIGH)
         {
-            move_stage("opt", -100);
+          // using this blocking command, otherwise we are having nested loops
+          stepper_optics.runToNewPosition(-i*200);  // Set the position to move to
+          i = i+1;
         }
         // after hitting the end_stop, reset the absolute position
-        absolute_pos_optics = 0;
+        stepper_optics.setCurrentPosition(0);
+        Serial.println("stepper_optics is free");
+        print_absolute_positions();
     }
     else if (motor_type == "car")
     {
         while (digitalRead(END_STOP_PIN_CAR) == HIGH)
         {
-            move_stage("car", 10);
+          // using this blocking command, otherwise we are having nested loops
+          stepper_carousel.runToNewPosition(i*500);  // Set the position to move to
+          i = i+1;
         }
         // after hitting the end_stop, reset the absolute position
-        absolute_pos_carousel = 0;
+        stepper_carousel.setCurrentPosition(0);
     }
     Serial.println("Stage homed, reset the absolute position");
 }
@@ -427,11 +441,13 @@ void check_motor_status()
 }
 
 void print_absolute_positions(){
-    Serial.print("Absolute optic stage position: ");
-    Serial.print(absolute_pos_optics);
+    Serial.print("Absolute position of stepper_optics: ");
+
+    Serial.print(stepper_optics.currentPosition()/stepper_optics_ratio);
     Serial.println(" um");
-    Serial.print("Absolute optic carousel position: ");
-    Serial.print(absolute_pos_carousel);
+    Serial.print("Absolute position of stepper_carousel: ");
+    float carousel_abs_position = fmod(stepper_carousel.currentPosition()/stepper_carousel_ratio, 360);
+    Serial.print(carousel_abs_position);
     Serial.println("*");
 }
 
@@ -453,4 +469,3 @@ String getValue(String data, char separator, int index)
     }
     return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
-

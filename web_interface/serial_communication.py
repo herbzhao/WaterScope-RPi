@@ -149,9 +149,9 @@ class serial_controller_class():
                 self.stepper_optics_busy = False
                 self.stepper_carousel_busy = False
             try: 
-                self.absolute_z
+                self.absolute_pos_opt
             except AttributeError:
-                self.absolute_z = 0
+                self.absolute_pos_opt = 0
                 
             # "Moving the motor, stop accepting commands"
             # "Finished the movement in"
@@ -160,13 +160,14 @@ class serial_controller_class():
                 self.stepper_optics_busy = True
             elif 'stepper_optics is free' in self.serial_output:
                 self.stepper_optics_busy = False
+
             if 'stepper_carousel is busy' in self.serial_output:
                 self.stepper_carousel_busy = True
             elif 'stepper_carousel is free' in self.serial_output:
                 self.stepper_carousel_busy = False
-            elif 'Absolute position' in self.serial_output:
-                # Absolute position: 1500
-                self.absolute_z = float(self.serial_output.replace('Absolute position: ', ''))
+            elif 'Absolute position of stepper_optics' in self.serial_output:
+                # Absolute position of stepper_optics:  1500 um
+                self.absolute_pos_opt = float(self.serial_output.replace('Absolute position of stepper_optics: ', '').replace('um', ''))
 
         if 'temperature' in options:
             # store temperature and time in a log dict
@@ -272,7 +273,7 @@ if __name__ == '__main__':
     serial_controller = serial_controller_class()
     serial_controller.serial_connect(port_address='/dev/ttyS0', baudrate=9600)
     #serial_controller.serial_connect(port_names=['Micro'], baudrate=115200)
-    serial_controller.serial_read_threading(options=['logging'])
+    serial_controller.serial_read_threading(options=['logging'], parsers=['waterscope_motor'])
 
     # accept user input
     while True:

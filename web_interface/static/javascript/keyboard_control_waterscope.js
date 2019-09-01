@@ -48,20 +48,20 @@ var step_size_car = 20;
 
 // Move fergboard
 Mousetrap.bind('w', function () {
-    console.log('pressed w');
+    // console.log('pressed w');
     direction_key = 'w';
 });
 Mousetrap.bind('s', function () {
-    console.log('pressed s');
+    // console.log('pressed s');
     direction_key = 's';
 });
 Mousetrap.bind('a', function () {
-    console.log('pressed a');
+    // console.log('pressed a');
     direction_key = 'a';
     // axios.get('/send_serial/?value=move_car(-{0}})&board=waterscope'.format(step_size_car));
 });
 Mousetrap.bind('d', function () {
-    console.log('pressed d');
+    // console.log('pressed d');
     direction_key = 'd';
     // axios.get('/send_serial/?value=move_car({0}})&board=waterscope'.format(step_size_car));
 });
@@ -115,7 +115,7 @@ function direction_key_loop() { //  create a loop function
                 // axios.get("/acquire_data/?option=stop_recording_video");
             } else if (direction_key == 's') {
                 console.log('move downward')
-                axios.get('/send_serial/?value=move_opt(-{0}})&board=waterscope'.format(step_size_opt));
+                axios.get('/send_serial/?value=move_opt(-{0})&board=waterscope'.format(step_size_opt));
                 // axios.get("/acquire_data/?option=stop_recording_video")
             } else if (direction_key == 'a') {
                 console.log('move anticlockwise')

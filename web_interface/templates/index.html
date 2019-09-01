@@ -214,7 +214,7 @@
 
                 <!--Note:  Stream only  -->
                 <!-- Warning: another layout here -->
-                <v-layout v-show='temp_plot == false'>
+                <v-layout v-if='temp_plot == false'>
                     <v-flex xs12>
                         <v-img src="{{ url_for('video_feed') }}" aspect-ratio=1.337></v-img>
                     </v-flex>
@@ -222,7 +222,7 @@
 
                 <!--Note:  Sream + serial  -->
                 <!-- Warning: another layout here -->
-                <v-layout v-show='temp_plot == true'>
+                <v-layout v-if='temp_plot == true'>
                     <v-flex xs8>
                         <v-img src="{{ url_for('video_feed') }}" aspect-ratio=1.337></v-img>
                     </v-flex>

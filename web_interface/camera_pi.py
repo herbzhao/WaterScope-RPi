@@ -28,17 +28,19 @@ class Camera(BaseCamera):
     def initialisation(cls):
         # TODO: implement a higher camera resolution and then resize to lower resolution for streaming?
         cls.image_seq = 0
-        cls.fps = 15
+        cls.fps = 5
         # reduce the fps for video recording to reduce the file size
         cls.video_recording_fps = 3
         # for OPENCV we use a lower resolution
         cls.stream_resolution = (1648,1232)
+        cls.stream_resolution = (656, 496)
+
         cls.video_resolution = (824, 616)
         cls.image_resolution = (3280,2464)
         # how many seconds before we automatically stop recording
         cls.record_timeout = 600
         # Change: 75 or 85 to see the streaming quality
-        cls.stream_quality = 85
+        cls.stream_quality = 30
         cls.starting_time = datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S')
         # URL for requests
         cls.base_URL = "http://localhost:5000"
@@ -218,9 +220,9 @@ FPS: {}
         # send serial command to move the motor
         # DEBUG: the bracket will be parsed into %28 and mess up with the code        
         if distance == 'home':
-            move_motor_url = cls.base_URL + "/send_serial/?value=home&board=waterscope"
+            move_motor_url = cls.base_URL + "/send_serial/?value=home_opt&board=waterscope"
         else:
-            move_motor_url = cls.base_URL + "/send_serial/?value=move({0})&board=waterscope".format(distance)
+            move_motor_url = cls.base_URL + "/send_serial/?value=move_opt({0})&board=waterscope".format(distance)
         requests.get(move_motor_url)
         # a delay to allow serial command to be executed
         time.sleep(1)
@@ -228,7 +230,7 @@ FPS: {}
             # print('waiting for motor to finish movement')
             waterscope_motor_status_url = cls.base_URL+ "/waterscope_motor_status"
             waterscope_motor_status = requests.get(waterscope_motor_status_url).json()
-            cls.absolute_z = waterscope_motor_status['absolute_z']
+            cls.absolute_pos_opt = waterscope_motor_status['absolute_pos_opt']
             time.sleep(0.1)
             if waterscope_motor_status['motor_idle'] is True:
                 # print('motor is ready')
@@ -259,12 +261,15 @@ FPS: {}
                 # it has to generate frames faster than displaying the frames, otherwise some random bug will occur
                 time.sleep(1/cls.fps*0.1)
                 # yield the result to be read
-                frame = cls.stream.getvalue()
+                cls.frame = cls.stream.getvalue()
+
+
                 ''' ensure the size of package is right''' 
-                if len(frame) == 0:
+                if len(cls.frame) == 0:
                     pass
                 else:
                     # useful for saving frames into seperate file
-                    cls.frame_to_capture = frame
-                    yield frame
+                    cls.frame_to_capture = cls.frame
+                    yield cls.frame
+
 

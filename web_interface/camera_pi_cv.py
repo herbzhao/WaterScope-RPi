@@ -28,17 +28,22 @@ class Camera(BaseCamera):
     def initialisation(cls):
         # TODO: implement a higher camera resolution and then resize to lower resolution for streaming?
         cls.image_seq = 0
-        cls.fps = 15
+        cls.fps = 5
         # reduce the fps for video recording to reduce the file size
         cls.video_recording_fps = 3
         # for OPENCV we use a lower resolution
-        cls.stream_resolution = (1648,1232)
+        # list of available resolutions
+        # cls.stream_resolution = (3280, 2464)
+        # cls.stream_resolution = (1648,1232)
+        # cls.stream_resolution = (832, 624)
+        cls.stream_resolution = (656, 496)
+
         cls.video_resolution = (824, 616)
         cls.image_resolution = (3280,2464)
         # how many seconds before we automatically stop recording
         cls.record_timeout = 600
         # Change: 75 or 85 to see the streaming quality
-        cls.stream_quality = 85
+        cls.stream_quality = 20
         cls.starting_time = datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S')
         # URL for requests
         cls.base_URL = "http://localhost:5000"
@@ -214,24 +219,31 @@ FPS: {}
         cls.image_seq = cls.image_seq + 1
 
     @classmethod
-    def move_stage(cls, distance=100):
+    def move_to(cls, destination=100):
         # send serial command to move the motor
-        # DEBUG: the bracket will be parsed into %28 and mess up with the code        
-        if distance == 'home':
-            move_motor_url = cls.base_URL + "/send_serial/?value=home&board=waterscope"
+        if destination == 'home':
+            move_motor_url = cls.base_URL + "/send_serial/?value=home_opt&board=waterscope"
         else:
-            move_motor_url = cls.base_URL + "/send_serial/?value=move({0})&board=waterscope".format(distance)
+            move_motor_url = cls.base_URL + "/send_serial/?value=move_to_opt({0})&board=waterscope".format(destination)
+
         requests.get(move_motor_url)
-        # a delay to allow serial command to be executed
-        time.sleep(1)
+        # DEBUG: a delay to allow serial command to be executed and motor becomes busy
+        while True:
+            waterscope_motor_status_url = cls.base_URL+ "/waterscope_motor_status"
+            waterscope_motor_status = requests.get(waterscope_motor_status_url).json()
+            if waterscope_motor_status['stepper_optics_busy']:
+                break
+            else:
+                time.sleep(1)
+                break
+
         while True:
             # print('waiting for motor to finish movement')
             waterscope_motor_status_url = cls.base_URL+ "/waterscope_motor_status"
             waterscope_motor_status = requests.get(waterscope_motor_status_url).json()
-            cls.absolute_z = waterscope_motor_status['absolute_z']
             time.sleep(0.1)
-            if waterscope_motor_status['motor_idle'] is True:
-                # print('motor is ready')
+            if waterscope_motor_status['stepper_optics_busy'] is False:
+                cls.absolute_pos_opt = waterscope_motor_status['absolute_pos_opt']
                 break
                 
     
@@ -272,7 +284,7 @@ FPS: {}
         image_y, image_x = cls.image.shape[:2]
 
         # a square from the centre of image
-        box_size = int(image_x*0.1)
+        box_size = int(image_x*0.2)
         roi_box = {
             'x1': int(image_x/2-box_size/2), 'y1':int(image_y/2-box_size/2), 
             'x2': int(image_x/2+box_size/2), 'y2':int(image_y/2+box_size/2)}
@@ -323,14 +335,10 @@ FPS: {}
 
     @classmethod
     def auto_focus(cls):
-        def move_stage_to_z(new_z):
-            distance = new_z - cls.absolute_z
-            cls.move_stage(distance)
-
         def focus_measure_at_z(new_z):
-            move_stage_to_z(new_z)
-            # wait for 1 second to stablise the mechanical stage
-            time.sleep(2)
+            cls.move_to(new_z)
+            # DEBUG: wait for 1 second to stablise the mechanical stage
+            time.sleep(0.2)
             focus_value =  cls.focus_value
             print("Focus value at {0} is: {1}".format(new_z, focus_value))
             return focus_value
@@ -344,38 +352,51 @@ FPS: {}
                 cls.z_scan_values.append(new_z)
                 cls.z_scan_focus_values.append(focus_value)
 
-        def iterate_z_scan_map(starting_z=5000):
+        def iterate_z_scan_map(starting_z=2500):
             ' automatically create several scan map from coarse to fine, using first guess and next best focus point' 
             start_time = time.time()
             # first scan is based on the best guess
-            create_z_scan_map(starting_z, 1000, 5)
+            create_z_scan_map(starting_z, 2000, 10)
+            # this will refine the best focus within range/points*2 = 400
+
             # Then finer scan  use the best focus value as the index for the z value
-            for z_scan_range in [500, 250, 100]:
+            for z_scan_range in [400]:
 
                 local_optimal_z = cls.z_scan_values[cls.z_scan_focus_values.index(max(cls.z_scan_focus_values))]
                 create_z_scan_map(local_optimal_z, z_scan_range, 5)
             
             global_optimal_z = cls.z_scan_values[cls.z_scan_focus_values.index(max(cls.z_scan_focus_values))]
-            move_stage_to_z(global_optimal_z)
+            cls.move_to(global_optimal_z)
             print('find the focus in {0:.2f} seconds at Z: {1}'.format(time.time() - start_time, global_optimal_z))
 
         # NOTE: Autofocus code runs from here
 
-        # allow some time for system to be ready
-        time.sleep(5)
+        # DEBUG: allow some time for system to be ready
+        cls.camera_ready = False
+        while True:
+            # wait until the image is ready before starting the auto focus
+            try:
+                cls.focus_value
+                break
+            except AttributeError:
+                print('waiting for the camera to be ready')
+
+        cls.annotation_text = 'Autofocusing'
         # home the stage for absolute_z
-        cls.move_stage('home')
+        cls.move_to('home')
 
         #  a dictionary to record different z with its corresponding focus value
         cls.z_scan_values = []
         cls.z_scan_focus_values = []
         iterate_z_scan_map()
         print('you are at the best focus now')
+
+        #  annotate when auto focus finish to notify the user
+        cls.annotation_text = 'Focus ready'
+
         # send requests to change the status to done
         requests.get(cls.base_URL + '/auto_focus/?command=done' )
         
-        #  annotate when auto focus finish to notify the user
-        cls.annotation_text = 'Focus ready'
 
     @classmethod
     def start_auto_focus_thread(cls):
@@ -420,9 +441,12 @@ FPS: {}
                 if len(frame) == 0:
                     pass
                 else:
+                    cls.camera_ready = True
                     # convert the stream string into np.arrry
                     ncols, nrows = cls.camera.resolution
+
                     data = np.fromstring(frame, dtype=np.uint8).reshape(nrows, ncols, 3)
+                    # data = cv2.resize(data, None, fx=0.5, fy=0.5)
                     cls.image = data
 
                     # place to run some filters, calculations
@@ -433,3 +457,4 @@ FPS: {}
                     cls.image = cv2.imencode('.jpg', cls.image)[1].tostring()
                     # yield the result to be read
                     yield cls.image
+

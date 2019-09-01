@@ -1,0 +1,3 @@
+305.08 s
+Average sensor:  NAN*C
+Heating effort is: nan

@@ -207,12 +207,16 @@ def serial_time_temp():
 @app.route('/waterscope_motor_status')
 def check_waterscope_motor_status():
     # stop sending command when motor is busy
-    # initialise_serial_connection()
-    stepper_optics_busy = Arduinos.serial_controllers['waterscope'].stepper_optics_busy
-    stepper_carousel_busy = Arduinos.serial_controllers['waterscope'].stepper_carousel_busy
-    absolute_z = Arduinos.serial_controllers['waterscope'].absolute_z
+    try:
+        stepper_optics_busy = Arduinos.serial_controllers['waterscope'].stepper_optics_busy
+        stepper_carousel_busy = Arduinos.serial_controllers['waterscope'].stepper_carousel_busy
+        absolute_pos_opt = Arduinos.serial_controllers['waterscope'].absolute_pos_opt
+    except AttributeError:
+        stepper_optics_busy = 'unknown'
+        stepper_carousel_busy = 'unknown'
+        absolute_pos_opt = 'unknown'
     # # NOTE: initilaise the motor_idle to be true
-    return jsonify({'stepper_optics_busy':stepper_optics_busy, 'stepper_carousel_busy': stepper_carousel_busy, 'absolute_z': absolute_z})
+    return jsonify({'stepper_optics_busy':stepper_optics_busy, 'stepper_carousel_busy': stepper_carousel_busy, 'absolute_pos_opt': absolute_pos_opt})
     # return jsonify({'stepper_optics_busy': False, 'absolute_z': 0})
     
 
@@ -236,7 +240,11 @@ def auto_focus():
         return render_template('index.html') 
     elif command == 'done':
         Camera.auto_focus_status = 'auto focus completed'
-        return render_template('index.html')
+        change_stream_method(option='PiCamera')
+        Camera.auto_focus_status = 'done'
+        return render_template('index.html') 
+    elif command == 'reset':
+        Camera.auto_focus_status = 'Waiting for auto focusing'
     else:
         return jsonify({'auto_focus_status': Camera.auto_focus_status})
 
@@ -330,4 +338,4 @@ def acquire_data():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, threaded=True, debug=True)
+    app.run(host='0.0.0.0', port=5000, threaded=True, debug=False)
