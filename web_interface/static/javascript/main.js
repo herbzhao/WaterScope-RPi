@@ -111,7 +111,7 @@ var app = new Vue({
         this.LED_switch = "true"
         this.defogger_switch = "true"
         setTimeout(() => {
-            this.serial_command = 'LED_RGB={0}'.format(this.default_LED_RGB);
+            // this.serial_command = 'LED_RGB={0}'.format(this.default_LED_RGB);
             this.send_serial_command();
             this.set_pi_time_with_user_time();
         }, 2000)
