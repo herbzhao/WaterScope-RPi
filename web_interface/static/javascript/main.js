@@ -16,20 +16,20 @@ var app = new Vue({
         timelapse_interval: 10,
         zoom: 1,
         max_zoom: 5,
-        temp_plot: false,
+        temp_plot: true,
         alert_window: false,
         alert_window_timeout: 5000,
         alert_window_2: false,
         alert_window_2_timeout: 1000,
         alert_content_2: '',
-        offset_temp: 0,
         default_LED_RGB: (30,30,30),
-        Tprep: 21,
-        Theat: 26,
-        T0: 20,
-        T1: 19,
-        T2: 18,
-        T3: 17
+        // offset_temp: 0,
+        // Tprep: 21,
+        // Theat: 26,
+        // T0: 20,
+        // T1: 19,
+        // T2: 18,
+        // T3: 17
     }),
 
     // watch when data change 
