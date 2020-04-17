@@ -19,5 +19,5 @@ waterscope:
   port_address: /dev/ttyS0
   port_names: [ttyAMA0, USB2.0-Serial]
   serial_read_options: [logging_time_temp]
-  serial_read_parsers: ['temperature', 'waterscope_motor']
+  serial_read_parsers: ['temperature', 'waterscope_motor', 'income_serial_command']
 

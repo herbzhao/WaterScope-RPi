@@ -7,7 +7,8 @@ var app = new Vue({
         peltier_control_command: '',
         chosen_arduino_board: "waterscope",
         available_arduino_boards: ['waterscope'],
-        LED_switch: 'false',
+        LED_switch: 'true',
+        UV_switch: null,
         defogger_switch: 'false',
         stream_method: 'PiCamera',
         recording_switch: null,
@@ -23,13 +24,6 @@ var app = new Vue({
         alert_window_2_timeout: 1000,
         alert_content_2: '',
         default_LED_RGB: (30,30,30),
-        // offset_temp: 0,
-        // Tprep: 21,
-        // Theat: 26,
-        // T0: 20,
-        // T1: 19,
-        // T2: 18,
-        // T3: 17
     }),
 
     // watch when data change 
@@ -39,9 +33,17 @@ var app = new Vue({
         },
         LED_switch: function () {
             if (this.LED_switch == "true") {
-                this.led_on()
+                this.LED_on()
             } else if (this.LED_switch == null) {
-                this.led_off()
+                this.LED_off()
+            }
+            this.alert_window = true
+        },
+        UV_switch: function () {
+            if (this.UV_switch == "true") {
+                this.UV_on()
+            } else if (this.UV_switch == null) {
+                this.UV_off()
             }
             this.alert_window = true
         },
@@ -90,6 +92,9 @@ var app = new Vue({
             if (this.LED_switch != null) {
                 alert_content.push("LED")
             }
+            if (this.UV_switch != null) {
+                alert_content.push("UV")
+            }
             if (this.defogger_switch != null) {
                 alert_content.push("defogger")
             }
@@ -118,17 +123,26 @@ var app = new Vue({
 
         setInterval(() => {
             this.read_auto_focus_status();
-        }, 2000)
+            this.handle_income_serial_command();
+        }, 1000)
     },
 
     methods: {
-        led_on: function () {
+        LED_on: function () {
             console.log('turn on LED')
-            axios.get("/send_serial/?value=led_on&board={0}".format(this.chosen_arduino_board));
+            axios.get("/send_serial/?value=LED_on&board={0}".format(this.chosen_arduino_board));
         },
-        led_off: function () {
+        LED_off: function () {
             console.log('turn off LED')
-            axios.get("/send_serial/?value=led_off&board={0}".format(this.chosen_arduino_board))
+            axios.get("/send_serial/?value=LED_off&board={0}".format(this.chosen_arduino_board))
+        },
+        UV_on: function () {
+            console.log('turn on UV')
+            axios.get("/send_serial/?value=UV_on&board={0}".format(this.chosen_arduino_board))
+        },
+        UV_off: function () {
+            console.log('turn off UV')
+            axios.get("/send_serial/?value=UV_off&board={0}".format(this.chosen_arduino_board))
         },
         defogger_on: function () {
             console.log('turn on defogger')
@@ -231,8 +245,31 @@ var app = new Vue({
             })
             if (auto_focus_status == 'done'){
                 axios.get('/auto_focus/?command=reset')
-                this.refresh()
+                axios.get("/send_serial/?value=LED_RGB=0,50,0&board={0}".format(this.chosen_arduino_board))
+
+                setTimeout(() => {
+                axios.get("/send_serial/?value=LED_RGB=10,10,10&board={0}".format(this.chosen_arduino_board))
+                }, 500);
+                // this.refresh()
             }
+        },
+        handle_income_serial_command: function(){
+            var vm = this
+            axios.get('/income_serial_command/?command=read').then(response => {
+                var income_serial_command  = response.data.income_serial_command
+                // console.log(response)
+                // clear the cached command after receiving it
+                if (income_serial_command == 'auto_focus'){
+                    console.log('auto_focus')
+                    axios.get('/income_serial_command/?command=clear')
+                    vm.auto_focus()
+                }
+                if (income_serial_command == 'capture'){
+                    axios.get('/income_serial_command/?command=clear')
+                    console.log('take photo')
+                    vm.take_image("high_res", "raspberry_pi_time")
+                }
+            })
         },
         set_pi_time_with_user_time: function () {
             var user_time = new Date();
@@ -267,11 +304,16 @@ var app = new Vue({
         auto_focus: function () {
             console.log('starting the auto focus now')
             // start the auto focusing
-            axios.get('/auto_focus/?command=start')
-            // location.reload()
+            axios.get("/send_serial/?value=LED_RGB=50,0,0&board={0}".format(this.chosen_arduino_board))
+
             setTimeout(() => {
-                this.refresh()
-            }, 1000);
+                axios.get("/send_serial/?value=LED_RGB=10,10,10&board={0}".format(this.chosen_arduino_board))
+            }, 500);
+
+            axios.get('/auto_focus/?command=start')
+            // setTimeout(() => {
+            //     this.refresh()
+            // }, 1000);
             // window.location.href = '/auto_focus/?command=start'
             //  NOTE: have some way to go back to PiCamera stream after auto focusing?
         },

@@ -1,0 +1,10 @@
+1997.11 s
+Incubator temp: -127.00*C
+Sensor disconnected, incubator off
+Defogger temp: 42.75 *C
+Defogger effort is: 255.00
+2002.25 s
+Incubator temp: -127.00*C
+Sensor disconnected, incubator off
+Defogger temp: 43.44 *C
+Defogger effort is: 255.00

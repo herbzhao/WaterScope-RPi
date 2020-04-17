@@ -193,8 +193,15 @@ class serial_controller_class():
                 self.log['heating_effort'].append(float(self.serial_output.replace('Heating effort is:','')))
                 self.last_logged_heating_effort = self.log['heating_effort'][-1]
 
+        if 'income_serial_command' in options:
+            # to trigger autofocus and captures by buttons
+            if 'auto_focus' in self.serial_output:
+                self.income_serial_command = 'auto_focus'
+            elif 'capture' in self.serial_output:
+                self.income_serial_command = 'capture'
 
-    def serial_read(self, options=['quiet'], parsers=['motor', 'temperature', 'waterscope_motor']):
+
+    def serial_read(self, options=['quiet'], parsers=['motor', 'temperature', 'waterscope_motor', 'income_serial_command']):
         self.stop_threading = False
         # set a default tag
         while True:

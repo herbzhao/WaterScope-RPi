@@ -117,6 +117,18 @@
                             <span>Toggle LED (hkey: on/off)</span>
                         </v-tooltip>
 
+    
+                            <!-- NOTE: LED -->
+                            <v-tooltip top>
+                                <v-btn-toggle v-model="UV_switch" slot="activator">
+                                    <v-btn color="#800080" value="true">
+                                        <span>UV</span>
+                                        <v-icon>highlight</v-icon>
+                                    </v-btn>
+                                </v-btn-toggle>
+                                <span>Toggle UV</span>
+                            </v-tooltip>
+                    
                         <!-- NOTE: LED -->
                         <v-tooltip top>
                             <v-btn-toggle v-model="defogger_switch" slot="activator">
@@ -185,7 +197,7 @@
 
                     <!-- NOTE: Timelapse input and toggle-->
                     <v-flex xs2>
-                        <v-text-field v-model="timelapse_interval" label="time in seconds" prepend-icon="access_time"></v-text-field>
+                        <v-text-field v-model="timelapse_interval" label="Taking timelapse per x seconds" prepend-icon="access_time"></v-text-field>
                     </v-flex>
 
                     <!-- NOTE: sharing the same v-model can ensure only one toggle at a time-->

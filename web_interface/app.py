@@ -217,7 +217,22 @@ def check_waterscope_motor_status():
     # # NOTE: initilaise the motor_idle to be true
     return jsonify({'stepper_optics_busy':stepper_optics_busy, 'stepper_carousel_busy': stepper_carousel_busy, 'absolute_pos_opt': absolute_pos_opt})
     # return jsonify({'stepper_optics_busy': False, 'absolute_z': 0})
-    
+
+
+''' Used to identify whether motor is busy ''' 
+@app.route('/income_serial_command/')
+def serial_command_input():
+    command = request.args.get('command', '')
+    if command == 'read':
+        try:
+            income_serial_command = Arduinos.serial_controllers['waterscope'].income_serial_command
+        except AttributeError:
+            income_serial_command = ''
+    if command == 'clear':
+        Arduinos.serial_controllers['waterscope'].income_serial_command = ''
+        income_serial_command = ''
+    # NOTE: initilaise the motor_idle to be true
+    return jsonify({'income_serial_command': income_serial_command})
 
 
 @app.route('/auto_focus/')
@@ -236,16 +251,16 @@ def auto_focus():
         # start auto focusing
         Camera.start_auto_focus_thread()
         Camera.auto_focus_status = 'auto focusing...'
-        return render_template('index.html') 
+        # return render_template('index.html') 
     elif command == 'done':
         Camera.auto_focus_status = 'auto focus completed'
-        change_stream_method(option='PiCamera')
+        # change_stream_method(option='PiCamera')
         Camera.auto_focus_status = 'done'
-        return render_template('index.html') 
+        # return render_template('index.html') 
     elif command == 'reset':
         Camera.auto_focus_status = 'Waiting for auto focusing'
-    else:
-        return jsonify({'auto_focus_status': Camera.auto_focus_status})
+
+    return jsonify({'auto_focus_status': Camera.auto_focus_status})
 
 
 
@@ -334,7 +349,7 @@ def acquire_data():
 
 
 
-change_stream_method(option='PiCamera')
+# change_stream_method(option='PiCamera')
 change_stream_method(option='OpenCV')
 
 

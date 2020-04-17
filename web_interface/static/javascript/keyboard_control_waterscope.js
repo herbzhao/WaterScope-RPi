@@ -43,7 +43,7 @@ Mousetrap.bind(['h'], function () {
 
 var direction_key;
 // a variable to store the focus movement size
-var step_size_opt = 200;
+var step_size_opt = 5;
 var step_size_car = 20;
 
 // Move fergboard

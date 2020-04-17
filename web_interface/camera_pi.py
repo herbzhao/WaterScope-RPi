@@ -202,11 +202,11 @@ FPS: {}
             # when taking photos at high res, need to stop the video channel first
             # cls.camera.stop_recording(splitter_port=1)
             cls.camera.stop_recording()
-            time.sleep(0)
+            time.sleep(0.1)
             cls.camera.resolution = cls.image_resolution
             # Remove bayer = Ture if dont care about RAW
             cls.camera.capture(filename, format = 'jpeg', quality=100, bayer = False)
-            time.sleep(0)
+            time.sleep(0.1)
             # reduce the resolution for video streaming
             cls.camera.resolution = cls.stream_resolution
             # resume the video channel
