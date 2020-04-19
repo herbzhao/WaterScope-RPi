@@ -40,7 +40,8 @@ function get_data_and_plot() {
   axios.get(API_url).then(response => {
 
     x_value = response.data.x
-    y_value = response.data.y
+    incubator_temp_value = response.data.incubator_temp_value
+    defogger_temp_value = response.data.defogger_temp_value
     // these are required to plot in HH:MM:SS format
     date = response.data.date
     hour = response.data.hour
@@ -48,7 +49,9 @@ function get_data_and_plot() {
     second = response.data.second
 
     // console.log(y_value)
-    real_time_plotting(x_value, y_value)
+    real_time_plotting(x_value, incubator_temp_value)
+    real_time_plotting(x_value, defogger_temp_value)
+
   }).catch(error => console.log(error))
 }
 

@@ -170,22 +170,27 @@ class serial_controller_class():
                 self.absolute_pos_opt = float(self.serial_output.replace('Absolute position of stepper_optics: ', '').replace('um', ''))
 
         if 'temperature' in options:
+            # use regex to match the arduino output:
+            # 50 s
+            self.time_re = re.compile('\d+.\d+\ss')
+            # Average sensor: 37.5 *C
+            self.incubator_temp_re = re.compile('Incubator temp:\s\d+.\d+\*C')
+            self.defogger_temp_re = re.compile('Defogger temp:\s\d+.\d+\*C')
+            # Heating effort is: 11.00
+            self.heating_effort_re = re.compile("Heating effort")
+        # extract time and temperature value
             # store temperature and time in a log dict
             try:
                 self.log
             except AttributeError:
                 self.log = {'temp':[], 'time':[], 'heating_effort':[]}
-                # use regex to match the arduino output:
-                # 50 s
-                self.time_re = re.compile('\d+.\d+\ss')
-                # Average sensor: 37.5 *C
-                self.temp_re = re.compile('Average sensor:\s\d+.\d+\*C')
-                # Heating effort is: 11.00
-                self.heating_effort_re = re.compile("Heating effort")
-            # extract time and temperature value
-            if self.temp_re.findall(self.serial_output):
-                self.log['temp'].append(float(self.serial_output.replace('*C','').replace('Average sensor: ','')))
-                self.last_logged_temp = self.log['temp'][-1]
+
+            if self.incubator_temp_re.findall(self.serial_output):
+                self.log['incubator_temp'].append(float(self.serial_output.replace('*C','').replace('Incubator temp: ','')))
+                self.last_logged_incubator_temp = self.log['incubator_temp'][-1]
+            elif self.defogger_temp_re.findall(self.serial_output):
+                self.log['defogger_temp'].append(float(self.serial_output.replace('*C','').replace('Defogger temp: ','')))
+                self.last_logged_defogger_temp = self.log['defogger_temp'][-1]
                 # print(self.last_logged_temp)
             elif self.time_re.findall(self.serial_output):
                 self.log['time'].append(float(self.serial_output.replace(' s','')))
@@ -219,7 +224,7 @@ class serial_controller_class():
                         # decide whether to print the output or store in a txt file
                         if options[0] == 'quiet':
                             pass
-                        
+
                         elif options[0] == 'normal':
                             print(self.serial_output)
 
@@ -252,13 +257,15 @@ class serial_controller_class():
                                 # heating effort: Heating effort is: 11.00
                                 
                                 try:
-                                    if self.last_logged_temp and self.last_logged_heating_effort:
+                                    if self.last_logged_defogger_temp and self.last_logged_incubator_temp and self.last_logged_heating_effort:
                                     # if self.last_logged_temp and self.last_logged_heating_effort:
                                         log_file.write(time_value_formatted+',')
-                                        log_file.write(str(self.last_logged_temp)+',')
+                                        log_file.write(str(self.last_logged_incubator_temp)+',')
+                                        log_file.write(str(self.last_logged_defogger_temp)+',')
                                         log_file.write(str(self.last_logged_heating_effort))
                                         log_file.write('\n')
-                                        del(self.last_logged_temp)
+                                        del(self.last_logged_incubator_temp)
+                                        del(self.last_logged_defogger_temp)
                                         del(self.last_logged_heating_effort)
                                 except AttributeError:
                                     pass

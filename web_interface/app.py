@@ -64,11 +64,14 @@ def parse_serial_time_temp():
     initialise_serial_connection()
     try:
         time_value = Arduinos.serial_controllers['waterscope'].log['time'][-1]
-        temp_value = Arduinos.serial_controllers['waterscope'].log['temp'][-1]
+        incubator_temp_value = Arduinos.serial_controllers['waterscope'].log['incubator_temp'][-1]
+        defogger_temp_value = Arduinos.serial_controllers['waterscope'].log['defogger_temp'][-1]
+
 
     except (IndexError, KeyError, AttributeError): 
         time_value = 0
-        temp_value = 0
+        incubator_temp_value = 0
+        defogger_temp_value = 0
 
     minute, second = divmod(time_value,60)
     hour, minute = divmod(minute, 60)
@@ -76,7 +79,7 @@ def parse_serial_time_temp():
     # use a arbitrary date for plotly to work properly
     time_value_formatted = datetime.datetime.combine(datetime.date(1, 1, 1), time_value_formatted)
 
-    return time_value_formatted, temp_value
+    return time_value_formatted, incubator_temp_value, defogger_temp_value
 
 @app.route('/')
 def index():
@@ -192,7 +195,7 @@ def send_serial():
 ''' The feed for serial_command output ''' 
 @app.route('/serial_time_temp')
 def serial_time_temp():
-    time_value_formatted, temp_value = parse_serial_time_temp()
+    time_value_formatted, incubator_temp_value, defogger_temp_value = parse_serial_time_temp()
     now = datetime.datetime.now()
     time_value_formatted = now.strftime("%Y-%m-%d %H:%M:%S")
     date = now.date()
@@ -200,7 +203,9 @@ def serial_time_temp():
     minute = now.minute
     hour = now.hour
     # return jsonify({'time_value':time_value, 'temp_value':temp_value})
-    return jsonify({'x':time_value_formatted, 'date': str(date), 'hour':hour, 'minute': minute, 'second': second, 'y':temp_value})
+    return jsonify({
+        'x':time_value_formatted, 'date': str(date), 'hour':hour, 'minute': minute, 'second': second, 
+        'incubator_temp_value':incubator_temp_value, 'defogger_temp_value': defogger_temp_value})
 
 ''' Used to identify whether motor is busy ''' 
 @app.route('/waterscope_motor_status')
