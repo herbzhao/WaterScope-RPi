@@ -120,9 +120,12 @@ var app = new Vue({
             this.send_serial_command();
             this.set_pi_time_with_user_time();
         }, 2000)
-
+        
         setInterval(() => {
             this.read_auto_focus_status();
+        }, 200)
+
+        setInterval(() => {
             this.handle_income_serial_command();
         }, 1000)
     },
@@ -249,7 +252,10 @@ var app = new Vue({
 
                 setTimeout(() => {
                 axios.get("/send_serial/?value=LED_RGB=10,10,10&board={0}".format(this.chosen_arduino_board))
-                }, 500);
+                axios.get("/send_serial/?value=af_complete&board={0}".format(this.chosen_arduino_board))
+                
+            }, 500);
+
                 // this.refresh()
             }
         },

@@ -1,0 +1,6 @@
+web_interface/20200418-115321/temp_log.txt
+web_interface/timelapse/
+web_interface/timelapse/arduino
+
+*.pyc
+web_interface/__pycache__

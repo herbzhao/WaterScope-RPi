@@ -219,20 +219,27 @@ class serial_controller_class():
                         # decide whether to print the output or store in a txt file
                         if options[0] == 'quiet':
                             pass
+                        
                         elif options[0] == 'normal':
                             print(self.serial_output)
+
                         elif options[0] == 'logging':
                             print(self.serial_output)
                             # NOTE: the options[1] is the folder name
                             # if not specified the folder name, use the starting time for the folder name
                             if len(options) == 1:
                                 options.append(self.starting_time)
+                            if not os.path.exists("timelapse_data"):
+                                os.mkdir("timelapse_data")
+                            if not os.path.exists("timelapse_data/arduino"):
+                                os.mkdir("timelapse_data/arduino")
                             # create the folder for the first time.
-                            if not os.path.exists("{}".format(options[1])):
-                                os.mkdir("{}".format(options[1]))
-                            log_file_location = "{}/temp_log.txt".format(options[1])
+                            if not os.path.exists("timelapse_data/arduino/{}".format(options[1])):
+                                os.mkdir("timelapse_data/arduino/{}".format(options[1]))
+                            log_file_location = "timelapse_data/arduino/{}/temp_log.txt".format(options[1])
                             with open(log_file_location, 'a+') as log_file:
                                 log_file.writelines(self.serial_output)
+
                         elif options[0] == 'logging_time_temp':
                             if not os.path.exists("timelapse_data"):
                                 os.mkdir("timelapse_data")
