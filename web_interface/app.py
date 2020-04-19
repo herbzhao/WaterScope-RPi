@@ -277,17 +277,17 @@ def parse_filename_and_acquire_data(filename, method):
     # synchronise the arduino_time
     if 'arduino_time' in filename:
         # HH:MM:SS format
-        time_value_formatted, temp_value = parse_serial_time_temp()
+        time_value_formatted, incubator_temp_value, defogger_temp_value = parse_serial_time_temp()
         # allowing other appendix
-        filename = str(time_value_formatted.time()) + '_T{}'.format(temp_value) + filename.replace('arduino_time', '')
+        filename = str(time_value_formatted.time()) + '_T{}'.format(defogger_temp_value) + filename.replace('arduino_time', '')
     # synchronise the raspberry pi time
     # to set pi's time: sudo date -s '2017-02-05 15:30:00'
     elif 'raspberry_pi_time' in filename:
-        time_value_formatted, temp_value = parse_serial_time_temp()
+        time_value_formatted, incubator_temp_value, defogger_temp_value = parse_serial_time_temp()
         # DEBUG: alfred says this is a problem
         now = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
         # allowing other appendix
-    filename = now + '_T{}'.format(temp_value) + filename.replace('raspberry_pi_time', '')
+    filename = now + '_T{}'.format(defogger_temp_value) + filename.replace('raspberry_pi_time', '')
 
     if method == 'normal':
         Camera.take_image(resolution='normal', filename=filename)

@@ -49,12 +49,21 @@ function get_data_and_plot() {
     second = response.data.second
 
     // console.log(y_value)
-    real_time_plotting(x_value, incubator_temp_value)
+    // real_time_plotting(x_value, incubator_temp_value)
+    // real_time_plotting(x_value, incubator_temp_value)
     real_time_plotting(x_value, defogger_temp_value)
+
 
   }).catch(error => console.log(error))
 }
 
+
+// extend multiple traces
+
+// https://redstapler.co/javascript-realtime-chart-plotly/
+// function real_time_plotting_multiple_traces(x_value, y_value_1, y_value_2) {
+//   Plotly.extendTraces(plotting_element_ID, {x:[[x_value], [x_value]], y: [[y_value_1], [y_value_2]]}, [0, 1])
+// }
 
 
 // https://redstapler.co/javascript-realtime-chart-plotly/

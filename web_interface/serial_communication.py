@@ -174,8 +174,8 @@ class serial_controller_class():
             # 50 s
             self.time_re = re.compile('\d+.\d+\ss')
             # Average sensor: 37.5 *C
-            self.incubator_temp_re = re.compile('Incubator temp:\s\d+.\d+\*C')
-            self.defogger_temp_re = re.compile('Defogger temp:\s\d+.\d+\*C')
+            self.incubator_temp_re = re.compile('Incubator temp:')
+            self.defogger_temp_re = re.compile('Defogger temp:')
             # Heating effort is: 11.00
             self.heating_effort_re = re.compile("Heating effort")
         # extract time and temperature value
@@ -183,7 +183,7 @@ class serial_controller_class():
             try:
                 self.log
             except AttributeError:
-                self.log = {'temp':[], 'time':[], 'heating_effort':[]}
+                self.log = {'incubator_temp':[], 'defogger_temp':[], 'time':[], 'heating_effort':[]}
 
             if self.incubator_temp_re.findall(self.serial_output):
                 self.log['incubator_temp'].append(float(self.serial_output.replace('*C','').replace('Incubator temp: ','')))
@@ -191,7 +191,6 @@ class serial_controller_class():
             elif self.defogger_temp_re.findall(self.serial_output):
                 self.log['defogger_temp'].append(float(self.serial_output.replace('*C','').replace('Defogger temp: ','')))
                 self.last_logged_defogger_temp = self.log['defogger_temp'][-1]
-                # print(self.last_logged_temp)
             elif self.time_re.findall(self.serial_output):
                 self.log['time'].append(float(self.serial_output.replace(' s','')))
             elif self.heating_effort_re.findall(self.serial_output):
@@ -294,7 +293,7 @@ if __name__ == '__main__':
     serial_controller = serial_controller_class()
     serial_controller.serial_connect(port_address='/dev/ttyS0', baudrate=9600)
     #serial_controller.serial_connect(port_names=['Micro'], baudrate=115200)
-    serial_controller.serial_read_threading(options=['logging'], parsers=['waterscope_motor'])
+    serial_controller.serial_read_threading(options=['logging'], parsers=['waterscope_motor', 'temperature'])
 
     # accept user input
     while True:
