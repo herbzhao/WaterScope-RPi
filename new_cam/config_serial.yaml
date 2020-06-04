@@ -1,0 +1,23 @@
+fergboard:
+  connect: False
+  baudrate: 115200
+  port_address:
+  port_names: [Micro]
+  serial_read_options: [normal]
+  serial_read_parsers: ['motor']
+parabolic:
+  connect: False
+  baudrate: 9600
+  port_address:
+  port_names: [SERIAL, Serial, ACM]
+  serial_read_options: [logging_time_temp]
+  serial_read_parsers: ['temperature']
+waterscope:
+  connect: True
+  baudrate: 9600
+  parser: waterscope
+  port_address: /dev/ttyS0
+  port_names: [ttyAMA0, USB2.0-Serial]
+  serial_read_options: [logging_time_temp]
+  serial_read_parsers: ['temperature', 'waterscope_motor', 'income_serial_command']
+
