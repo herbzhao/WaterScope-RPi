@@ -7,7 +7,13 @@ import yaml
 import numpy as np
 import threading
 
+import cv2
+import os
+import datetime
 from serial_communication import serial_controller_class, Arduinos
+import yaml
+import threading
+import numpy as np
 
 
 def align_down(size, align):
@@ -33,9 +39,7 @@ def set_controls(camera):
         print(e)
 
 
-
-
-
+# NOTE: serial communication 
 def initialise_serial_connection():
     ''' all the arduino connection is done via this function''' 
     try:
@@ -84,7 +88,7 @@ if __name__ == "__main__":
         set_controls(camera)
 
         time.sleep(2)
-        send_serial("LED_ON")
+        send_serial("LED_on")
         time.sleep(2)
         frame = camera.capture(encoding = 'jpeg')
         
@@ -92,7 +96,7 @@ if __name__ == "__main__":
         frame.as_array.tofile("{}.jpg".format(filename))
 
         time.sleep(2)
-        send_serial("LED_OFF")
+        send_serial("LED_off")
         time.sleep(1)
         # Release memory
         del frame
