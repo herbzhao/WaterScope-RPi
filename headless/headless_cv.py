@@ -23,6 +23,10 @@ class OpencvClass():
         self.ROI = []
         self.sample_ID = 0
         self.auto_focus_status = ""
+        # NOTE: turn this on when in deployment
+        self.headless = False
+        self.stop_streaming = False
+
         # allow the camera to warmup
         time.sleep(0.1)
 
@@ -58,8 +62,12 @@ class OpencvClass():
             self.define_ROI(0.2)
             self.variance_of_laplacian()
 
+            #  NOTE: disable this for autostart
             # show the frame
-            # cv2.imshow("stream", self.image)
+            if self.headless == False:
+                cv2.imshow("stream", self.image)
+            else:
+                cv2.destroyAllWindows()
 
             
             key = cv2.waitKey(1) & 0xFF
@@ -69,23 +77,32 @@ class OpencvClass():
 
             # read serial command:
             self.read_serial()
+            # capture one image
+            # self.analysis_result()
 
-            # NOTE: after autofocus
+            # NOTE: after autofocus 
             if self.auto_focus_status =="ready":
                     time.sleep(1)
-                    self.capture_image()
-                    time.sleep(1)
+                    # self.capture_image()
+                    self.analysis_result()
                     self.move_to(0)
-                    self.send_serial('results=123,456')
+                    self.send_serial('results={},{}'.format(self.result['E.coli'], self.result['coliforms']))
                     self.auto_focus_status = ''
+                    self.annotating("E.coli: {}, coliforms: {}".format(self.result['E.coli'], self.result['coliforms']))
 
             # if the `q` key was pressed, break from the loop
-            if key == ord("q"):
-                cv2.destroyAllWindows()
-                break
+            # if key == ord("q"):
+            #     cv2.destroyAllWindows()
+            #     break
         
             if key == ord("c"):
                 self.capture_image()
+
+            if key == ord("h"):
+                self. send_serial("home")
+
+            if key == ord("m"):
+                self.analysis_result()
 
             if key == ord("a"):
                 self.start_auto_focus_thread()
@@ -96,8 +113,13 @@ class OpencvClass():
             if key == ord("s"):
                 self.send_serial("move_opt({})".format(-10))
 
-            if key == ord("s"):
-                self.move_to(0)
+            if key == ord("q"):
+                self.headless = not self.headless
+            
+            if self.stop_streaming == True:
+                cv2.destroyAllWindows()
+                break
+
 
     def initialise_data_folder(self):
         if not os.path.exists('timelapse_data'):
@@ -110,30 +132,61 @@ class OpencvClass():
         self.initialise_data_folder()
         # NOTE: when file name is not specified, use a counter
         if filename == '':
-            filename = self.folder_path+'/{}_{:04d}_{}.jpg'.format(self.sample_ID, self.image_seq, datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S'))
+            self.filename = self.folder_path+'/{}_{:04d}_{}.jpg'.format(self.sample_ID, self.image_seq, datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S'))
         else:
-            filename = self.folder_path+'/{}_{:04d}-{}.jpg'.format(self.sample_ID, self.image_seq, filename)
+            self.filename = self.folder_path+'/{}_{:04d}-{}.jpg'.format(self.sample_ID, self.image_seq, self.filename)
         if resolution == 'normal':
             print('taking image')
-            self.camera.capture(filename, format = 'jpeg', quality=100, bayer = False, use_video_port=True)
+            self.camera.capture(self.filename, format = 'jpeg', quality=100, bayer = False, use_video_port=True)
         elif resolution == 'high_res':
             print('taking high_res image')
             # when taking photos at high res, need to stop the video channel first
             # self.camera.stop_recording(splitter_port=1)
             # self.camera.stop_recording()
-            # self.stop_streaming()
+
             time.sleep(0.1)
             self.camera.resolution = self.image_resolution
             # Remove bayer = Ture if dont care about RAW
-            self.camera.capture(filename, format = 'jpeg', quality=100, bayer = False)
+            self.camera.capture(self.filename, format = 'jpeg', quality=100, bayer = False)
             time.sleep(0.1)
             # reduce the resolution for video streaming
             self.camera.resolution = self.stream_resolution
+
+
             # resume the video channel
             # Warning: be careful about the self.camera.start_recording. 'bgr' for opencv and 'mjpeg' for picamera
             # self.camera.start_recording(self.stream, format='mjpeg', quality = self.stream_quality, splitter_port=1)
 
         self.image_seq += 1
+
+    def analysis_result(self):
+        print('Capture an image')
+        
+        self.capture_image()
+        print(self.filename)
+        time.sleep(1)
+        with open('image_to_analyse.txt', 'a+') as file:
+            file.write(self.filename)
+
+        # self.headless = True
+        print('Wait for ML to work out stuff')
+
+        while True:
+            # keep checking whether result it out
+            if os.path.exists(self.filename.replace('.jpg', '_result.txt')):
+                with open(self.filename.replace('.jpg', '_result.txt')) as file:
+                    lines = file.readlines()
+                    self.result = {}
+                    for line in lines:
+                        bacteria_name = line.split(':')[0].replace(' ', '').replace('\t','').replace('\n', '')
+                        count = line.split(':')[1].replace(' ', '').replace('\t','').replace('\n', '')
+                        self.result[bacteria_name] =  count
+                break
+
+            else:
+                time.sleep(2)
+
+        print(self.result)
 
     # NOTE: opencv specific modification code
     def define_ROI(self,  box_ratio = 0.2):
@@ -166,7 +219,7 @@ class OpencvClass():
             # compute the Laplacian of the image and then return the focus
             # measure, which is simply the variance of the Laplacian
             self.focus_value = cv2.Laplacian(self.ROI, cv2.CV_64F).var()
-            print(self.focus_value)
+            # print(self.focus_value)
             focus_text = 'f: {:.2f}'.format(self.focus_value)
             # CV font
             font = cv2.FONT_HERSHEY_DUPLEX
@@ -286,11 +339,12 @@ class OpencvClass():
             self.move_to(global_optimal_z)
             print('find the focus in {0:.2f} seconds at Z: {1}'.format(time.time() - start_time, global_optimal_z))
 
+
         # NOTE: Autofocus code runs from here
         print('starting to auto focus')
         self.annotating('Autofocusing')
         # home the stage for absolute_z
-        self.move_to('home')
+        self. send_serial("home")
 
         #  a dictionary to record different z with its corresponding focus value
         self.focus_table = {}
@@ -303,7 +357,10 @@ class OpencvClass():
         # send requests to change the status to done
         self.send_serial('af_complete')
 
+        # For the arduino to know
+        # DEBUG: disable this temporarily
         self.auto_focus_status = "ready"
+        
 
 
 while __name__ == "__main__":

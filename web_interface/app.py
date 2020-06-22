@@ -38,7 +38,7 @@ def initialise_serial_connection():
         Arduinos.serial_controllers
     except AttributeError:
         with open('config_serial.yaml') as config_serial_file:
-            serial_controllers_config = yaml.load(config_serial_file)
+            serial_controllers_config = yaml.load(config_serial_file, Loader=yaml.Loader)
         Arduinos.available_arduino_boards = []
 
         for board_name in serial_controllers_config:
@@ -131,7 +131,7 @@ def settings_io():
         Camera.stop_stream()
 
     with open('config_picamera.yaml') as config_file:
-        config = yaml.load(config_file)
+        config = yaml.load(config_file, Loader=yaml.Loader)
         default_LED_RGB = config['default_LED_RGB']
 
     settings = {

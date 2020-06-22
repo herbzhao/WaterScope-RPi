@@ -52,7 +52,7 @@ class Camera(BaseCamera):
     @classmethod
     def update_camera_setting(cls):
         with open('config_picamera.yaml') as config_file:
-            config = yaml.load(config_file)
+            config = yaml.load(config_file, Loader=yaml.Loader)
             # consistent imaging condition
             cls.camera.awb_mode = config['awb_mode']
             cls.camera.awb_gains = (config['red_gain'], config['blue_gain'])
