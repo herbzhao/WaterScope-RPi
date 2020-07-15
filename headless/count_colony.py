@@ -318,13 +318,13 @@ def predict_from_model(cropped_img):
 
     # Threshold predictions for blue and purple
     preds_env_test_t = preds_env_test
-    preds_env_test_t[0,:,:,0] = (preds_env_test_t[0, :, :, 0] < 0.2).astype(np.uint8)
-    preds_env_test_t[0,:,:,2] = (preds_env_test_t[0, :, :, 2] < 0.01).astype(np.uint8)
+    preds_env_test_t[0,:,:,0] = (preds_env_test_t[0, :, :, 0] < 0.005).astype(np.uint8)
+    preds_env_test_t[0,:,:,1] = (preds_env_test_t[0, :, :, 1] < 0.005).astype(np.uint8)
 
     thresholded_blue = (np.squeeze(preds_env_test_t[0, :, :, 0]))
     thresholded_blue = thresholded_blue * 255
     thresholded_blue = thresholded_blue.astype('uint8')
-    thresholded_purple = (np.squeeze(preds_env_test_t[0, :, :, 2]))
+    thresholded_purple = (np.squeeze(preds_env_test_t[0, :, :, 1]))
     thresholded_purple = thresholded_purple * 255
     thresholded_purple = thresholded_purple.astype('uint8')
 
@@ -361,7 +361,7 @@ def segment_and_count(predicted_image, return_image = 'False'):
     dist2 = np.uint8(dist2)
 
     # Obtain coordinates of local maxima (output type = numpy array of maxima coordinates)
-    coordinates = peak_local_max(dist2, min_distance=2)
+    coordinates = peak_local_max(dist2, min_distance=10)
 
     # Create empty mask
     markers2 = np.zeros(dist2.shape, dtype=np.int32)
@@ -411,7 +411,7 @@ def segment_and_count(predicted_image, return_image = 'False'):
 def segment_and_count_boundary(input_img, return_image='True', color='Blue'):
     img = input_img
     img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-    img = cv2.resize(img, (512, 512), interpolation=cv2.INTER_AREA)
+    #img = cv2.resize(img, (512, 512), interpolation=cv2.INTER_AREA)
 
     # Prediction map was of size (256x256), enlarging gave uneven edge, gaussian blur then threshold
     # to smooth out the edges
@@ -961,7 +961,6 @@ def analysis_image(img_name = 'image.jpg', result = 'result.jpg', print_log=Fals
         img_name = img_name + '.jpg'
     else:
         img_name = img_name
-    print(img_name)
     inputimg = cv2.imread(img_name)
     inputimg2= cv2.imread(img_name)
     overgrown_flag = RGB_comparator(raw_to_cropped(inputimg, dim=(256, 256), color_check=True))
@@ -986,8 +985,8 @@ def analysis_image(img_name = 'image.jpg', result = 'result.jpg', print_log=Fals
         purple_image, purple_count = purple[0], purple[1]
 
         # Get the cropped original image of the same dimension for ease of result viewing
-        ori_image = raw_to_cropped(inputimg2, dim=(512, 512))
-        cv2.rectangle(ori_image, (1, 1), (511, 511), (255, 255, 255), 2)
+        ori_image = raw_to_cropped(inputimg2, dim=(256, 256))
+        cv2.rectangle(ori_image, (1, 1), (255, 255), (255, 255, 255), 2)
 
         # Saving the counts in a text file
         f = open(count_name, "w+")
@@ -1000,15 +999,15 @@ def analysis_image(img_name = 'image.jpg', result = 'result.jpg', print_log=Fals
         twoboundary = masking_boundary(masking_boundary(ori_image, blue_image), purple_image)
         # Writing title and count on images
         cv2.putText(twoboundary, 'E.coli count : %d' % (blue_count),
-                    (5, 500),
+                    (5, 231),
                     cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
+                    0.5,
                     (255, 255, 255),
                     2)
         cv2.putText(twoboundary, 'coliform count : %d' % (purple_count),
-                    (5, 450),
+                    (5, 206),
                     cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
+                    0.5,
                     (255, 255, 255),
                     2)
         cv2.imwrite(result_name, twoboundary)
@@ -1029,30 +1028,30 @@ def analysis_image(img_name = 'image.jpg', result = 'result.jpg', print_log=Fals
         purple_image, purple_count = purple[0], purple[1]
 
         # Get the cropped original image of the same dimension for ease of result viewing
-        ori_image = raw_to_cropped(inputimg2, dim=(512, 512))
-        cv2.rectangle(ori_image, (1, 1), (511, 511), (255, 255, 255), 2)
+        ori_image = raw_to_cropped(inputimg2, dim=(256, 256))
+        cv2.rectangle(ori_image, (1, 1), (255,255), (255, 255, 255), 2)
 
         # Saving the counts in a text file
         f = open(count_name, "w+")
         f.write('E. coli\t\t: %d %s \ncoliforms\t: %d %s' % (blue_count, flag_string, purple_count, flag_string))
         f.close()
 
-        cv2.rectangle(blue_image, (1, 1), (511, 511), (255, 255, 255), 2)
-        cv2.rectangle(purple_image, (1, 1), (511, 511), (255, 255, 255), 2)
+        cv2.rectangle(blue_image, (1, 1), (255, 255), (255, 255, 255), 2)
+        cv2.rectangle(purple_image, (1, 1), (255,255), (255, 255, 255), 2)
         # Saving the segmented images
         twoboundary = masking_boundary(masking_boundary(ori_image, blue_image), purple_image)
 
         # Writing title and count on images
         cv2.putText(twoboundary, 'E.coli count : %d %s' % (blue_count, flag_string),
-                    (5, 500),
+                    (5, 231),
                     cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
+                    0.5,
                     (255, 255, 255),
                     2)
         cv2.putText(twoboundary, 'coliform count : %d %s' % (purple_count, flag_string),
-                    (5, 450),
+                    (5, 206),
                     cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
+                    0.5,
                     (255, 255, 255),
                     2)
         cv2.imwrite(result_name, twoboundary)
@@ -1092,8 +1091,26 @@ def generalized_dice_coeff(y_true, y_pred):
     gen_dice_coef = 2 * numerator / denominator
     return gen_dice_coef
 
+
+# New Custom Metrics
+def dice_coef(y_true, y_pred):
+    smooth = 0.0
+    y_true_f = K.flatten(y_true)
+    y_pred_f = K.flatten(y_pred)
+    intersection = K.sum(y_true_f * y_pred_f)
+    return (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
+
+def jacard(y_true, y_pred):
+
+    y_true_f = K.flatten(y_true)
+    y_pred_f = K.flatten(y_pred)
+    intersection = K.sum(y_true_f * y_pred_f)
+    union = K.sum(y_true_f + y_pred_f - y_true_f * y_pred_f)
+
+    return intersection/union
+
 # Load the TFLite model and allocate tensors.
-interpreter = Interpreter(model_path="converted_model.tflite")
+interpreter = Interpreter(model_path="25nd_June_small3.tflite")
 interpreter.allocate_tensors()
 
 # Get input and output tensors.
@@ -1103,4 +1120,3 @@ output_details = interpreter.get_output_details()
 # # Test the model on random input data.
 input_shape = input_details[0]['shape']
 input_data = np.array(np.random.random_sample(input_shape), dtype=np.float32)
-

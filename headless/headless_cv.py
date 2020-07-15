@@ -10,6 +10,10 @@ from serial_communication import serial_controller_class, Arduinos
 import yaml
 import threading
 import numpy as np
+import signal
+import subprocess
+import serial as bluetooth
+import base64
 
 
 class OpencvClass():
@@ -22,14 +26,86 @@ class OpencvClass():
         self.starting_time = datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S')
         self.ROI = []
         self.sample_ID = 0
+        self.sample_location = ""
+        self.sample_time = ""
+        self.sample_comment = ""
         self.auto_focus_status = ""
         # NOTE: turn this on when in deployment
-        self.headless = False
+        self.headless = True
         self.stop_streaming = False
+        self.bt_open=0
 
+        # wipe the file
+        with open('image_to_analyse.txt', 'w+') as file:
+            pass
+        
         # allow the camera to warmup
         time.sleep(0.1)
+        #self.open_bluetooth()
+    def open_bluetooth(self):
+            
+        try:
+            self.bt = bluetooth.Serial('/dev/rfcomm0', 1000000)
+            self.bt.close()
+            self.bt = bluetooth.Serial('/dev/rfcomm0', 1000000)
+            self.bt_open=True
+            print('BT port open')
+        except:
+      #      pass
+            print ('port not open')
+ 
+        
+        
+    def bt_readline(self):
+        eol = b'$\n'
+        leneol = len(eol)
+        line = bytearray()
+        while True:
+            c = self.bt.read(1)
+            if c:
+                line += c
+                if line[-leneol:] == eol:
+                    break
+            else:
+                break
+        return bytes(line[:-leneol])
 
+    def read_bluetooth(self):
+        if self.bt.in_waiting>1:
+            bt_data = (self.bt_readline()).decode("utf-8")
+            print(bt_data)
+            if ((bt_data[0:2]) == 'id'):
+                self.sample_ID = int(bt_data.split(",")[0][3:])
+                print(self.sample_ID)
+                self.sample_location = bt_data.split(",")[1][9:]
+                self.sample_time=bt_data.split(",")[2][5:]
+                self.sample_comment=bt_data.split(",")[3][8:]
+            if ((bt_data[0:3]) == 'ard'):
+                self.send_serial(bt_data[4:])
+           
+            if(bt_data=="full_analysis"):
+               # self.write_bluetooth('coliform=15,ecoli=23')
+             #   with open("preview.jpg", "rb") as imageFile:
+               #     text = base64.b64encode(imageFile.read())
+              
+                
+                self.start_auto_focus_thread()
+            if(bt_data=="sample_preview"):
+                image_path = self.filename.replace('.jpg', '_result.jpg')
+                
+                with open(image_path, "rb") as imageFile:
+                   text = base64.b64encode(imageFile.read())
+                if(self.bt_open==True):
+                   self.bt.write('preview=data:image/png;base64,'.encode("utf-8"))
+                   self.bt.write(text)
+                   self.bt.write('$\n'.encode("utf-8"))             
+                print('preview_requested')
+
+    def write_bluetooth(self,bt_out):
+        eol = '$\n'
+        if(self.bt_open==True):
+            self.bt.write((bt_out+eol).encode("utf-8"))
+            
     def update_camera_setting(self):
         with open('config_picamera.yaml') as config_file:
             config = yaml.load(config_file)
@@ -47,11 +123,16 @@ class OpencvClass():
     def start_streaming(self):
         # for arduino
         self.send_serial("success")
+        self.send_serial("LED_RGB=7,10,7")
 
         self.camera.resolution = self.stream_resolution
         self.camera.framerate = 10
         self.rawCapture = PiRGBArray(self.camera, self.stream_resolution)
-        # cv2.namedWindow("stream")
+      # bluetooth start
+       # self.establish_connection()
+        self.open_bluetooth()
+
+       # cv2.namedWindow("stream")
         # capture frames from the camera
         for frame in self.camera.capture_continuous(self.rawCapture, format="bgr", use_video_port=True):
             # grab the raw NumPy array representing the image, then initialize the timestamp
@@ -73,8 +154,21 @@ class OpencvClass():
             key = cv2.waitKey(1) & 0xFF
             # clear the stream in preparation for the next frame
             self.rawCapture.truncate(0)
-
-
+            
+            #read bluetooth
+            if self.bt_open == False:
+                self.open_bluetooth()
+            else:
+                try:
+                    self.read_bluetooth()
+                except Exception as e:
+                    print('disconnected bt')
+                    print(e)
+                    self.bt_open = False
+                 #   os.killpg(os.getpgid(pro.pid), signal.SIGTERM)
+                  #  self.establish_connection()
+                  
+            
             # read serial command:
             self.read_serial()
             # capture one image
@@ -86,11 +180,13 @@ class OpencvClass():
                     # self.capture_image()
                     self.analysis_result()
                     self.move_to(0)
-                    self.send_serial('results={},{}'.format(self.result['E.coli'], self.result['coliforms']))
+                    self.send_serial('results={},{}'.format(self.result['coliforms'], self.result['E.coli']))
                     self.auto_focus_status = ''
                     self.annotating("E.coli: {}, coliforms: {}".format(self.result['E.coli'], self.result['coliforms']))
-
-            # if the `q` key was pressed, break from the loop
+                    print('coliform={},ecoli={}'.format(self.result['coliforms'], self.result['E.coli']))
+                    self.write_bluetooth('coliform={},ecoli={}'.format(self.result['coliforms'], self.result['E.coli']))
+                    self.send_serial("led_off")  
+          # if the `q` key was pressed, break from the loop
             # if key == ord("q"):
             #     cv2.destroyAllWindows()
             #     break
@@ -124,7 +220,8 @@ class OpencvClass():
     def initialise_data_folder(self):
         if not os.path.exists('timelapse_data'):
             os.mkdir('timelapse_data')
-        self.folder_path = 'timelapse_data/{}'.format(self.starting_time)
+        self.folder_path = 'timelapse_data/{}'.format(self.sample_ID)
+        print(self.sample_ID)
         if not os.path.exists(self.folder_path):
             os.mkdir(self.folder_path)
 
@@ -132,9 +229,9 @@ class OpencvClass():
         self.initialise_data_folder()
         # NOTE: when file name is not specified, use a counter
         if filename == '':
-            self.filename = self.folder_path+'/{}_{:04d}_{}.jpg'.format(self.sample_ID, self.image_seq, datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S'))
+            self.filename = self.folder_path+'/{:04d}_{}.jpg'.format(self.image_seq, datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S'))
         else:
-            self.filename = self.folder_path+'/{}_{:04d}-{}.jpg'.format(self.sample_ID, self.image_seq, self.filename)
+            self.filename = self.folder_path+'/{:04d}-{}.jpg'.format(self.image_seq, self.filename)
         if resolution == 'normal':
             print('taking image')
             self.camera.capture(self.filename, format = 'jpeg', quality=100, bayer = False, use_video_port=True)
@@ -151,8 +248,7 @@ class OpencvClass():
             time.sleep(0.1)
             # reduce the resolution for video streaming
             self.camera.resolution = self.stream_resolution
-
-
+ 
             # resume the video channel
             # Warning: be careful about the self.camera.start_recording. 'bgr' for opencv and 'mjpeg' for picamera
             # self.camera.start_recording(self.stream, format='mjpeg', quality = self.stream_quality, splitter_port=1)
@@ -165,7 +261,7 @@ class OpencvClass():
         self.capture_image()
         print(self.filename)
         time.sleep(1)
-        with open('image_to_analyse.txt', 'a+') as file:
+        with open('image_to_analyse.txt', 'w+') as file:
             file.write(self.filename)
 
         # self.headless = True
@@ -181,6 +277,7 @@ class OpencvClass():
                         bacteria_name = line.split(':')[0].replace(' ', '').replace('\t','').replace('\n', '')
                         count = line.split(':')[1].replace(' ', '').replace('\t','').replace('\n', '')
                         self.result[bacteria_name] =  count
+                        
                 break
 
             else:
@@ -287,9 +384,10 @@ class OpencvClass():
             self.capture_image()
         try:
             self.sample_ID = Arduinos.serial_controllers['waterscope'].sample_ID
-            self.sample_ID = self.sample_ID.replace("ID=", "")
+            self.sample_ID = self.sample_ID.replace("ID=", "").strip()
         except AttributeError:
-            self.sample_ID = 0
+            #self.sample_ID = 0
+            pass
 
         Arduinos.serial_controllers['waterscope'].income_serial_command = ""
 
@@ -345,7 +443,7 @@ class OpencvClass():
         self.annotating('Autofocusing')
         # home the stage for absolute_z
         self. send_serial("home")
-
+        self.send_serial("led_on")
         #  a dictionary to record different z with its corresponding focus value
         self.focus_table = {}
 
