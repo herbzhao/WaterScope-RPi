@@ -36,7 +36,7 @@ class Camera(BaseCamera):
         # cls.stream_resolution = (656, 496)
 
         cls.video_resolution = (824, 616)
-        cls.image_resolution = (3280,2464)
+        cls.image_resolution = (4056,3040)
         # how many seconds before we automatically stop recording
         cls.record_timeout = 600
         # Change: 75 or 85 to see the streaming quality

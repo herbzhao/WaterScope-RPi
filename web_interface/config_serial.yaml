@@ -16,7 +16,7 @@ waterscope:
   connect: True
   baudrate: 9600
   parser: waterscope
-  port_address: /dev/ttyS0
+  port_address: /dev/ttyUSB0
   port_names: [ttyAMA0, USB2.0-Serial]
   serial_read_options: [logging_time_temp]
   serial_read_parsers: ['temperature', 'waterscope_motor', 'income_serial_command']

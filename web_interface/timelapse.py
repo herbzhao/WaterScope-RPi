@@ -56,7 +56,7 @@ def start_time_lapse(time_interval=10):
     global ser
     # initialise the camera
     camera = PiCamera()
-    camera.resolution = (3280,2464)
+    camera.resolution = (4056,3040)
     print('start timelapse')
 
     # read configs for consistent imaging
