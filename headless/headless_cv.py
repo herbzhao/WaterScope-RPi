@@ -124,6 +124,7 @@ class OpencvClass():
         # for arduino
         self.send_serial("success")
         self.send_serial("LED_RGB=7,10,7")
+        
 
         self.camera.resolution = self.stream_resolution
         self.camera.framerate = 10
@@ -402,8 +403,14 @@ class OpencvClass():
         def focus_measure_at_z(new_z):
             self.move_to(new_z)
             # DEBUG: wait for 1 second to stablise the mechanical stage
-            time.sleep(0.3)
-            focus_value =  self.focus_value
+            time.sleep(0.5)
+            # averaging the focus value
+            focus_value_collection = []
+            for i in range(5):
+                focus_value_collection.append(self.focus_value)
+                time.sleep(0.1)
+            focus_value = np.average(focus_value_collection)
+
             print("Focus value at {0:.0f} is: {1:.2f}".format(new_z, focus_value))
             self.focus_table.update({new_z: focus_value})
             # print(self.focus_table)
@@ -427,7 +434,7 @@ class OpencvClass():
             # this will refine the best focus within range/points*2 = 400
 
             # Then finer scan  use the best focus value as the index for the z value
-            for z_scan_range in [20, 5]:
+            for z_scan_range in  [25, 10]:
                 optimal_focus_z = max(self.focus_table, key=self.focus_table.get)
                 scan_z_range(optimal_focus_z, z_scan_range, 5)
             
@@ -442,8 +449,13 @@ class OpencvClass():
         print('starting to auto focus')
         self.annotating('Autofocusing')
         # home the stage for absolute_z
-        self. send_serial("home")
+        self.send_serial("home")
         self.send_serial("led_on")
+        self.send_serial("abs_opt=120")
+        self.send_serial("temp=70")
+        time.sleep(150)
+        self.send_serial("home")
+        time.sleep(2)
         #  a dictionary to record different z with its corresponding focus value
         self.focus_table = {}
 

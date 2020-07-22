@@ -248,10 +248,10 @@ var app = new Vue({
             })
             if (auto_focus_status == 'done'){
                 axios.get('/auto_focus/?command=reset')
-                axios.get("/send_serial/?value=LED_RGB=0,50,0&board={0}".format(this.chosen_arduino_board))
+                // axios.get("/send_serial/?value=LED_RGB=0,50,0&board={0}".format(this.chosen_arduino_board))
 
                 setTimeout(() => {
-                axios.get("/send_serial/?value=LED_RGB=10,10,10&board={0}".format(this.chosen_arduino_board))
+                // axios.get("/send_serial/?value=LED_RGB=10,10,10&board={0}".format(this.chosen_arduino_board))
                 axios.get("/send_serial/?value=af_complete&board={0}".format(this.chosen_arduino_board))
                 
             }, 500);
@@ -310,11 +310,11 @@ var app = new Vue({
         auto_focus: function () {
             console.log('starting the auto focus now')
             // start the auto focusing
-            axios.get("/send_serial/?value=LED_RGB=50,0,0&board={0}".format(this.chosen_arduino_board))
+            // axios.get("/send_serial/?value=LED_RGB=50,0,0&board={0}".format(this.chosen_arduino_board))
 
-            setTimeout(() => {
-                axios.get("/send_serial/?value=LED_RGB=10,10,10&board={0}".format(this.chosen_arduino_board))
-            }, 500);
+            // setTimeout(() => {
+            //     axios.get("/send_serial/?value=LED_RGB=10,10,10&board={0}".format(this.chosen_arduino_board))
+            // }, 500);
 
             axios.get('/auto_focus/?command=start')
             // setTimeout(() => {

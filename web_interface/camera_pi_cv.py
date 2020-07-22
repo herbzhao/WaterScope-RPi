@@ -220,14 +220,18 @@ FPS: {}
         cls.image_seq = cls.image_seq + 1
 
     @classmethod
+    def send_serial(cls, serial_command = "LED_ON"):
+        serial_command_url = cls.base_URL + "/send_serial/?value={}&board=waterscope".format(serial_command)
+        requests.get(serial_command_url)
+
+    @classmethod
     def move_to(cls, destination=100):
         # send serial command to move the motor
         if destination == 'home':
-            move_motor_url = cls.base_URL + "/send_serial/?value=abs_opt(0)&board=waterscope"
+            cls.send_serial('home')
         else:
-            move_motor_url = cls.base_URL + "/send_serial/?value=abs_opt({0})&board=waterscope".format(int(destination))
+            cls.send_serial('abs_opt({})'.format(int(destination)))
 
-        requests.get(move_motor_url)
         time.sleep(0.1)
         # # DEBUG: a delay to allow serial command to be executed and motor becomes busy
         # while True:
@@ -342,8 +346,16 @@ FPS: {}
         def focus_measure_at_z(new_z):
             cls.move_to(new_z)
             # DEBUG: wait for 1 second to stablise the mechanical stage
-            time.sleep(0.1)
-            focus_value =  cls.focus_value
+            # time.sleep(1)
+            time.sleep(0.5)
+            focus_value_collection = []
+            for i in range(5):
+                focus_value_collection.append(cls.focus_value)
+                time.sleep(0.1)
+                
+            focus_value = np.average(focus_value_collection)
+
+            # time.sleep(1)
             print("Focus value at {0:.0f} is: {1:.2f}".format(new_z, focus_value))
             cls.focus_table.update({new_z: focus_value})
             # print(cls.focus_table)
@@ -360,19 +372,23 @@ FPS: {}
             ' automatically create several scan map from coarse to fine, using first guess and next best focus point' 
             start_time = time.time()
             # first scan is based on the best guess
-            scan_z_range(40, 80, 10)
+            scan_z_range(50, 100, 10)
             # this will refine the best focus within range/points*2 = 400
 
             # Then finer scan  use the best focus value as the index for the z value
-            for z_scan_range in [20, 5]:
+            for z_scan_range in [25, 10]:
                 optimal_focus_z = max(cls.focus_table, key=cls.focus_table.get)
                 scan_z_range(optimal_focus_z, z_scan_range, 5)
             
             print(cls.focus_table)
             global_optimal_z = max(cls.focus_table, key=cls.focus_table.get)
             print('optimal: {}'.format(global_optimal_z))
+            cls.move_to('home')
+            time.sleep(2)
             cls.move_to(global_optimal_z)
             print('find the focus in {0:.2f} seconds at Z: {1}'.format(time.time() - start_time, global_optimal_z))
+            # disable twiching
+            cls.send_serial("results=9999,9999")
 
         # NOTE: Autofocus code runs from here
 
@@ -390,6 +406,7 @@ FPS: {}
         cls.annotation_text = 'Autofocusing'
         # home the stage for absolute_z
         cls.move_to('home')
+        # cls.move_to(120)
 
         #  a dictionary to record different z with its corresponding focus value
         cls.focus_table = {}
