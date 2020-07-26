@@ -444,6 +444,9 @@ class OpencvClass():
             self.move_to(global_optimal_z)
             print('find the focus in {0:.2f} seconds at Z: {1}'.format(time.time() - start_time, global_optimal_z))
 
+            # disable twiching
+            self.send_serial('results=9999,9999')
+
 
         # NOTE: Autofocus code runs from here
         print('starting to auto focus')
