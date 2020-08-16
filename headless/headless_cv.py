@@ -34,6 +34,7 @@ class OpencvClass():
         self.headless = True
         self.stop_streaming = False
         self.bt_open=0
+        self.update_camera_setting()
 
         # wipe the file
         with open('image_to_analyse.txt', 'w+') as file:
@@ -87,7 +88,6 @@ class OpencvClass():
                # self.write_bluetooth('coliform=15,ecoli=23')
              #   with open("preview.jpg", "rb") as imageFile:
                #     text = base64.b64encode(imageFile.read())
-              
                 
                 self.start_auto_focus_thread()
             if(bt_data=="sample_preview"):
@@ -119,12 +119,15 @@ class OpencvClass():
             self.camera.saturation = config['saturation']
             self.camera.led = False
             self.image_resolution = config['image_resolution']
+            self.default_LED_RGB = config['default_LED_RGB']
             
 
     def start_streaming(self):
         # for arduino
         self.send_serial("success")
-        self.send_serial("LED_RGB=7,10,7")
+        # self.send_serial("LED_RGB=7,10,7")
+        self.send_serial("LED_RGB={},{},{}".format(self.default_LED_RGB[0], self.default_LED_RGB[1], self.default_LED_RGB[2]))
+
         
 
         self.camera.resolution = self.stream_resolution
