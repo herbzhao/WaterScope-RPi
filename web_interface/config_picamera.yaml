@@ -4,6 +4,9 @@ default_LED_RGB: [5,5,5]
 # exposure mode
 exposure_mode: 'off'
 
+# camera image taking resolution
+image_resolution: [3280,2464]
+
 # The analog gain offers higher sensitivity and less noise than using digital gain only
 analog_gain: 1.
 digital_gain: 1.

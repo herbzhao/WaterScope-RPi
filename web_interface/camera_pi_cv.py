@@ -61,6 +61,7 @@ class Camera(BaseCamera):
             set_digital_gain(cls.camera, config['digital_gain'])
             cls.camera.shutter_speed = config['shutter_speed']
             cls.camera.saturation = config['saturation']
+            cls.image_resolution = config['image_resolution']
             cls.camera.led = False
 
     # TODO: a zoom function with picamera https://picamera.readthedocs.io/en/release-1.13/api_camera.html

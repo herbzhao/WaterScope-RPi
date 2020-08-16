@@ -118,6 +118,7 @@ class OpencvClass():
             self.camera.shutter_speed = config['shutter_speed']
             self.camera.saturation = config['saturation']
             self.camera.led = False
+            self.image_resolution = config['image_resolution']
             
 
     def start_streaming(self):
