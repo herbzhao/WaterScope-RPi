@@ -389,7 +389,7 @@ FPS: {}
             cls.move_to(global_optimal_z)
             print('find the focus in {0:.2f} seconds at Z: {1}'.format(time.time() - start_time, global_optimal_z))
             # disable twiching
-            cls.send_serial("results=9999,9999")
+            cls.send_serial("motor_off")
 
         # NOTE: Autofocus code runs from here
 
