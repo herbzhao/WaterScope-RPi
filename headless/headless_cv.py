@@ -14,6 +14,7 @@ import signal
 import subprocess
 import serial as bluetooth
 import base64
+from PIL import Image
 
 
 class OpencvClass():
@@ -100,6 +101,15 @@ class OpencvClass():
                    self.bt.write(text)
                    self.bt.write('$\n'.encode("utf-8"))             
                 print('preview_requested')
+            if(bt_data=="raw_preview"):
+                image_path = self.filename.replace('.jpg', '_compressed.jpg')
+                with open(image_path, "rb") as imageFile:
+                   text = base64.b64encode(imageFile.read())
+                if(self.bt_open==True):
+                   self.bt.write('raw=data:image/png;base64,'.encode("utf-8"))
+                   self.bt.write(text)
+                   self.bt.write('$\n'.encode("utf-8"))             
+                print('raw_preview_requested')
 
     def write_bluetooth(self,bt_out):
         eol = '$\n'
@@ -248,7 +258,11 @@ class OpencvClass():
             # Remove bayer = Ture if dont care about RAW
             self.camera.capture(self.filename, format = 'jpeg', quality=100, bayer = False)
             time.sleep(0.1)
-            # reduce the resolution for video streaming
+            image = Image.open(self.filename)
+            image.save(self.filename.replace('.jpg', '_compressed.jpg'),quality=80,optimize=True)
+            time.sleep(0.1)
+
+# reduce the resolution for video streaming
             self.camera.resolution = self.stream_resolution
  
             # resume the video channel
@@ -457,7 +471,7 @@ class OpencvClass():
         self.send_serial("led_on")
         self.send_serial("abs_opt=120")
         self.send_serial("temp=70")
-        time.sleep(150)
+        time.sleep(5)
         self.send_serial("home")
         time.sleep(2)
         #  a dictionary to record different z with its corresponding focus value
