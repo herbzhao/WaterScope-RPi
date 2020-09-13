@@ -735,7 +735,7 @@ def saving_result(img_directory = 'image', result_directory = 'result/general_te
             else:
                 if print_log == True:
                     print('sample is overgrown, too many colonies to count')
-                flag_string = 'too many to count'
+                flag_string = '(flagged)'
                 # Get colony counts ONLY (will be deprecated soon)
                 # blue_count = get_count(inputimg, 'Blue')
                 # purple_count = get_count(inputimg, 'Purple')
@@ -783,13 +783,14 @@ def saving_result(img_directory = 'image', result_directory = 'result/general_te
                     twoboundary = masking_boundary(masking_boundary(ori_image, blue_image), purple_image)
 
                     # Writing title and count on images
-                    if flag_string == "too many to count":
+                    if flag_string == "(flagged)":
                         cv2.putText(twoboundary, flag_string,
                                     (5, 231),
                                     cv2.FONT_HERSHEY_SIMPLEX,
                                     0.5,
                                     (255, 255, 255),
                                     2)
+                        
                             
                     else:
                         cv2.putText(twoboundary, 'E.coli count : %d %s' % (blue_count, flag_string),
@@ -835,13 +836,14 @@ def saving_result(img_directory = 'image', result_directory = 'result/general_te
                     twoboundary = masking_boundary(masking_boundary(ori_image, blue_image), purple_image)
 
 
-                    if flag_string == "too many to count":
+                    if flag_string == "(flagged)":
                         cv2.putText(twoboundary, flag_string,
-                                    (5, 231),
+                                    (5, 550),
                                     cv2.FONT_HERSHEY_SIMPLEX,
                                     0.5,
                                     (255, 255, 255),
                                     2)
+                       
                             
                     else:
                         cv2.putText(twoboundary, 'E.coli count : %d %s' % (blue_count, flag_string),
@@ -1038,7 +1040,7 @@ def analysis_image(img_name = 'image.jpg', result = 'result.jpg', print_log=Fals
     else:
         if print_log == True:
             print('sample is overgrown, too many colonies to count')
-        flag_string = 'too many to count'
+        flag_string = '(flagged)'
         # Get colony counts ONLY (will be deprecated soon)
         # blue_count = get_count(inputimg, 'Blue')
         # purple_count = get_count(inputimg, 'Purple')
@@ -1063,15 +1065,27 @@ def analysis_image(img_name = 'image.jpg', result = 'result.jpg', print_log=Fals
         twoboundary = masking_boundary(masking_boundary(ori_image, blue_image), purple_image)
 
         # Writing title and count on images
-        if flag_string == "too many to count":
-            cv2.putText(twoboundary, flag_string,
+        if flag_string == "(flagged)":
+            cv2.putText(twoboundary, 'too many to count or flagged',
+                        (5, 180),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.5,
+                        (255, 255, 255),
+                        2)
+            cv2.putText(twoboundary, 'E.coli count : %d %s' % (blue_count, flag_string),
                         (5, 231),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         0.5,
                         (255, 255, 255),
                         2)
+            cv2.putText(twoboundary, 'coliform count : %d %s' % (purple_count, flag_string),
+                        (5, 206),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.5,
+                        (255, 255, 255),
+                        2)
             cv2.imwrite(result_name, twoboundary)
-            return {'e.coli': 7777, 'coliform': 7777}
+            return {'e.coli': blue_count, 'coliform': purple_count}
                 
         else:
             cv2.putText(twoboundary, 'E.coli count : %d %s' % (blue_count, flag_string),

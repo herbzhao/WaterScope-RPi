@@ -35,6 +35,8 @@ class OpencvClass():
         self.headless = True
         self.stop_streaming = False
         self.bt_open=0
+        self.timer=0
+        self.flagged=0
 
         # wipe the file
         with open('image_to_analyse.txt', 'w+') as file:
@@ -134,7 +136,7 @@ class OpencvClass():
     def start_streaming(self):
         # for arduino
         self.send_serial("success")
-        self.send_serial("LED_RGB=7,10,7")
+        
         
 
         self.camera.resolution = self.stream_resolution
@@ -185,7 +187,11 @@ class OpencvClass():
             self.read_serial()
             # capture one image
             # self.analysis_result()
-
+            if(self.flagged==1):
+                    self.timer=self.timer+1
+                   # print(self.timer)
+                    if(self.timer>300):
+                        self.send_serial("led_off")
             # NOTE: after autofocus 
             if self.auto_focus_status =="ready":
                     time.sleep(1)
@@ -197,7 +203,7 @@ class OpencvClass():
                     self.annotating("E.coli: {}, coliforms: {}".format(self.result['E.coli'], self.result['coliforms']))
                     print('coliform={},ecoli={}'.format(self.result['coliforms'], self.result['E.coli']))
                     self.write_bluetooth('coliform={},ecoli={}'.format(self.result['coliforms'], self.result['E.coli']))
-                    self.send_serial("led_off")  
+                    #self.send_serial("led_off")  
           # if the `q` key was pressed, break from the loop
             # if key == ord("q"):
             #     cv2.destroyAllWindows()
@@ -292,7 +298,18 @@ class OpencvClass():
                     for line in lines:
                         bacteria_name = line.split(':')[0].replace(' ', '').replace('\t','').replace('\n', '')
                         count = line.split(':')[1].replace(' ', '').replace('\t','').replace('\n', '')
-                        self.result[bacteria_name] =  count
+                       # self.result[bacteria_name] =  count
+                        #print(count)
+                      #  print(count)
+                        if(count.find("flagged")<0):
+                            self.result[bacteria_name] =  count
+                            print("result valid")
+                        else:
+                            self.result[bacteria_name] =  count
+                            print("too many or flagged")
+                            self.send_serial('LED_RGB=100,0,0')
+                            self.flagged=1
+                            
                         
                 break
 
@@ -445,7 +462,7 @@ class OpencvClass():
             self.move_to(0)
             time.sleep(2)
             # first scan is based on the best guess
-            scan_z_range(50, 100, 10)
+            scan_z_range(90, 180, 10)
             # this will refine the best focus within range/points*2 = 400
 
             # Then finer scan  use the best focus value as the index for the z value
@@ -460,7 +477,7 @@ class OpencvClass():
             print('find the focus in {0:.2f} seconds at Z: {1}'.format(time.time() - start_time, global_optimal_z))
 
             # disable twiching
-            self.send_serial('motor_off')
+            self.send_serial('results=9999,9999')
 
 
         # NOTE: Autofocus code runs from here
@@ -468,10 +485,11 @@ class OpencvClass():
         self.annotating('Autofocusing')
         # home the stage for absolute_z
         self.send_serial("home")
+        self.send_serial("LED_RGB=10,10,9")
         self.send_serial("led_on")
         self.send_serial("abs_opt=120")
         self.send_serial("temp=70")
-        time.sleep(5)
+        time.sleep(150)
         self.send_serial("home")
         time.sleep(2)
         #  a dictionary to record different z with its corresponding focus value

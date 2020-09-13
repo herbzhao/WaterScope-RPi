@@ -1,5 +1,5 @@
 # Default LED brightness
-default_LED_RGB: [5,5,5]
+default_LED_RGB: [10,10,9]
 
 # exposure mode
 exposure_mode: 'off'
@@ -19,8 +19,8 @@ shutter_speed: 50000
 awb_mode: 'auto'
 
 # if not using auto, then you can change the awb_gains
-red_gain: 1.55
-blue_gain: 1.25
+red_gain: 1.0
+blue_gain: 1.0
 
 # color saturation of the camera as an integer between -100 and 100. 
 saturation: 0
