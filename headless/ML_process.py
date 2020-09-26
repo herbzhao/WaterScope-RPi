@@ -1,8 +1,5 @@
 import time
 
-
-
-
 def analysis_image(input_filename):
     start = time.time()
     result = count_colony.analysis_image(input_filename, input_filename.replace('.jpg', '_result.jpg'))

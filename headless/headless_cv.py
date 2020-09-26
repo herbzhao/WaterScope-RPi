@@ -452,7 +452,10 @@ class OpencvClass():
         def scan_z_range(central_point = 50, range = 100, nubmer_of_points = 10):
             " using a central point and scan up and down with half of the range"
             z_scan_map = np.linspace(central_point-range/2, central_point+range/2, nubmer_of_points, endpoint=True)
+            z_scan_map = [int(z) for z in z_scan_map]
             print(z_scan_map)
+            self.send_serial("home")
+
             for new_z in z_scan_map:
                 focus_value = focus_measure_at_z(new_z)
 
@@ -473,6 +476,7 @@ class OpencvClass():
             print(self.focus_table)
             global_optimal_z = max(self.focus_table, key=self.focus_table.get)
             print('optimal: {}'.format(global_optimal_z))
+            self.send_serial("home")
             self.move_to(global_optimal_z)
             print('find the focus in {0:.2f} seconds at Z: {1}'.format(time.time() - start_time, global_optimal_z))
 
