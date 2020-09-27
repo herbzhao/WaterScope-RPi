@@ -66,7 +66,7 @@ class serial_controller_class():
         ''' parsing the command from interface for WaterScope water testing kit (Sammy code)'''
         # move_car(200) --> move_car=500
         # LED_RGB(5,6,7) --> LED_RGB=5,6,7
-        serial_command = serial_command.replace(' ','').replace('(','=').replace(')','')
+        serial_command = serial_command.replace(' ',' ').replace('(','=').replace(')','')
         return serial_command
 
     def parsing_command_fergboard(self, serial_command):

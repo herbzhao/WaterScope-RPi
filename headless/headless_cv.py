@@ -189,16 +189,28 @@ class OpencvClass():
             # self.analysis_result()
             if(self.flagged==1):
                     self.timer=self.timer+1
+                    self.send_serial('line1=Sample overgrown')
+                    time.sleep(0.5)
+                    self.send_serial('line2=or anomalous')
+                    time.sleep(5)
+                    self.send_serial('results={},{}'.format(self.result['coliforms'], self.result['E.coli']))
                    # print(self.timer)
-                    if(self.timer>300):
+                    
+                    if(self.timer>20):
                         self.send_serial("led_off")
+                        self.flagged=0
+                        
             # NOTE: after autofocus 
             if self.auto_focus_status =="ready":
                     time.sleep(1)
                     # self.capture_image()
                     self.analysis_result()
                     self.move_to(0)
+                    time.sleep(1)
+                    self.send_serial('incubator_37')
+                    time.sleep(1)
                     self.send_serial('results={},{}'.format(self.result['coliforms'], self.result['E.coli']))
+                    
                     self.auto_focus_status = ''
                     self.annotating("E.coli: {}, coliforms: {}".format(self.result['E.coli'], self.result['coliforms']))
                     print('coliform={},ecoli={}'.format(self.result['coliforms'], self.result['E.coli']))
@@ -411,10 +423,15 @@ class OpencvClass():
             income_serial_command = ''
         
         if income_serial_command == "auto_focus":
-            self.start_auto_focus_thread()
+            if self.auto_focus_status =="":
+                self.start_auto_focus_thread()
 
         elif income_serial_command == "capture":
             self.capture_image()
+            
+        if income_serial_command == "cancel":
+            self.flagged=0
+            print('flagged to 0')
         try:
             self.sample_ID = Arduinos.serial_controllers['waterscope'].sample_ID
             self.sample_ID = self.sample_ID.replace("ID=", "").strip()
@@ -435,7 +452,7 @@ class OpencvClass():
         def focus_measure_at_z(new_z):
             self.move_to(new_z)
             # DEBUG: wait for 1 second to stablise the mechanical stage
-            time.sleep(0.5)
+            time.sleep(2)
             # averaging the focus value
             focus_value_collection = []
             for i in range(5):
@@ -452,9 +469,10 @@ class OpencvClass():
         def scan_z_range(central_point = 50, range = 100, nubmer_of_points = 10):
             " using a central point and scan up and down with half of the range"
             z_scan_map = np.linspace(central_point-range/2, central_point+range/2, nubmer_of_points, endpoint=True)
-            z_scan_map = [int(z) for z in z_scan_map]
+            z_scan_map = [int(z) if z >= 0 else 0 for z in  z_scan_map]
             print(z_scan_map)
             self.send_serial("home")
+            time.sleep(2)
 
             for new_z in z_scan_map:
                 focus_value = focus_measure_at_z(new_z)
@@ -465,11 +483,11 @@ class OpencvClass():
             self.move_to(0)
             time.sleep(2)
             # first scan is based on the best guess
-            scan_z_range(90, 180, 10)
+            scan_z_range(90, 160, 10)
             # this will refine the best focus within range/points*2 = 400
 
             # Then finer scan  use the best focus value as the index for the z value
-            for z_scan_range in  [25, 10]:
+            for z_scan_range in  [25, 15]:
                 optimal_focus_z = max(self.focus_table, key=self.focus_table.get)
                 scan_z_range(optimal_focus_z, z_scan_range, 5)
             
@@ -477,7 +495,8 @@ class OpencvClass():
             global_optimal_z = max(self.focus_table, key=self.focus_table.get)
             print('optimal: {}'.format(global_optimal_z))
             self.send_serial("home")
-            self.move_to(global_optimal_z)
+            time.sleep(2)
+            focus_measure_at_z(global_optimal_z)
             print('find the focus in {0:.2f} seconds at Z: {1}'.format(time.time() - start_time, global_optimal_z))
 
             # disable twiching
@@ -488,14 +507,23 @@ class OpencvClass():
         print('starting to auto focus')
         self.annotating('Autofocusing')
         # home the stage for absolute_z
+        self.send_serial("incubator_off")
+        time.sleep(0.5)
         self.send_serial("home")
+        time.sleep(0.5)
         self.send_serial("LED_RGB=10,10,9")
+        time.sleep(0.5)
         self.send_serial("led_on")
+        time.sleep(0.5)
         self.send_serial("abs_opt=120")
+        time.sleep(0.5)
+        #self.send_serial("custom=Defogging,sample...")
+       # time.sleep(0.5)
         self.send_serial("temp=70")
-        time.sleep(150)
+        time.sleep(5)
         self.send_serial("home")
         time.sleep(2)
+        #self.send_serial("custom=Autofocusing...")
         #  a dictionary to record different z with its corresponding focus value
         self.focus_table = {}
 
