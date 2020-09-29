@@ -7,9 +7,8 @@ from skimage.feature import peak_local_max
 import os
 import time
 import tensorflow as tf
-from tqdm import tqdm
 from PIL import Image
-from headless.integrate_folder.yolo import YOLO
+from integrate_folder.yolo import YOLO
 # from tflite_runtime.interpreter import Interpreter  # on Pi, uncomment this; otherwise, use tf.lite.Interpreter
 
 
