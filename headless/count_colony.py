@@ -8,7 +8,7 @@ import os
 import time
 import tensorflow as tf
 from PIL import Image
-# from integrate_folder.yolo import YOLO
+from integrate_folder.yolo import YOLO
 from tflite_runtime.interpreter import Interpreter  # on Pi, uncomment this; otherwise, use tf.lite.Interpreter
 
 
