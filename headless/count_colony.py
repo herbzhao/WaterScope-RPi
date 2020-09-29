@@ -1387,7 +1387,7 @@ def jacard(y_true, y_pred):
     return intersection/union
 
 # Load the TFLite model and allocate tensors.
-interpreter = tf.lite.Interpreter(model_path='headless/25nd_June_small3.tflite')
+interpreter = tf.lite.Interpreter(model_path='converted_model.tflite')
 interpreter.allocate_tensors()
 
 # Get input and output tensors.
@@ -1398,10 +1398,10 @@ output_details = interpreter.get_output_details()
 input_shape = input_details[0]['shape']
 input_data = np.array(np.random.random_sample(input_shape), dtype=np.float32)
 
-FLAGS = {'image': True, 'input': 'headless/integrate_folder/normal_yolo_evaluate/',
-         'output': 'headless/integrate_folder/',
-         'model_path': 'headless/integrate_folder/model_data/tiny-yolo3_coliform_500v700_2class.h5',
-         'classes_path': 'headless/integrate_folder/_classes.txt'}
+FLAGS = {'image': True, 'input': 'integrate_folder/normal_yolo_evaluate/',
+         'output': 'integrate_folder/',
+         'model_path': 'integrate_folder/model_data/tiny-yolo3_coliform_500v700_2class.h5',
+         'classes_path': 'integrate_folder/_classes.txt'}
 
 yolo = YOLO(**FLAGS)
 
