@@ -20,8 +20,8 @@ from keras.utils import multi_gpu_model
 
 class YOLO(object):
     _defaults = {
-        "model_path": 'headless/integrate_folder/model_data/tiny-yolo3_500v700b32b32_added.h5', #tiny-yolov3_compatible_windows.h5',
-        "anchors_path": 'headless/integrate_folder/model_data/tiny_yolo_anchors.txt',
+        "model_path": 'integrate_folder/model_data/tiny-yolo3_500v700b32b32_added.h5', #tiny-yolov3_compatible_windows.h5',
+        "anchors_path": 'integrate_folder/model_data/tiny_yolo_anchors.txt',
         "classes_path": '_classes.txt',
         "score" : 0.03,
         "iou" : 0.01,
