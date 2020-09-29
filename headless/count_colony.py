@@ -1195,8 +1195,8 @@ def analysis_image(img_name='image.jpg', result='result.jpg', print_log=False):
     overgrown_flag = RGB_comparator(raw_to_cropped(inputimg, dim=(256, 256), color_check=True))
 
     # save and open in PIL image ... to do : find a better way?
-    cv2.imwrite(save_path+img_file[:-4]+'_cropped.png', cropped)
-    large_crop_PIL = Image.open(save_path+img_file[:-4]+'_cropped.png')
+    cv2.imwrite(img_name[:-4]+'_cropped.png', cropped)
+    large_crop_PIL = Image.open(img_name[:-4]+'_cropped.png')
 
     if '.jpg' not in result and '.png' not in result:
         result_name = result + '.png'
@@ -1251,13 +1251,14 @@ def analysis_image(img_name='image.jpg', result='result.jpg', print_log=False):
                     (255, 255, 255),
                     1)
         cv2.imwrite(result_name, twoboundary)
-        os.remove(save_path + img_file[:-4] + '_cropped.png')
+        os.remove(img_name[:-4]+'_cropped.png')
 
         return {'e.coli': blue_count, 'coliform': purple_count}
 
     else:
         if print_log == True:
             print('sample is overgrown, too many colonies to count')
+        image_draw, out_label = yolo.detect_image(large_crop_PIL)
 
         image_draw_array = np.array(image_draw)
         image_draw_array = cv2.cvtColor(image_draw_array, cv2.COLOR_RGB2BGR)
@@ -1287,7 +1288,7 @@ def analysis_image(img_name='image.jpg', result='result.jpg', print_log=False):
         cv2.rectangle(blue_image, (1, 1), (255, 255), (255, 255, 255), 2)
         cv2.rectangle(purple_image, (1, 1), (255, 255), (255, 255, 255), 2)
         # Saving the segmented images
-        twoboundary = masking_boundary(masking_boundary(ori_image, blue_image), purple_image)
+        twoboundary = masking_boundary(masking_boundary(image_draw_array, blue_image), purple_image)
 
         # Writing title and count on images
         if flag_string:
@@ -1312,8 +1313,8 @@ def analysis_image(img_name='image.jpg', result='result.jpg', print_log=False):
                             0.3,
                             (255, 255, 255),
                             1)
-                cv2.imwrite(save_path + img_file, twoboundary)
-                os.remove(save_path + img_file[:-4] + '_cropped.png')
+                cv2.imwrite(img_name, twoboundary)
+                os.remove(img_name[:-4] + '_cropped.png')
 
             return {'e.coli': blue_count, 'coliform': purple_count}
 
@@ -1330,10 +1331,11 @@ def analysis_image(img_name='image.jpg', result='result.jpg', print_log=False):
                         0.3,
                         (255, 255, 255),
                         1)
-            cv2.imwrite(save_path+img_file, twoboundary)
-            os.remove(save_path + img_file[:-4] + '_cropped.png')
+            cv2.imwrite(img_name, twoboundary)
+            os.remove(img_name + '_cropped.png')
 
             return {'e.coli': blue_count, 'coliform': purple_count}
+
 
 # if __name__ == "__main__":
 
