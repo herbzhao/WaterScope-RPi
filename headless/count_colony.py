@@ -1,13 +1,17 @@
 import numpy as np
 from keras.models import load_model
-from keras import backend as K
+from tensorflow.keras import backend as K
 import cv2
 import random as rng
 from skimage.feature import peak_local_max
 import os
 import time
 import tensorflow as tf
-from tflite_runtime.interpreter import Interpreter
+from tqdm import tqdm
+from PIL import Image
+from headless.integrate_folder.yolo import YOLO
+# from tflite_runtime.interpreter import Interpreter  # on Pi, uncomment this; otherwise, use tf.lite.Interpreter
+
 
 def raw_to_cropped(raw_image, dim, color_check=False, print_log=False):
 
@@ -957,7 +961,63 @@ def model_param():
 
     return interpreter, input_details, input_data, output_details
 
-def analysis_image(img_name = 'image.jpg', result = 'result.jpg', print_log=False):
+def flagging_version2(unet_count_blue, yolo_count_blue, unet_count_purple, yolo_count_purple, flag, high_thresh=10, too_many_thresh=30, yolo_edge_case_thresh=5):
+    flag_type = {'anomalous':0, 'too_many':0}
+    '''
+    using unet & yolo counts, establish the type of flag into three types : 
+    1, 0 = anomalous
+    0, 1 = too_many
+    1, 1 = unsure
+    note that :
+    - anomalous can be due to intense background color, causing flagging even though count is accurate
+    - too_many suggests count cannot be trusted, and count should be converted to an arbitrarily large number
+    - unsure means exactly what it means
+    '''
+    if flag:
+        if unet_count_blue != 0 and yolo_count_blue != 0:
+            if unet_count_blue <= high_thresh and yolo_count_blue <= high_thresh:
+                flag_type['anomalous'] = 1
+                return flag_type
+            elif unet_count_blue >= high_thresh and yolo_count_blue >= high_thresh:
+                if unet_count_blue > yolo_count_blue:
+                    count = unet_count_blue
+                else:
+                    count = yolo_count_blue
+                if count >= too_many_thresh:
+                    flag_type['too_many'] = 1
+                    return flag_type
+                else:
+                    flag_type['anomalous'] = 1
+                    return flag_type
+            elif unet_count_blue >= high_thresh and yolo_count_blue <= high_thresh:
+                # flag_type['too_many'] = 1
+                # flag_type['anomalous'] = 1
+                # return flag_type
+                if yolo_count_purple >= too_many_thresh:
+                    flag_type['too_many'] = 1
+                    return flag_type
+                else:
+                    flag_type['anomalous'] = 1
+                    return flag_type
+            else:
+                if yolo_count_blue >= too_many_thresh:
+                    flag_type['too_many'] = 1
+                    return flag_type
+                else :
+                    flag_type['anomalous'] = 1
+                    return flag_type
+        elif unet_count_blue == 0 and yolo_count_blue != 0:
+            if yolo_count_blue <= yolo_edge_case_thresh:
+                flag_type['anomalous'] = 1
+                return flag_type
+            else:
+                flag_type['too_many'] = 1
+                return flag_type
+        else:
+            flag_type['anomalous'] = 1
+            return flag_type
+
+def analysis_image_old(img_name='image.jpg', result='result.jpg', print_log=False):
     def masking_boundary(ori_image, boundary_image):
         # Load two images
         img1 = ori_image
@@ -985,16 +1045,15 @@ def analysis_image(img_name = 'image.jpg', result = 'result.jpg', print_log=Fals
     else:
         img_name = img_name
     inputimg = cv2.imread(img_name)
-    inputimg2= cv2.imread(img_name)
+    inputimg2 = cv2.imread(img_name)
     overgrown_flag = RGB_comparator(raw_to_cropped(inputimg, dim=(256, 256), color_check=True))
-
 
     if '.jpg' not in result and '.png' not in result:
         result_name = result + '.png'
     else:
         result_name = result
 
-    count_name = result_name[:-3]+'txt'
+    count_name = result_name[:-3] + 'txt'
     if overgrown_flag == False:
         if print_log == True:
             print('Sample is not overgrown, proceed with counting')
@@ -1035,7 +1094,7 @@ def analysis_image(img_name = 'image.jpg', result = 'result.jpg', print_log=Fals
                     2)
         cv2.imwrite(result_name, twoboundary)
 
-        return {'e.coli':blue_count, 'coliform':purple_count}
+        return {'e.coli': blue_count, 'coliform': purple_count}
 
     else:
         if print_log == True:
@@ -1052,7 +1111,7 @@ def analysis_image(img_name = 'image.jpg', result = 'result.jpg', print_log=Fals
 
         # Get the cropped original image of the same dimension for ease of result viewing
         ori_image = raw_to_cropped(inputimg2, dim=(256, 256))
-        cv2.rectangle(ori_image, (1, 1), (255,255), (255, 255, 255), 2)
+        cv2.rectangle(ori_image, (1, 1), (255, 255), (255, 255, 255), 2)
 
         # Saving the counts in a text file
         f = open(count_name, "w+")
@@ -1060,7 +1119,7 @@ def analysis_image(img_name = 'image.jpg', result = 'result.jpg', print_log=Fals
         f.close()
 
         cv2.rectangle(blue_image, (1, 1), (255, 255), (255, 255, 255), 2)
-        cv2.rectangle(purple_image, (1, 1), (255,255), (255, 255, 255), 2)
+        cv2.rectangle(purple_image, (1, 1), (255, 255), (255, 255, 255), 2)
         # Saving the segmented images
         twoboundary = masking_boundary(masking_boundary(ori_image, blue_image), purple_image)
 
@@ -1086,7 +1145,7 @@ def analysis_image(img_name = 'image.jpg', result = 'result.jpg', print_log=Fals
                         2)
             cv2.imwrite(result_name, twoboundary)
             return {'e.coli': blue_count, 'coliform': purple_count}
-                
+
         else:
             cv2.putText(twoboundary, 'E.coli count : %d %s' % (blue_count, flag_string),
                         (5, 231),
@@ -1104,10 +1163,181 @@ def analysis_image(img_name = 'image.jpg', result = 'result.jpg', print_log=Fals
 
             return {'e.coli': blue_count, 'coliform': purple_count}
 
+def analysis_image(img_name='image.jpg', result='result.jpg', print_log=False):
+    def masking_boundary(ori_image, boundary_image):
+        # Load two images
+        img1 = ori_image
+        img2 = boundary_image
+
+        # ROI
+        rows, cols, channels = img2.shape
+        roi = img1[0:rows, 0:cols]
+
+        # Now create a mask of boundary and its inverse mask
+        img2gray = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
+        ret, mask = cv2.threshold(img2gray, 10, 255, cv2.THRESH_BINARY)
+        mask_inv = cv2.bitwise_not(mask)
+        # Now black-out the area of boundary in ROI
+        img1_bg = cv2.bitwise_and(roi, roi, mask=mask_inv)
+        # Take only region of boundary
+        img2_fg = cv2.bitwise_and(img2, img2, mask=mask)
+        # Put boundary in ROI and modify the ori_image
+        dst = cv2.add(img1_bg, img2_fg)
+        img1[0:rows, 0:cols] = dst
+        return img1
+
+    if '.jpg' not in img_name[-4:] and '.png' not in img_name[:-4]:
+        img_name = img_name + '.jpg'
+    else:
+        img_name = img_name
+    inputimg = cv2.imread(img_name)
+    cropped = raw_to_cropped(inputimg, (256, 256))
+    overgrown_flag = RGB_comparator(raw_to_cropped(inputimg, dim=(256, 256), color_check=True))
+
+    # save and open in PIL image ... to do : find a better way?
+    cv2.imwrite(save_path+img_file[:-4]+'_cropped.png', cropped)
+    large_crop_PIL = Image.open(save_path+img_file[:-4]+'_cropped.png')
+
+    if '.jpg' not in result and '.png' not in result:
+        result_name = result + '.png'
+    else:
+        result_name = result
+
+    count_name = result_name[:-3] + 'txt'
+    if overgrown_flag == False:
+        if print_log == True:
+            print('Sample is not overgrown, proceed with counting')
+        image_draw, out_label = yolo.detect_image(large_crop_PIL)
+
+        image_draw_array = np.array(image_draw)
+        image_draw_array = cv2.cvtColor(image_draw_array, cv2.COLOR_RGB2BGR)
+
+        # Get segmented images and counts
+        blue_predict, purple_predict = predict_from_model(cropped)
+        blue, purple = segment_and_count_boundary(blue_predict, return_image='True', color='Blue'),\
+           segment_and_count_boundary(purple_predict, return_image='True', color='Purple')
+        blue_image, blue_count = blue[0], blue[1]
+        purple_image, purple_count = purple[0], purple[1]
+
+        # Get the cropped original image of the same dimension for ease of result viewing
+        cv2.rectangle(image_draw_array, (1, 1), (255, 255), (255, 255, 255), 2)
+
+        cv2.rectangle(blue_image, (1, 1), (511, 511), (255, 255, 255), 2)
+        cv2.rectangle(purple_image, (1, 1), (511, 511), (255, 255, 255), 2)
+
+        # Saving the counts in a text file
+        f = open(count_name, "w+")
+        f.write('(u-net) E. coli\t\t: %d \n(u-net) coliforms\t: %d\n(yolo) E. coli\t\t: %d \n(yolo) coliforms\t: %d' % (blue_count, purple_count, len(out_label['blue']), len(out_label['coliform'])))
+        f.close()
+        # Saving the segmented images
+        twoboundary = masking_boundary(masking_boundary(image_draw_array, blue_image), purple_image)
+        # Writing title and count on images
+        cv2.putText(twoboundary, 'normal',
+                    (5, 210),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.3,
+                    (255, 255, 255),
+                    1)
+        cv2.putText(twoboundary, 'E.coli : %d (u-net) %d (yolo)' % (blue_count, len(out_label['blue'])),
+                    (5, 240),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.3,
+                    (255, 255, 255),
+                    1)
+        cv2.putText(twoboundary, 'coliform : %d (u-net) %d (yolo)' % (purple_count, len(out_label['coliform'])),
+                    (5, 225),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.3,
+                    (255, 255, 255),
+                    1)
+        cv2.imwrite(result_name, twoboundary)
+        os.remove(save_path + img_file[:-4] + '_cropped.png')
+
+        return {'e.coli': blue_count, 'coliform': purple_count}
+
+    else:
+        if print_log == True:
+            print('sample is overgrown, too many colonies to count')
+
+        image_draw_array = np.array(image_draw)
+        image_draw_array = cv2.cvtColor(image_draw_array, cv2.COLOR_RGB2BGR)
+        # Get segmented images and counts
+        blue_predict, purple_predict = predict_from_model(cropped)
+        blue, purple = segment_and_count_boundary(blue_predict, return_image='True', color='Blue'), \
+                       segment_and_count_boundary(purple_predict, return_image='True', color='Purple')
+        blue_image, blue_count = blue[0], blue[1]
+        purple_image, purple_count = purple[0], purple[1]
+
+        flag_type = flagging_version2(blue_count, len(out_label['blue']), purple_count, len(out_label['coliform']), overgrown_flag)
+        if flag_type['anomalous'] and flag_type['too_many']:
+            flag_string = 'unsure'
+        elif flag_type['anomalous']:
+            flag_string = 'anomalous'
+        else:
+            flag_string = 'too_many'
+
+        # Get the cropped original image of the same dimension for ease of result viewing
+        cv2.rectangle(image_draw_array, (1, 1), (255, 255), (255, 255, 255), 2)
+
+        # Saving the counts in a text file
+        f = open(count_name, "w+")
+        f.write('(u-net) E. coli\t\t: %d \n(u-net) coliforms\t: %d\n(yolo) E. coli\t\t: %d \n(yolo) coliforms\t: %d' % (blue_count, purple_count, len(out_label['blue']), len(out_label['coliform'])))
+        f.close()
+
+        cv2.rectangle(blue_image, (1, 1), (255, 255), (255, 255, 255), 2)
+        cv2.rectangle(purple_image, (1, 1), (255, 255), (255, 255, 255), 2)
+        # Saving the segmented images
+        twoboundary = masking_boundary(masking_boundary(ori_image, blue_image), purple_image)
+
+        # Writing title and count on images
+        if flag_string:
+            twoboundary = masking_boundary(masking_boundary(image_draw_array, blue_image), purple_image)
+            # Writing title and count on images
+            if flag_string:
+                cv2.putText(twoboundary, flag_string,
+                            (5, 210),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            0.3,
+                            (255, 255, 255),
+                            1)
+                cv2.putText(twoboundary, 'E.coli : %d (u-net) %d (yolo)' % (blue_count, len(out_label['blue'])),
+                            (5, 240),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            0.3,
+                            (255, 255, 255),
+                            1)
+                cv2.putText(twoboundary, 'coliform : %d (u-net) %d (yolo)' % (purple_count, len(out_label['coliform'])),
+                            (5, 225),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            0.3,
+                            (255, 255, 255),
+                            1)
+                cv2.imwrite(save_path + img_file, twoboundary)
+                os.remove(save_path + img_file[:-4] + '_cropped.png')
+
+            return {'e.coli': blue_count, 'coliform': purple_count}
+
+        else:
+            cv2.putText(twoboundary, 'E.coli : %d (u-net) %d (yolo)' % (blue_count, len(out_label['blue'])),
+                        (5, 240),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.3,
+                        (255, 255, 255),
+                        1)
+            cv2.putText(twoboundary, 'coliform : %d (u-net) %d (yolo)' % (purple_count, len(out_label['coliform'])),
+                        (5, 225),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.3,
+                        (255, 255, 255),
+                        1)
+            cv2.imwrite(save_path+img_file, twoboundary)
+            os.remove(save_path + img_file[:-4] + '_cropped.png')
+
+            return {'e.coli': blue_count, 'coliform': purple_count}
 
 # if __name__ == "__main__":
 
-# Defining metrics for evaluating prediction accuracy
+# Defining metrics for evaluating prediction accuracy (not used in the 25nd_June_small3.tflite model)
 def tversky_loss(y_true, y_pred):
     alpha = 0.4
     beta = 0.6
@@ -1138,7 +1368,7 @@ def generalized_dice_coeff(y_true, y_pred):
     return gen_dice_coef
 
 
-# New Custom Metrics
+# New Custom Metrics (specifically for the model used in training 25nd_June_small3.tflite
 def dice_coef(y_true, y_pred):
     smooth = 0.0
     y_true_f = K.flatten(y_true)
@@ -1156,7 +1386,7 @@ def jacard(y_true, y_pred):
     return intersection/union
 
 # Load the TFLite model and allocate tensors.
-interpreter = Interpreter(model_path="25nd_June_small3.tflite")
+interpreter = tf.lite.Interpreter(model_path='headless/25nd_June_small3.tflite')
 interpreter.allocate_tensors()
 
 # Get input and output tensors.
@@ -1166,3 +1396,11 @@ output_details = interpreter.get_output_details()
 # # Test the model on random input data.
 input_shape = input_details[0]['shape']
 input_data = np.array(np.random.random_sample(input_shape), dtype=np.float32)
+
+FLAGS = {'image': True, 'input': 'headless/integrate_folder/normal_yolo_evaluate/',
+         'output': 'headless/integrate_folder/',
+         'model_path': 'headless/integrate_folder/model_data/tiny-yolo3_coliform_500v700_2class.h5',
+         'classes_path': 'headless/integrate_folder/_classes.txt'}
+
+yolo = YOLO(**FLAGS)
+
