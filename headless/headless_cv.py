@@ -77,6 +77,9 @@ class OpencvClass():
         if self.bt.in_waiting>1:
             bt_data = (self.bt_readline()).decode("utf-8")
             print(bt_data)
+            if(len(bt_data)>150):
+                with open("update_file.txt", "wb") as fh:
+                    fh.write(base64.decodebytes(bt_data))
             if ((bt_data[0:2]) == 'id'):
                 self.sample_ID = int(bt_data.split(",")[0][3:])
                 print(self.sample_ID)
