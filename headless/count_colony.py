@@ -1320,7 +1320,7 @@ def analysis_image(img_name='image.jpg', result='result.jpg', print_log=False):
                             0.3,
                             (255, 255, 255),
                             1)
-                cv2.imwrite(img_name, twoboundary)
+                cv2.imwrite(result_name, twoboundary)
                 os.remove(img_name[:-4] + '_cropped.png')
 
             return {'e.coli': blue_count, 'coliform': purple_count}
