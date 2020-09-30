@@ -1218,6 +1218,11 @@ def analysis_image(img_name='image.jpg', result='result.jpg', print_log=False):
         blue_image, blue_count = blue[0], blue[1]
         purple_image, purple_count = purple[0], purple[1]
 
+        if len(out_label['blue']) > blue_count:
+            blue_count = len(out_label['blue'])
+        if len(out_label['coliform']) > purple_count:
+            purple_count = len(out_label['coliform'])
+
         # Get the cropped original image of the same dimension for ease of result viewing
         cv2.rectangle(image_draw_array, (1, 1), (255, 255), (255, 255, 255), 2)
 
@@ -1237,13 +1242,13 @@ def analysis_image(img_name='image.jpg', result='result.jpg', print_log=False):
                     0.3,
                     (255, 255, 255),
                     1)
-        cv2.putText(twoboundary, 'E.coli : %d (u-net) %d (yolo)' % (blue_count, len(out_label['blue'])),
+        cv2.putText(twoboundary, 'E.coli : %d' % (blue_count),
                     (5, 240),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.3,
                     (255, 255, 255),
                     1)
-        cv2.putText(twoboundary, 'coliform : %d (u-net) %d (yolo)' % (purple_count, len(out_label['coliform'])),
+        cv2.putText(twoboundary, 'coliform : %d' % (purple_count),
                     (5, 225),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.3,
@@ -1267,7 +1272,10 @@ def analysis_image(img_name='image.jpg', result='result.jpg', print_log=False):
                        segment_and_count_boundary(purple_predict, return_image='True', color='Purple')
         blue_image, blue_count = blue[0], blue[1]
         purple_image, purple_count = purple[0], purple[1]
-
+        if len(out_label['blue']) > blue_count:
+            blue_count = len(out_label['blue'])
+        if len(out_label['coliform']) > purple_count:
+            purple_count = len(out_label['coliform'])
         flag_type = flagging_version2(blue_count, len(out_label['blue']), purple_count, len(out_label['coliform']), overgrown_flag)
         if flag_type['anomalous'] and flag_type['too_many']:
             flag_string = 'unsure'
@@ -1300,13 +1308,13 @@ def analysis_image(img_name='image.jpg', result='result.jpg', print_log=False):
                             0.3,
                             (255, 255, 255),
                             1)
-                cv2.putText(twoboundary, 'E.coli : %d (u-net) %d (yolo)' % (blue_count, len(out_label['blue'])),
+                cv2.putText(twoboundary, 'E.coli : %d ' % (blue_count),
                             (5, 240),
                             cv2.FONT_HERSHEY_SIMPLEX,
                             0.3,
                             (255, 255, 255),
                             1)
-                cv2.putText(twoboundary, 'coliform : %d (u-net) %d (yolo)' % (purple_count, len(out_label['coliform'])),
+                cv2.putText(twoboundary, 'coliform : %d' % (purple_count),
                             (5, 225),
                             cv2.FONT_HERSHEY_SIMPLEX,
                             0.3,
@@ -1318,13 +1326,13 @@ def analysis_image(img_name='image.jpg', result='result.jpg', print_log=False):
             return {'e.coli': blue_count, 'coliform': purple_count}
 
         else:
-            cv2.putText(twoboundary, 'E.coli : %d (u-net) %d (yolo)' % (blue_count, len(out_label['blue'])),
+            cv2.putText(twoboundary, 'E.coli : %d' % (blue_count),
                         (5, 240),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         0.3,
                         (255, 255, 255),
                         1)
-            cv2.putText(twoboundary, 'coliform : %d (u-net) %d (yolo)' % (purple_count, len(out_label['coliform'])),
+            cv2.putText(twoboundary, 'coliform : %d' % (purple_count),
                         (5, 225),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         0.3,
@@ -1336,6 +1344,7 @@ def analysis_image(img_name='image.jpg', result='result.jpg', print_log=False):
             return {'e.coli': blue_count, 'coliform': purple_count}
 
 
+        
 # if __name__ == "__main__":
 
 # Defining metrics for evaluating prediction accuracy (not used in the 25nd_June_small3.tflite model)
