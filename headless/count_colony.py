@@ -966,7 +966,7 @@ def flagging_version2(unet_count_blue, yolo_count_blue, unet_count_purple, yolo_
     using unet & yolo counts, establish the type of flag into three types : 
     1, 0 = anomalous
     0, 1 = too_many
-    1, 1 = unsure
+    1, 1 = Result uncertain
     note that :
     - anomalous can be due to intense background color, causing flagging even though count is accurate
     - too_many suggests count cannot be trusted, and count should be converted to an arbitrarily large number
@@ -1286,7 +1286,7 @@ def analysis_image(img_name='image.jpg', result='result.jpg', print_log=False):
             purple_count_new = purple_count
         flag_type = flagging_version2(blue_count, len(out_label['blue']), purple_count, len(out_label['coliform']), overgrown_flag)
         if flag_type['anomalous'] and flag_type['too_many']:
-            flag_string = 'unsure'
+            flag_string = 'Result uncertain'
         elif flag_type['anomalous']:
             flag_string = 'anomalous'
         else:
