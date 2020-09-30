@@ -1387,7 +1387,7 @@ def jacard(y_true, y_pred):
     return intersection/union
 
 # Load the TFLite model and allocate tensors.
-interpreter = Interpreter(model_path='converted_model.tflite')
+interpreter = Interpreter(model_path='25nd_June_small3.tflite')
 interpreter.allocate_tensors()
 
 # Get input and output tensors.
