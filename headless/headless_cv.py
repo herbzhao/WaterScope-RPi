@@ -37,7 +37,8 @@ class OpencvClass():
         self.bt_open=0
         self.timer=0
         self.flagged=0
-
+        self.flag_message =""
+        self.flag_string=""
         # wipe the file
         with open('image_to_analyse.txt', 'w+') as file:
             pass
@@ -192,14 +193,16 @@ class OpencvClass():
             # self.analysis_result()
             if(self.flagged==1):
                     self.timer=self.timer+1
-                    self.send_serial('line1=Sample overgrown')
-                    time.sleep(0.5)
-                    self.send_serial('line2=or anomalous')
-                    time.sleep(5)
+                    time.sleep(4)
                     self.send_serial('results={},{}'.format(self.result['coliforms'], self.result['E.coli']))
+                    time.sleep(2)
+                    self.send_serial('line1='+self.flag_message)
+                    time.sleep(0.5)
+                    self.send_serial('line2=check manual')
+                    
                    # print(self.timer)
                     
-                    if(self.timer>20):
+                    if(self.timer>50):
                         self.send_serial("led_off")
                         self.flagged=0
                         
@@ -217,7 +220,7 @@ class OpencvClass():
                     self.auto_focus_status = ''
                     self.annotating("E.coli: {}, coliforms: {}".format(self.result['E.coli'], self.result['coliforms']))
                     print('coliform={},ecoli={}'.format(self.result['coliforms'], self.result['E.coli']))
-                    self.write_bluetooth('coliform={},ecoli={}'.format(self.result['coliforms'], self.result['E.coli']))
+                    self.write_bluetooth('coliform={},ecoli={},flag={}'.format(self.result['coliforms'], self.result['E.coli'],self.flag_string))
                     #self.send_serial("led_off")  
           # if the `q` key was pressed, break from the loop
             # if key == ord("q"):
@@ -310,20 +313,33 @@ class OpencvClass():
                 with open(self.filename.replace('.jpg', '_result.txt')) as file:
                     lines = file.readlines()
                     self.result = {}
-                    for line in lines:
-                        bacteria_name = line.split(':')[0].replace(' ', '').replace('\t','').replace('\n', '')
-                        count = line.split(':')[1].replace(' ', '').replace('\t','').replace('\n', '')
+                    ecoli_count = max(lines[0].split()[-1],lines[2].split()[-1])
+                    coliform_count = max(lines[1].split()[-1],lines[3].split()[-1])
+                    self.result['coliforms']=coliform_count
+                    self.result['E.coli']=ecoli_count
+                    self.flag_string = lines[4]
+                    if(self.flag_string=='anomalous' or self.flag_string=='too_many' or self.flag_string=='Result uncertain'):
+                        self.send_serial('LED_RGB=100,0,0')
+                        self.flagged=1
+                        if(self.flag_string=='too_many'):
+                            self.flag_string = 'overgrown'
+                        self.flag_message='Sample '+self.flag_string
+                        if(self.flag_string=='Result uncertain'):
+                            self.flag_message='Result uncertain'
+                    #for line in lines:
+                   #     bacteria_name = 
+                   #     count = line.split(':')[1].replace(' ', '').replace('\t','').replace('\n', '')
                        # self.result[bacteria_name] =  count
                         #print(count)
                       #  print(count)
-                        if(count.find("flagged")<0):
-                            self.result[bacteria_name] =  count
-                            print("result valid")
-                        else:
-                            self.result[bacteria_name] =  count
-                            print("too many or flagged")
-                            self.send_serial('LED_RGB=100,0,0')
-                            self.flagged=1
+                     #   if(count.find("flagged")<0):
+                      #      self.result[bacteria_name] =  count
+                       #     print("result valid")
+                      #  else:
+                      #      self.result[bacteria_name] =  count
+                        #    print("too many or flagged")
+                        #    self.send_serial('LED_RGB=100,0,0')
+                            #self.flagged=1
                             
                         
                 break
