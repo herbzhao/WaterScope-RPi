@@ -286,6 +286,17 @@ class OpencvClass():
             image.save(self.filename.replace('.jpg', '_compressed.jpg'),quality=80,optimize=True)
             time.sleep(0.1)
 
+            # add annotation?
+            image = cv2.imread(self.filename.replace('.jpg', '_compressed.jpg'))
+            cv2.putText(image, 'sample ID : {}'.format(self.sample_ID),
+                    (5, 150),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5,
+                    (255, 255, 255),
+                    2)
+            cv2.imwrite(self.filename.replace('.jpg', '_compressed.jpg'))
+            time.sleep(0.1)
+
 # reduce the resolution for video streaming
             self.camera.resolution = self.stream_resolution
  
