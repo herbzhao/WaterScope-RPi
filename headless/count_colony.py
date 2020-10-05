@@ -12,7 +12,7 @@ from integrate_folder.yolo import YOLO
 from tflite_runtime.interpreter import Interpreter  # on Pi, uncomment this; otherwise, use tf.lite.Interpreter
 
 
-def raw_to_cropped(raw_image, dim, color_check=False, print_log=False):
+def raw_to_cropped_old(raw_image, dim, color_check=False, print_log=False):
 
     '''
     :parameter: raw_image
@@ -241,6 +241,243 @@ def raw_to_cropped(raw_image, dim, color_check=False, print_log=False):
                     #   print(x, y,radius)
                     return crop_color
 
+def raw_to_cropped(raw_image, dim, color_check=False, print_log=False, multiplier=0.05):
+    '''
+    :parameter: raw_image
+                dim -> output dimension
+                color_check -> if True, crop 1.5*radius to focus only on the center color [since if highly contaminated,
+                the center will already have enough information and avoid taking the edge color into account]
+    :return: cropped 256x256 pixel image centered on the ROI
+    '''
+
+    def checkradius(x, y, radius):
+        if x < 450 or x > 750 or y < 400 or radius < 150:  # May 6th, 560, 700, 400, 150
+            x = 640
+            y = 450
+            radius = 200
+            if print_log == True:
+                print('adjust x,y,radius to 640,450,200 due to anomalous value(s) of %d, %d, %d.' % (x, y, radius))
+            return x, y, radius
+        else:
+            return x, y, radius
+
+    if color_check == True:
+        def masking(mask, image, x, y, radius, dim):
+            cropimg = cv2.subtract(mask, image)
+            cropimg = cv2.subtract(mask, cropimg)
+            cropimg = cropimg[y - radius + int(radius * 0.5):y + radius - int(radius * 0.5),
+                      x - radius + int(radius * 0.5):x + radius - int(radius * 0.5)]
+            cropimg = cv2.resize(cropimg, dim, interpolation=cv2.INTER_AREA)
+            return cropimg
+
+        img = cv2.cvtColor(raw_image, cv2.COLOR_BGR2GRAY)
+        img_color = raw_image
+        r = 1200.0 / img.shape[1]
+        dimension = (1200, int(img.shape[0] * r))
+        img = cv2.resize(img, dimension, interpolation=cv2.INTER_AREA)
+        img_color = cv2.resize(img_color, dimension, interpolation=cv2.INTER_AREA)
+
+        # BGR channel
+        blue, green, red = cv2.split(img_color)
+        img_combine_1 = red
+        img_combine_2 = blue
+        img_combine_3 = green
+
+        # Detecting ROI
+        mask = np.zeros((901, 1200), dtype=np.uint8)
+        circles = cv2.HoughCircles(img, cv2.HOUGH_GRADIENT, 1, 300,
+                                   param1=60, param2=40, minRadius=200, maxRadius=238)
+        if type(circles) != type(None):
+            if len(circles[0, :, :]) > 1:
+                x, y, radius = np.uint16([[circles[0, 0, :]]][0][0])
+                x, y, radius = checkradius(x, y, radius)
+                cv2.circle(mask, (x, y), radius - int(radius * 0.5), (255, 255, 255), -1, 8, 0)
+                crop_img_combine_1 = masking(mask, img_combine_1, x, y, radius, dim)
+                crop_img_combine_2 = masking(mask, img_combine_2, x, y, radius, dim)
+                crop_img_combine_3 = masking(mask, img_combine_3, x, y, radius, dim)
+                crop_color = cv2.merge((crop_img_combine_2, crop_img_combine_3, crop_img_combine_1))
+
+                return crop_color
+            else:
+                x, y, radius = np.uint16(circles[0][0])
+                x, y, radius = checkradius(x, y, radius)
+                cv2.circle(mask, (x, y), radius - int(radius * 0.5), (255, 255, 255), -1, 8, 0)
+                crop_img_combine_1 = masking(mask, img_combine_1, x, y, radius, dim)
+                crop_img_combine_2 = masking(mask, img_combine_2, x, y, radius, dim)
+                crop_img_combine_3 = masking(mask, img_combine_3, x, y, radius, dim)
+                crop_color = cv2.merge((crop_img_combine_2, crop_img_combine_3, crop_img_combine_1))
+                return crop_color
+        else:
+            if print_log == True:
+                print('no circle found... try changing parameter (1)')
+            circles = cv2.HoughCircles(img, cv2.HOUGH_GRADIENT, 1, 300,
+                                       param1=50, param2=30, minRadius=200,
+                                       maxRadius=238)
+            if type(circles) != type(None):
+                x, y, radius = np.uint16(circles[0][0])
+                x, y, radius = checkradius(x, y, radius)
+                cv2.circle(mask, (x, y), radius - int(radius * 0.5), (255, 255, 255), -1, 8, 0)
+                crop_img_combine_1 = masking(mask, img_combine_1, x, y, radius, dim)
+                crop_img_combine_2 = masking(mask, img_combine_2, x, y, radius, dim)
+                crop_img_combine_3 = masking(mask, img_combine_3, x, y, radius, dim)
+                crop_color = cv2.merge((crop_img_combine_2, crop_img_combine_3, crop_img_combine_1))
+                return crop_color
+            else:
+                if print_log == True:
+                    print('no circles found... try changing parameter (2)')
+                circles = cv2.HoughCircles(img, cv2.HOUGH_GRADIENT, 1, 300,
+                                           param1=40, param2=20, minRadius=200,
+                                           maxRadius=238)
+                if type(circles) != type(None):
+                    if len(circles[0, :, :]) > 1:
+                        x, y, radius = np.uint16([[circles[0, 0, :]]][0][0])
+                        x, y, radius = checkradius(x, y, radius)
+                        cv2.circle(mask, (x, y), radius - int(radius * 0.5), (255, 255, 255), -1, 8, 0)
+                        crop_img_combine_1 = masking(mask, img_combine_1, x, y, radius, dim)
+                        crop_img_combine_2 = masking(mask, img_combine_2, x, y, radius, dim)
+                        crop_img_combine_3 = masking(mask, img_combine_3, x, y, radius, dim)
+                        crop_color = cv2.merge((crop_img_combine_2, crop_img_combine_3, crop_img_combine_1))
+                        return crop_color
+                    else:
+                        x, y, radius = np.uint16(circles[0][0])
+                        x, y, radius = checkradius(x, y, radius)
+                        cv2.circle(mask, (x, y), radius - int(radius * 0.5), (255, 255, 255), -1, 8, 0)
+                        crop_img_combine_1 = masking(mask, img_combine_1, x, y, radius, dim)
+                        crop_img_combine_2 = masking(mask, img_combine_2, x, y, radius, dim)
+                        crop_img_combine_3 = masking(mask, img_combine_3, x, y, radius, dim)
+                        crop_color = cv2.merge((crop_img_combine_2, crop_img_combine_3, crop_img_combine_1))
+                        return crop_color
+                else:
+                    if print_log == True:
+                        print('no circle found...:c... resorting to empirically estimated x,y,r=640,450,200')
+                    x, y, radius = 640, 450, 200
+                    cv2.circle(mask, (x, y), radius - int(radius * 0.5), (255, 255, 255), -1, 8, 0)
+                    crop_img_combine_1 = masking(mask, img_combine_1, x, y, radius, dim)
+                    crop_img_combine_2 = masking(mask, img_combine_2, x, y, radius, dim)
+                    crop_img_combine_3 = masking(mask, img_combine_3, x, y, radius, dim)
+                    crop_color = cv2.merge((crop_img_combine_2, crop_img_combine_3, crop_img_combine_1))
+                    return crop_color
+    else:  # if color_check=False, crop as usual
+        t_0 = time.time()
+
+        def masking(mask, image, x, y, radius, dim):
+            cropimg = cv2.subtract(mask, image)
+            cropimg = cv2.subtract(mask, cropimg)
+            cropimg = cropimg[y - radius:y + radius, x - radius:x + radius]
+            cropimg = cv2.resize(cropimg, dim, interpolation=cv2.INTER_AREA)
+            return cropimg
+
+        img = cv2.cvtColor(raw_image, cv2.COLOR_BGR2GRAY)
+        img_color = raw_image
+        r = 1200.0 / img.shape[1]
+        dimension = (1200, int(img.shape[0] * r))
+        img = cv2.resize(img, dimension, interpolation=cv2.INTER_AREA)
+        img_color = cv2.resize(img_color, dimension, interpolation=cv2.INTER_AREA)
+
+        # BGR channel
+        blue, green, red = cv2.split(img_color)
+        img_combine_1 = red
+        img_combine_2 = blue
+        img_combine_3 = green
+
+        # Detecting ROI
+        mask = np.zeros((901, 1200), dtype=np.uint8)
+        circles = cv2.HoughCircles(img, cv2.HOUGH_GRADIENT, 1, 300,
+                                   param1=70, param2=60, minRadius=230, maxRadius=270)
+        if type(circles) != type(None):
+            if len(circles[0, :, :]) > 1:
+                x, y, radius = np.uint16([[circles[0, 0, :]]][0][0])
+                x, y, radius = checkradius(x, y, radius)
+                radius += int(radius * multiplier)
+                cv2.circle(mask, (x, y), radius, (255, 255, 255), -1, 8, 0)
+                crop_img_combine_1 = masking(mask, img_combine_1, x, y, radius, dim)
+                crop_img_combine_2 = masking(mask, img_combine_2, x, y, radius, dim)
+                crop_img_combine_3 = masking(mask, img_combine_3, x, y, radius, dim)
+                crop_color = cv2.merge((crop_img_combine_2, crop_img_combine_3, crop_img_combine_1))
+                # if print_log == True:
+                #   print(x, y, radius)
+
+                return crop_color
+            else:
+                x, y, radius = np.uint16(circles[0][0])
+                x, y, radius = checkradius(x, y, radius)
+                radius += int(radius * multiplier)
+                cv2.circle(mask, (x, y), radius, (255, 255, 255), -1, 8, 0)
+                crop_img_combine_1 = masking(mask, img_combine_1, x, y, radius, dim)
+                crop_img_combine_2 = masking(mask, img_combine_2, x, y, radius, dim)
+                crop_img_combine_3 = masking(mask, img_combine_3, x, y, radius, dim)
+                crop_color = cv2.merge((crop_img_combine_2, crop_img_combine_3, crop_img_combine_1))
+                # if print_log == True:
+                #   print(x, y, radius)
+
+                return crop_color
+        else:
+            if print_log == True:
+                print('no circle found... try changing parameter (1)')
+            circles = cv2.HoughCircles(img, cv2.HOUGH_GRADIENT, 1, 300,
+                                       param1=60, param2=40, minRadius=230, maxRadius=270)
+            if type(circles) != type(None):
+                x, y, radius = np.uint16(circles[0][0])
+                x, y, radius = checkradius(x, y, radius)
+                radius += int(radius * multiplier)
+                cv2.circle(mask, (x, y), radius, (255, 255, 255), -1, 8, 0)
+                crop_img_combine_1 = masking(mask, img_combine_1, x, y, radius, dim)
+                crop_img_combine_2 = masking(mask, img_combine_2, x, y, radius, dim)
+                crop_img_combine_3 = masking(mask, img_combine_3, x, y, radius, dim)
+                crop_color = cv2.merge((crop_img_combine_2, crop_img_combine_3, crop_img_combine_1))
+                # if print_log == True:
+                #   print(x, y, radius)
+
+                return crop_color
+            else:
+                if print_log == True:
+                    print('no circles found... try changing parameter (2)')
+                circles = cv2.HoughCircles(img, cv2.HOUGH_GRADIENT, 1, 300,
+                                           param1=50, param2=30, minRadius=230, maxRadius=270)
+                if type(circles) != type(None):
+                    if len(circles[0, :, :]) > 1:
+                        x, y, radius = np.uint16([[circles[0, 0, :]]][0][0])
+                        x, y, radius = checkradius(x, y, radius)
+                        radius += int(radius * multiplier)
+                        cv2.circle(mask, (x, y), radius, (255, 255, 255), -1, 8, 0)
+                        crop_img_combine_1 = masking(mask, img_combine_1, x, y, radius, dim)
+                        crop_img_combine_2 = masking(mask, img_combine_2, x, y, radius, dim)
+                        crop_img_combine_3 = masking(mask, img_combine_3, x, y, radius, dim)
+                        crop_color = cv2.merge((crop_img_combine_2, crop_img_combine_3, crop_img_combine_1))
+                        # if print_log == True:
+                        #   print(x, y,radius)
+
+                        return crop_color
+                    else:
+                        x, y, radius = np.uint16(circles[0][0])
+                        x, y, radius = checkradius(x, y, radius)
+                        radius += int(radius * multiplier)
+                        cv2.circle(mask, (x, y), radius, (255, 255, 255), -1, 8, 0)
+                        crop_img_combine_1 = masking(mask, img_combine_1, x, y, radius, dim)
+                        crop_img_combine_2 = masking(mask, img_combine_2, x, y, radius, dim)
+                        crop_img_combine_3 = masking(mask, img_combine_3, x, y, radius, dim)
+                        crop_color = cv2.merge((crop_img_combine_2, crop_img_combine_3, crop_img_combine_1))
+                        # if print_log == True:
+                        #   print(x, y,radius)
+
+                        return crop_color
+                else:
+                    if print_log == True:
+                        print('no circle found...:c... resorting to empirically estimated x,y,radius of 640,450,200')
+                    x = 640
+                    y = 450
+                    radius = 200
+                    radius += int(radius * multiplier)
+                    cv2.circle(mask, (x, y), radius, (255, 255, 255), -1, 8, 0)
+                    crop_img_combine_1 = masking(mask, img_combine_1, x, y, radius, dim)
+                    crop_img_combine_2 = masking(mask, img_combine_2, x, y, radius, dim)
+                    crop_img_combine_3 = masking(mask, img_combine_3, x, y, radius, dim)
+                    crop_color = cv2.merge((crop_img_combine_2, crop_img_combine_3, crop_img_combine_1))
+                    # if print_log == True:
+                    #   print(x, y,radius)
+                    return crop_color
+                
+                
 def RGB_comparator(cropped_img, n_colors = 6, n_dominant = 2):
 
     '''
