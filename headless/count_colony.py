@@ -1654,7 +1654,7 @@ input_data = np.array(np.random.random_sample(input_shape), dtype=np.float32)
 
 FLAGS = {'image': True, 'input': 'integrate_folder/normal_yolo_evaluate/',
          'output': 'integrate_folder/',
-         'model_path': 'integrate_folder/model_data/tiny-yolo3_coliform_500v700_2class.h5',
+         'model_path': 'integrate_folder/model_data/tiny-yolov3_coliform_500v300_2class_100img.h5',
          'classes_path': 'integrate_folder/_classes.txt'}
 
 yolo = YOLO(**FLAGS)
