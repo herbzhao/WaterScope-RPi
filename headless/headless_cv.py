@@ -288,13 +288,13 @@ class OpencvClass():
 
             # add annotation?
             image = cv2.imread(self.filename.replace('.jpg', '_compressed.jpg'))
-            cv2.putText(image, 'sample ID : {}'.format(self.sample_ID),
+            cv2.putText(image, 'ID : {}'.format(self.sample_ID),
                     (5, 150),
                     cv2.FONT_HERSHEY_SIMPLEX,
-                    0.5,
+                    5,
                     (255, 255, 255),
-                    2)
-            cv2.imwrite(self.filename.replace('.jpg', '_compressed.jpg'))
+                    4)
+            cv2.imwrite(self.filename.replace('.jpg', '_compressed.jpg'),image)
             time.sleep(0.1)
 
 # reduce the resolution for video streaming
@@ -324,8 +324,16 @@ class OpencvClass():
                 with open(self.filename.replace('.jpg', '_result.txt')) as file:
                     lines = file.readlines()
                     self.result = {}
-                    ecoli_count = max(lines[0].split()[-1],lines[2].split()[-1])
-                    coliform_count = max(lines[1].split()[-1],lines[3].split()[-1])
+                    if(int(lines[0].split()[-1])>50):
+                        ecoli_count = lines[2].split()[-1]
+                    else:
+                        ecoli_count = lines[0].split()[-1]
+                    if(int(lines[1].split()[-1])>50):
+                        coliform_count = lines[3].split()[-1]
+                    else:
+                        coliform_count = lines[1].split()[-1]
+                   # ecoli_count = max(lines[0].split()[-1],lines[2].split()[-1])
+                   # coliform_count = max(lines[1].split()[-1],lines[3].split()[-1])
                     self.result['coliforms']=coliform_count
                     self.result['E.coli']=ecoli_count
                     self.flag_string = lines[4]
@@ -456,12 +464,11 @@ class OpencvClass():
             if self.auto_focus_status =="":
                 self.start_auto_focus_thread()
 
-        elif income_serial_command == "capture":
-            self.capture_image()
-            
-        if income_serial_command == "cancel":
+        elif income_serial_command == "cancel":
             self.flagged=0
             print('flagged to 0')
+            
+  
         try:
             self.sample_ID = Arduinos.serial_controllers['waterscope'].sample_ID
             self.sample_ID = self.sample_ID.replace("ID=", "").strip()
