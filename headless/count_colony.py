@@ -1483,13 +1483,13 @@ def analysis_image(img_name='image.jpg', result='result.jpg', print_log=False):
                     0.3,
                     (255, 255, 255),
                     1)
-        cv2.putText(twoboundary, 'E.coli : %d' % (blue_count_new),
+        cv2.putText(twoboundary, 'E.coli : %d' % (blue_count),
                     (5, 240),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.3,
                     (255, 255, 255),
                     1)
-        cv2.putText(twoboundary, 'coliform : %d' % (purple_count_new),
+        cv2.putText(twoboundary, 'coliform : %d' % (purple_count),
                     (5, 225),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.3,
@@ -1498,7 +1498,7 @@ def analysis_image(img_name='image.jpg', result='result.jpg', print_log=False):
         cv2.imwrite(result_name, twoboundary)
         os.remove(img_name[:-4]+'_cropped.png')
 
-        return {'e.coli': blue_count_new, 'coliform': purple_count_new}
+        return {'e.coli': blue_count, 'coliform': purple_count}
 
     else:
         if print_log == True:
@@ -1541,7 +1541,11 @@ def analysis_image(img_name='image.jpg', result='result.jpg', print_log=False):
         cv2.rectangle(purple_image, (1, 1), (255, 255), (255, 255, 255), 2)
         # Saving the segmented images
         twoboundary = masking_boundary(masking_boundary(image_draw_array, blue_image), purple_image)
-
+        
+        if flag_string == 'too_many':
+            blue_count_new = 200
+            purple_count_new = 200
+        
         # Writing title and count on images
         if flag_string:
             twoboundary = masking_boundary(masking_boundary(image_draw_array, blue_image), purple_image)
