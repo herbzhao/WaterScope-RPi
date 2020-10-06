@@ -1577,6 +1577,11 @@ def analysis_image(img_name='image.jpg', result='result.jpg', print_log=False):
         # Get the cropped original image of the same dimension for ease of result viewing
         cv2.rectangle(image_draw_array, (1, 1), (255, 255), (255, 255, 255), 2)
 
+        if flag_type['too_many']:
+            blue_count_new = 200
+        if flag_type['too_many_coliform']:    
+            purple_count_new = 200        
+        
         # Saving the counts in a text file
         f = open(count_name, "w+")
         f.write('(u-net) E. coli\t\t: %d \n(u-net) coliforms\t: %d\n(yolo) E. coli\t\t: %d \n(yolo) coliforms\t: %d\n%s\n%d\n%d' % (blue_count, purple_count, len(out_label['blue']), len(out_label['coliform']), flag_string, blue_count_new, purple_count_new))
@@ -1586,11 +1591,6 @@ def analysis_image(img_name='image.jpg', result='result.jpg', print_log=False):
         cv2.rectangle(purple_image, (1, 1), (255, 255), (255, 255, 255), 2)
         # Saving the segmented images
         twoboundary = masking_boundary(masking_boundary(image_draw_array, blue_image), purple_image)
-        
-        if flag_type['too_many']:
-            blue_count_new = 200
-        if flag_type['too_many_coliform']:    
-            purple_count_new = 200
         
         # Writing title and count on images
         if flag_string:
