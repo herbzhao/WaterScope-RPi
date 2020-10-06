@@ -1198,21 +1198,26 @@ def model_param():
     return interpreter, input_details, input_data, output_details
 
 def flagging_version2(unet_count_blue, yolo_count_blue, unet_count_purple, yolo_count_purple, flag, high_thresh=10, too_many_thresh=30, yolo_edge_case_thresh=5):
-    flag_type = {'anomalous':0, 'too_many':0}
+    flag_type = {'anomalous':0, 'too_many':0, 'too_many_coliform':0, 'anomalous_coliform':0}
     '''
     using unet & yolo counts, establish the type of flag into three types : 
     1, 0 = anomalous
     0, 1 = too_many
-    1, 1 = Result uncertain
+    1, 1 = unsure
     note that :
     - anomalous can be due to intense background color, causing flagging even though count is accurate
     - too_many suggests count cannot be trusted, and count should be converted to an arbitrarily large number
     - unsure means exactly what it means
     '''
+
     if flag:
         if unet_count_blue != 0 and yolo_count_blue != 0:
             if unet_count_blue <= high_thresh and yolo_count_blue <= high_thresh:
                 flag_type['anomalous'] = 1
+                if unet_count_purple >= 100 or yolo_count_purple >= 100:
+                    flag_type['too_many_coliform'] = 1
+                else:
+                    flag_type['anomalous_coliform'] = 1
                 return flag_type
             elif unet_count_blue >= high_thresh and yolo_count_blue >= high_thresh:
                 if unet_count_blue > yolo_count_blue:
@@ -1221,9 +1226,17 @@ def flagging_version2(unet_count_blue, yolo_count_blue, unet_count_purple, yolo_
                     count = yolo_count_blue
                 if count >= too_many_thresh:
                     flag_type['too_many'] = 1
+                    if unet_count_purple >= 100 or yolo_count_purple >= 100:
+                        flag_type['too_many_coliform'] = 1
+                    else:
+                        flag_type['anomalous_coliform'] = 1
                     return flag_type
                 else:
                     flag_type['anomalous'] = 1
+                    if unet_count_purple >= 100 or yolo_count_purple >= 100:
+                        flag_type['too_many_coliform'] = 1
+                    else:
+                        flag_type['anomalous_coliform'] = 1
                     return flag_type
             elif unet_count_blue >= high_thresh and yolo_count_blue <= high_thresh:
                 # flag_type['too_many'] = 1
@@ -1231,26 +1244,54 @@ def flagging_version2(unet_count_blue, yolo_count_blue, unet_count_purple, yolo_
                 # return flag_type
                 if yolo_count_purple >= too_many_thresh:
                     flag_type['too_many'] = 1
+                    if unet_count_purple >= 100 or yolo_count_purple >= 100:
+                        flag_type['too_many_coliform'] = 1
+                    else:
+                        flag_type['anomalous_coliform'] = 1
                     return flag_type
                 else:
                     flag_type['anomalous'] = 1
+                    if unet_count_purple >= 100 or yolo_count_purple >= 100:
+                        flag_type['too_many_coliform'] = 1
+                    else:
+                        flag_type['anomalous_coliform'] = 1
                     return flag_type
             else:
-                if yolo_count_blue >= too_many_thresh:
+                if yolo_count_blue >= 15:
                     flag_type['too_many'] = 1
+                    if unet_count_purple >= 100 or yolo_count_purple >= 100:
+                        flag_type['too_many_coliform'] = 1
+                    else:
+                        flag_type['anomalous_coliform'] = 1
                     return flag_type
                 else :
                     flag_type['anomalous'] = 1
+                    if unet_count_purple >= 100 or yolo_count_purple >= 100:
+                        flag_type['too_many_coliform'] = 1
+                    else:
+                        flag_type['anomalous_coliform'] = 1
                     return flag_type
         elif unet_count_blue == 0 and yolo_count_blue != 0:
             if yolo_count_blue <= yolo_edge_case_thresh:
                 flag_type['anomalous'] = 1
+                if unet_count_purple >= 100 or yolo_count_purple >= 100:
+                    flag_type['too_many_coliform'] = 1
+                else:
+                    flag_type['anomalous_coliform'] = 1
                 return flag_type
             else:
                 flag_type['too_many'] = 1
+                if unet_count_purple >= 100 or yolo_count_purple >= 100:
+                    flag_type['too_many_coliform'] = 1
+                else:
+                    flag_type['anomalous_coliform'] = 1
                 return flag_type
         else:
             flag_type['anomalous'] = 1
+            if unet_count_purple >= 100 or yolo_count_purple >= 100:
+                flag_type['too_many_coliform'] = 1
+            else:
+                flag_type['anomalous_coliform'] = 1
             return flag_type
 
 def analysis_image_old(img_name='image.jpg', result='result.jpg', print_log=False):
@@ -1523,11 +1564,15 @@ def analysis_image(img_name='image.jpg', result='result.jpg', print_log=False):
             purple_count_new = purple_count
         flag_type = flagging_version2(blue_count, len(out_label['blue']), purple_count, len(out_label['coliform']), overgrown_flag)
         if flag_type['anomalous'] and flag_type['too_many']:
-            flag_string = 'Result uncertain'
+            flag_string = 'unsure'
         elif flag_type['anomalous']:
-            flag_string = 'anomalous'
+            flag_string = 'anomalous (e.coli)'
         else:
-            flag_string = 'too_many'
+            flag_string = 'too_many (e.coli)'
+        if flag_type['anomalous_coliform']:
+            flag_string+=' anomalous (coliform)'
+        else:
+            flag_string+= ' too_many (coliform)'
 
         # Get the cropped original image of the same dimension for ease of result viewing
         cv2.rectangle(image_draw_array, (1, 1), (255, 255), (255, 255, 255), 2)
