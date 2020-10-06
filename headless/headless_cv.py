@@ -324,19 +324,20 @@ class OpencvClass():
                 with open(self.filename.replace('.jpg', '_result.txt')) as file:
                     lines = file.readlines()
                     self.result = {}
-                    if(int(lines[0].split()[-1])>50):
-                        ecoli_count = lines[2].split()[-1]
-                    else:
-                        ecoli_count = lines[0].split()[-1]
-                    if(int(lines[1].split()[-1])>50):
-                        coliform_count = lines[3].split()[-1]
-                    else:
-                        coliform_count = lines[1].split()[-1]
-                   # ecoli_count = max(lines[0].split()[-1],lines[2].split()[-1])
-                   # coliform_count = max(lines[1].split()[-1],lines[3].split()[-1])
+                  #  if(int(lines[0].split()[-1])>50):
+                  #      ecoli_count = lines[2].split()[-1]
+                  #  else:
+                   #     ecoli_count = lines[0].split()[-1]
+                  #  if(int(lines[1].split()[-1])>50):
+                   #     coliform_count = lines[3].split()[-1]
+                   # else:
+                   #     coliform_count = lines[1].split()[-1]
+                    ecoli_count = lines[5].split()[-1]
+                    coliform_count = lines[6].split()[-1]
                     self.result['coliforms']=coliform_count
                     self.result['E.coli']=ecoli_count
-                    self.flag_string = lines[4]
+                    self.flag_string = lines[4].split()[0]
+                                                    
                     if(self.flag_string=='anomalous' or self.flag_string=='too_many' or self.flag_string=='Result uncertain'):
                         self.send_serial('LED_RGB=100,0,0')
                         self.flagged=1
@@ -537,7 +538,7 @@ class OpencvClass():
             print('find the focus in {0:.2f} seconds at Z: {1}'.format(time.time() - start_time, global_optimal_z))
 
             # disable twiching
-            self.send_serial('results=9999,9999')
+            self.send_serial('motor_off')
 
 
         # NOTE: Autofocus code runs from here
@@ -557,7 +558,7 @@ class OpencvClass():
         #self.send_serial("custom=Defogging,sample...")
        # time.sleep(0.5)
         self.send_serial("temp=70")
-        time.sleep(5)
+        time.sleep(150)
         self.send_serial("home")
         time.sleep(2)
         #self.send_serial("custom=Autofocusing...")
