@@ -1472,7 +1472,7 @@ def analysis_image(img_name='image.jpg', result='result.jpg', print_log=False):
 
         # Saving the counts in a text file
         f = open(count_name, "w+")
-        f.write('(u-net) E. coli\t\t: %d \n(u-net) coliforms\t: %d\n(yolo) E. coli\t\t: %d \n(yolo) coliforms\t: %d\n%s' % (blue_count, purple_count, len(out_label['blue']), len(out_label['coliform']), 'normal'))
+        f.write('%d\n%d\n%d\n%d\n%s\n%d\n%d' % (blue_count, purple_count, len(out_label['blue']), len(out_label['coliform']), flag_string, blue_count_new, purple_count_new))
         f.close()
         # Saving the segmented images
         twoboundary = masking_boundary(masking_boundary(image_draw_array, blue_image), purple_image)
@@ -1534,7 +1534,7 @@ def analysis_image(img_name='image.jpg', result='result.jpg', print_log=False):
 
         # Saving the counts in a text file
         f = open(count_name, "w+")
-        f.write('(u-net) E. coli\t\t: %d \n(u-net) coliforms\t: %d\n(yolo) E. coli\t\t: %d \n(yolo) coliforms\t: %d\n%s' % (blue_count, purple_count, len(out_label['blue']), len(out_label['coliform']), flag_string))
+        f.write('%d\n%d\n%d\n%d\n%s\n%d\n%d' % (blue_count, purple_count, len(out_label['blue']), len(out_label['coliform']), flag_string, blue_count_new, purple_count_new))
         f.close()
 
         cv2.rectangle(blue_image, (1, 1), (255, 255), (255, 255, 255), 2)
