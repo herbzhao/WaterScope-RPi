@@ -1587,8 +1587,9 @@ def analysis_image(img_name='image.jpg', result='result.jpg', print_log=False):
         # Saving the segmented images
         twoboundary = masking_boundary(masking_boundary(image_draw_array, blue_image), purple_image)
         
-        if flag_string == 'too_many':
+        if flag_type['too_many']:
             blue_count_new = 200
+        if flag_type['too_many_coliform']:    
             purple_count_new = 200
         
         # Writing title and count on images
