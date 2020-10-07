@@ -203,6 +203,8 @@ class serial_controller_class():
                 self.income_serial_command = 'auto_focus'
             elif 'capture' in self.serial_output:
                 self.income_serial_command = 'capture'
+            elif 'cancel' in self.serial_output:
+                self.income_serial_command = 'cancel'    
             elif 'ID' in self.serial_output:
                 print(self.serial_output)
                 self.income_serial_command = 'ID'

@@ -463,7 +463,7 @@ class OpencvClass():
             income_serial_command = Arduinos.serial_controllers['waterscope'].income_serial_command
         except AttributeError:
             income_serial_command = ''
-        
+        print(income_serial_command)
         if income_serial_command == "auto_focus":
             if self.auto_focus_status =="":
                 self.start_auto_focus_thread()
@@ -561,7 +561,7 @@ class OpencvClass():
         #self.send_serial("custom=Defogging,sample...")
        # time.sleep(0.5)
         self.send_serial("temp=70")
-        time.sleep(150)
+        time.sleep(2)
         self.send_serial("home")
         time.sleep(2)
         #self.send_serial("custom=Autofocusing...")
