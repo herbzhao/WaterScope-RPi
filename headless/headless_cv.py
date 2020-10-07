@@ -95,7 +95,10 @@ class OpencvClass():
              #   with open("preview.jpg", "rb") as imageFile:
                #     text = base64.b64encode(imageFile.read())
               
-                
+                self.send_serial('line1=Analysing sample')
+                time.sleep(0.5)
+                self.send_serial('line2=check app')
+                time.sleep(2)
                 self.start_auto_focus_thread()
             if(bt_data=="sample_preview"):
                 image_path = self.filename.replace('.jpg', '_result.jpg')
