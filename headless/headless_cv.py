@@ -561,7 +561,7 @@ class OpencvClass():
         #self.send_serial("custom=Defogging,sample...")
        # time.sleep(0.5)
         self.send_serial("temp=70")
-        time.sleep(2)
+        time.sleep(150)
         self.send_serial("home")
         time.sleep(2)
         #self.send_serial("custom=Autofocusing...")
