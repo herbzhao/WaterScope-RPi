@@ -22,6 +22,9 @@ from set_picamera_gain import set_analog_gain, set_digital_gain
 # opencv specific import
 import cv2
 import math
+# from scipy.signal import find_peaks 
+# from scipy.signal import argrelextrema
+
 
 class Camera(BaseCamera):
     @classmethod
@@ -45,6 +48,10 @@ class Camera(BaseCamera):
         # Change: 75 or 85 to see the streaming quality
         cls.stream_quality = 20
         cls.starting_time = datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S')
+
+        # For ROI
+        cls.centre = None
+        
         # URL for requests
         # cls.base_URL = "http://localhost:5000"
         cls.base_URL = "http://localhost"
@@ -264,6 +271,7 @@ FPS: {}
         cls.annotation_text = ''
         cls.cv_libraries = [
             cls.define_ROI,
+            # cls.hough_circle,
             # cls.edge_detection,
             # cls.thresholding,
             cls.variance_of_laplacian, 
@@ -288,16 +296,35 @@ FPS: {}
 
     @classmethod
     def define_ROI(cls):
-        # do some modification
+        def find_centre_of_circle():
+            gray = cv2.cvtColor(cls.image, cv2.COLOR_BGR2GRAY)
+            circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1.2, 100, minRadius=100, maxRadius=180)
+            if circles is not None:
+                circles = np.round(circles[0, :]).astype("int")
+                x, y, r = circles[0]
+                cv2.circle(cls.image, (x, y), r+5, (0, 255, 0), 1)
+                cls.centre = {"x": x, "y": y}
+                
+            else:
+                pass
+                
+        # try to find the centre of the filter for ROI
+        find_centre_of_circle()
+        
         # the opencv size is (y,x)
         image_y, image_x = cls.image.shape[:2]
 
         # a square from the centre of image
         box_size = int(image_x*0.2)
-        roi_box = {
-            'x1': int(image_x/2-box_size/2), 'y1':int(image_y/2-box_size/2), 
-            'x2': int(image_x/2+box_size/2), 'y2':int(image_y/2+box_size/2)}
-        
+        if cls.centre is None:
+            roi_box = {
+                'x1': int(image_x/2-box_size/2), 'y1':int(image_y/2-box_size/2), 
+                'x2': int(image_x/2+box_size/2), 'y2':int(image_y/2+box_size/2)}
+        else:
+            roi_box = {
+                'x1': int(cls.centre['x']-box_size/2), 'y1':int(cls.centre['y']-box_size/2), 
+                'x2': int(cls.centre['x']+box_size/2), 'y2':int(cls.centre['y']+box_size/2)}
+
         # the rectangle affects the laplacian, draw it outside the ROI
         # draw the rectangle
 
@@ -325,6 +352,7 @@ FPS: {}
         cls.image = thresh5
     
 
+
     @classmethod
     def variance_of_laplacian(cls):
         ''' focus calculation ''' 
@@ -341,9 +369,82 @@ FPS: {}
             (int(cls.image.shape[0]*0.1), int(cls.image.shape[1]*0.1)), 
             font, 2, (0, 0, 255))
 
-
     @classmethod
     def auto_focus(cls):
+        def focus_measure_at_z(new_z):
+            cls.move_to(new_z)
+            # DEBUG: wait for 1 second to stablise the mechanical stage
+            # time.sleep(1)
+            time.sleep(0.5)
+            focus_value_collection = []
+            for i in range(5):
+                focus_value_collection.append(cls.focus_value)
+                time.sleep(0.1)
+                
+            focus_value = np.average(focus_value_collection)
+            # print(cls.focus_table)
+            return focus_value
+
+        def record_focus_scan(starting_point=20, end_point=100, gap=5):
+            z_scan_map = np.arange(starting_point, end_point, gap)
+            focus_table = []
+            for new_z in z_scan_map:
+                focus_value = focus_measure_at_z(new_z)
+                print("Focus value at {0:.0f} is: {1:.2f}".format(new_z, focus_value))
+                focus_table.append(focus_value)
+                
+            z_map_focus_table  = np.vstack((z_scan_map, np.array(focus_table)))
+            focus_local_maxima = (np.diff(np.sign(np.diff(focus_table))) < 0).nonzero()[0] + 1
+            local_maxima_z = z_scan_map[focus_local_maxima]
+
+            # print(z_map_focus_table)
+            # print(focus_local_maxima)
+            # print(local_maxima_z)
+            
+            # take the 2nd maxima as the global best
+            if len(local_maxima_z) > 1:
+                global_optimal_z = local_maxima_z[-1]
+            else:
+                global_optimal_z = local_maxima_z[0]
+            
+            print("Local optimal focus is at {}".format(global_optimal_z))
+
+            return global_optimal_z
+
+        def scan_z_range(central_point = 50, range = 100, nubmer_of_points = 10):
+            " using a central point and scan up and down with half of the range"
+            z_scan_map = np.linspace(central_point-range/2, central_point+range/2, nubmer_of_points, endpoint=True)
+            print(z_scan_map)
+            for new_z in z_scan_map:
+                focus_value = focus_measure_at_z(new_z)
+                cls.focus_table.update({new_z: focus_value})
+
+    
+    
+        # NOTE: autofocus start from here
+        start_time = time.time()
+
+        cls.move_to('home')
+        global_optimal_z = record_focus_scan()
+
+        # clear up the focus table for local refined scanning
+        cls.focus_table = {}
+        scan_z_range(global_optimal_z, 15, 15)
+
+        print(cls.focus_table)
+        global_optimal_z = max(cls.focus_table, key=cls.focus_table.get)
+        print('optimal: {}'.format(global_optimal_z))
+        cls.move_to('home')
+        time.sleep(2)
+        cls.move_to(global_optimal_z)
+        print('find the focus in {0:.2f} seconds at Z: {1}'.format(time.time() - start_time, global_optimal_z))
+        # disable twiching
+        cls.send_serial("motor_off")
+
+
+
+    @classmethod
+    def auto_focus_old(cls):
         def focus_measure_at_z(new_z):
             cls.move_to(new_z)
             # DEBUG: wait for 1 second to stablise the mechanical stage
@@ -373,7 +474,7 @@ FPS: {}
             ' automatically create several scan map from coarse to fine, using first guess and next best focus point' 
             start_time = time.time()
             # first scan is based on the best guess
-            scan_z_range(50, 100, 10)
+            scan_z_range(90, 160, 10)
             # this will refine the best focus within range/points*2 = 400
 
             # Then finer scan  use the best focus value as the index for the z value
