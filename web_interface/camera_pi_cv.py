@@ -392,7 +392,8 @@ FPS: {}
                 focus_value = focus_measure_at_z(new_z)
                 print("Focus value at {0:.0f} is: {1:.2f}".format(new_z, focus_value))
                 focus_table.append(focus_value)
-                
+
+            focus_table = np.array(focus_table)
             z_map_focus_table  = np.vstack((z_scan_map, np.array(focus_table)))
             focus_local_maxima = (np.diff(np.sign(np.diff(focus_table))) < 0).nonzero()[0] + 1
             local_maxima_z = z_scan_map[focus_local_maxima]
@@ -403,7 +404,20 @@ FPS: {}
             
             # take the 2nd maxima as the global best
             if len(local_maxima_z) > 1:
-                global_optimal_z = local_maxima_z[-1]
+                # find the best 2 focus and then choose the larger one
+                print(focus_table[focus_local_maxima])
+                print(np.unique(focus_table[focus_local_maxima]))
+
+                max_focus = np.unique(focus_table[focus_local_maxima])[-1]
+                second_max_focus = np.unique(focus_table[focus_local_maxima])[-2]
+                max_focus_index = np.where(focus_table[focus_local_maxima] == max_focus)
+                second_max_focus_index = np.where(focus_table[focus_local_maxima] == second_max_focus)
+                # choose the one with larger index
+                if max_focus_index > second_max_focus_index:
+                    global_optimal_z = local_maxima_z[max_focus_index]
+                else:
+                    global_optimal_z = local_maxima_z[second_max_focus_index]
+
             else:
                 global_optimal_z = local_maxima_z[0]
             

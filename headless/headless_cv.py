@@ -26,6 +26,7 @@ class OpencvClass():
         self.image_seq = 0
         self.starting_time = datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S')
         self.ROI = []
+        self.centre = None
         self.sample_ID = 0
         self.sample_location = ""
         self.sample_time = ""
@@ -374,15 +375,34 @@ class OpencvClass():
 
     # NOTE: opencv specific modification code
     def define_ROI(self,  box_ratio = 0.2):
+        def find_centre_of_circle():
+            gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
+            circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1.2, 100, minRadius=100, maxRadius=180)
+            if circles is not None:
+                circles = np.round(circles[0, :]).astype("int")
+                x, y, r = circles[0]
+                cv2.circle(self.image, (x, y), r+5, (0, 255, 0), 1)
+                self.centre = {"x": x, "y": y}
+                
+            else:
+                pass
+        
+        # try to find the centre of the filter for ROI
+        find_centre_of_circle()
         # do some modification
         # the opencv size is (y,x)
         image_y, image_x = self.image.shape[:2]
 
         # a square from the centre of image
         box_size = int(image_x*box_ratio)
-        roi_box = {
-            'x1': int(image_x/2-box_size/2), 'y1':int(image_y/2-box_size/2), 
-            'x2': int(image_x/2+box_size/2), 'y2':int(image_y/2+box_size/2)}
+        if self.centre is None:
+            roi_box = {
+                'x1': int(image_x/2-box_size/2), 'y1':int(image_y/2-box_size/2), 
+                'x2': int(image_x/2+box_size/2), 'y2':int(image_y/2+box_size/2)}
+        else:
+            roi_box = {
+                'x1': int(self.centre['x']-box_size/2), 'y1':int(self.centre['y']-box_size/2), 
+                'x2': int(self.centre['x']+box_size/2), 'y2':int(self.centre['y']+box_size/2)}
         
         # the rectangle affects the laplacian, draw it outside the ROI
         # draw the rectangle
@@ -507,6 +527,43 @@ class OpencvClass():
             print(focus_value)
             return focus_value
 
+        def find_coarse_focus(starting_point=20, end_point=100, gap=5):
+            z_scan_map = np.arange(starting_point, end_point, gap)
+            focus_table = []
+            for new_z in z_scan_map:
+                focus_value = focus_measure_at_z(new_z)
+                print("Focus value at {0:.0f} is: {1:.2f}".format(new_z, focus_value))
+                focus_table.append(focus_value)
+                
+            z_map_focus_table  = np.vstack((z_scan_map, np.array(focus_table)))
+            focus_local_maxima = (np.diff(np.sign(np.diff(focus_table))) < 0).nonzero()[0] + 1
+            local_maxima_z = z_scan_map[focus_local_maxima]
+            focus_table = np.array(focus_table)
+
+            # print(z_map_focus_table)
+            # print(focus_local_maxima)
+            # print(local_maxima_z)
+            
+            # take the 2nd maxima as the global best
+            if len(local_maxima_z) > 1:
+                max_focus = np.unique(focus_table[focus_local_maxima])[-1]
+                second_max_focus = np.unique(focus_table[focus_local_maxima])[-2]
+                max_focus_index = np.where(focus_table[focus_local_maxima] == max_focus)
+                second_max_focus_index = np.where(focus_table[focus_local_maxima] == second_max_focus)
+                # choose the one with larger index
+                if max_focus_index > second_max_focus_index:
+                    global_optimal_z = local_maxima_z[max_focus_index]
+                else:
+                    global_optimal_z = local_maxima_z[second_max_focus_index]
+                    
+            else:
+                global_optimal_z = local_maxima_z[0]
+            
+            print("Local optimal focus is at {}".format(global_optimal_z))
+
+            return global_optimal_z
+
+
         def scan_z_range(central_point = 50, range = 100, nubmer_of_points = 10):
             " using a central point and scan up and down with half of the range"
             z_scan_map = np.linspace(central_point-range/2, central_point+range/2, nubmer_of_points, endpoint=True)
@@ -561,14 +618,29 @@ class OpencvClass():
         #self.send_serial("custom=Defogging,sample...")
        # time.sleep(0.5)
         self.send_serial("temp=70")
-        time.sleep(150)
+        # time.sleep(150)
         self.send_serial("home")
         time.sleep(2)
         #self.send_serial("custom=Autofocusing...")
         #  a dictionary to record different z with its corresponding focus value
-        self.focus_table = {}
 
-        iterate_z_scan_map()
+        # focus action
+        start_time = time.time()
+        self.focus_table = {}
+        global_optimal_z = find_coarse_focus()
+        # clear up the focus table for local refined scanning
+        self.focus_table = {}
+        # iterate_z_scan_map()
+        scan_z_range(global_optimal_z, 15, 15)
+        
+        print(self.focus_table)
+        global_optimal_z = max(self.focus_table, key=self.focus_table.get)
+        print('optimal: {}'.format(global_optimal_z))
+        self.send_serial("home")
+        time.sleep(2)
+        focus_measure_at_z(global_optimal_z)
+        print('find the focus in {0:.2f} seconds at Z: {1}'.format(time.time() - start_time, global_optimal_z))
+
         print('you are at the best focus now')
 
         #  annotate when auto focus finish to notify the user
