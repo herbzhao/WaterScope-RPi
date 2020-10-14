@@ -385,7 +385,7 @@ FPS: {}
             # print(cls.focus_table)
             return focus_value
 
-        def record_focus_scan(starting_point=20, end_point=100, gap=5):
+        def find_coarse_focus(starting_point=20, end_point=100, gap=5):
             z_scan_map = np.arange(starting_point, end_point, gap)
             focus_table = []
             for new_z in z_scan_map:
@@ -425,7 +425,7 @@ FPS: {}
         start_time = time.time()
 
         cls.move_to('home')
-        global_optimal_z = record_focus_scan()
+        global_optimal_z = find_coarse_focus()
 
         # clear up the focus table for local refined scanning
         cls.focus_table = {}
