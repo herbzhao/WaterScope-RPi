@@ -32,12 +32,13 @@ class OpencvClass():
         self.sample_comment = ""
         self.auto_focus_status = ""
         # NOTE: turn this on when in deployment
-        self.headless = True
+        self.headless = False
         self.stop_streaming = False
         self.bt_open=0
         self.timer=0
         self.flagged=0
         self.update_camera_setting()
+
 
         # wipe the file
         with open('image_to_analyse.txt', 'w+') as file:
