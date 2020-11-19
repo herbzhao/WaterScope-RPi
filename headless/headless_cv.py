@@ -37,8 +37,8 @@ class OpencvClass():
         self.bt_open=0
         self.timer=0
         self.flagged=0
-        self.update_camera_setting()
-
+        self.flag_message =""
+        self.flag_string=""
         # wipe the file
         with open('image_to_analyse.txt', 'w+') as file:
             pass
@@ -78,6 +78,9 @@ class OpencvClass():
         if self.bt.in_waiting>1:
             bt_data = (self.bt_readline()).decode("utf-8")
             print(bt_data)
+            if(len(bt_data)>150):
+                with open("update_file.txt", "wb") as fh:
+                    fh.write(base64.decodebytes(bt_data))
             if ((bt_data[0:2]) == 'id'):
                 self.sample_ID = int(bt_data.split(",")[0][3:])
                 print(self.sample_ID)
@@ -92,7 +95,10 @@ class OpencvClass():
              #   with open("preview.jpg", "rb") as imageFile:
                #     text = base64.b64encode(imageFile.read())
               
-                
+                self.send_serial('line1=Analysing sample')
+                time.sleep(0.5)
+                self.send_serial('line2=check app')
+                time.sleep(2)
                 self.start_auto_focus_thread()
             if(bt_data=="sample_preview"):
                 image_path = self.filename.replace('.jpg', '_result.jpg')
@@ -190,20 +196,34 @@ class OpencvClass():
             # self.analysis_result()
             if(self.flagged==1):
                     self.timer=self.timer+1
+                    time.sleep(4)
+                    self.send_serial('results={},{}'.format(self.result['coliforms'], self.result['E.coli']))
+                    time.sleep(2)
+                    self.send_serial('line1='+self.flag_message)
+                    time.sleep(0.5)
+                    self.send_serial('line2=check manual')
+                    
                    # print(self.timer)
-                    if(self.timer>300):
+                    
+                    if(self.timer>50):
                         self.send_serial("led_off")
+                        self.flagged=0
+                        
             # NOTE: after autofocus 
             if self.auto_focus_status =="ready":
                     time.sleep(1)
                     # self.capture_image()
                     self.analysis_result()
                     self.move_to(0)
+                    time.sleep(1)
+                    self.send_serial('incubator_37')
+                    time.sleep(1)
                     self.send_serial('results={},{}'.format(self.result['coliforms'], self.result['E.coli']))
+                    
                     self.auto_focus_status = ''
                     self.annotating("E.coli: {}, coliforms: {}".format(self.result['E.coli'], self.result['coliforms']))
                     print('coliform={},ecoli={}'.format(self.result['coliforms'], self.result['E.coli']))
-                    self.write_bluetooth('coliform={},ecoli={}'.format(self.result['coliforms'], self.result['E.coli']))
+                    self.write_bluetooth('coliform={},ecoli={},flag={}'.format(self.result['coliforms'], self.result['E.coli'],self.flag_string))
                     #self.send_serial("led_off")  
           # if the `q` key was pressed, break from the loop
             # if key == ord("q"):
@@ -269,6 +289,17 @@ class OpencvClass():
             image.save(self.filename.replace('.jpg', '_compressed.jpg'),quality=80,optimize=True)
             time.sleep(0.1)
 
+            # add annotation?
+            image = cv2.imread(self.filename.replace('.jpg', '_compressed.jpg'))
+            cv2.putText(image, 'ID : {}'.format(self.sample_ID),
+                    (5, 150),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    5,
+                    (255, 255, 255),
+                    4)
+            cv2.imwrite(self.filename.replace('.jpg', '_compressed.jpg'),image)
+            time.sleep(0.1)
+
 # reduce the resolution for video streaming
             self.camera.resolution = self.stream_resolution
  
@@ -296,20 +327,42 @@ class OpencvClass():
                 with open(self.filename.replace('.jpg', '_result.txt')) as file:
                     lines = file.readlines()
                     self.result = {}
-                    for line in lines:
-                        bacteria_name = line.split(':')[0].replace(' ', '').replace('\t','').replace('\n', '')
-                        count = line.split(':')[1].replace(' ', '').replace('\t','').replace('\n', '')
+                  #  if(int(lines[0].split()[-1])>50):
+                  #      ecoli_count = lines[2].split()[-1]
+                  #  else:
+                   #     ecoli_count = lines[0].split()[-1]
+                  #  if(int(lines[1].split()[-1])>50):
+                   #     coliform_count = lines[3].split()[-1]
+                   # else:
+                   #     coliform_count = lines[1].split()[-1]
+                    ecoli_count = lines[5].split()[-1]
+                    coliform_count = lines[6].split()[-1]
+                    self.result['coliforms']=coliform_count
+                    self.result['E.coli']=ecoli_count
+                    self.flag_string = lines[4].split()[0]
+                                                    
+                    if(self.flag_string=='anomalous' or self.flag_string=='too_many' or self.flag_string=='Result uncertain'):
+                        self.send_serial('LED_RGB=100,0,0')
+                        self.flagged=1
+                        if(self.flag_string=='too_many'):
+                            self.flag_string = 'overgrown'
+                        self.flag_message='Sample '+self.flag_string
+                        if(self.flag_string=='Result uncertain'):
+                            self.flag_message='Result uncertain'
+                    #for line in lines:
+                   #     bacteria_name = 
+                   #     count = line.split(':')[1].replace(' ', '').replace('\t','').replace('\n', '')
                        # self.result[bacteria_name] =  count
                         #print(count)
                       #  print(count)
-                        if(count.find("flagged")<0):
-                            self.result[bacteria_name] =  count
-                            print("result valid")
-                        else:
-                            self.result[bacteria_name] =  count
-                            print("too many or flagged")
-                            self.send_serial('LED_RGB=100,0,0')
-                            self.flagged=1
+                     #   if(count.find("flagged")<0):
+                      #      self.result[bacteria_name] =  count
+                       #     print("result valid")
+                      #  else:
+                      #      self.result[bacteria_name] =  count
+                        #    print("too many or flagged")
+                        #    self.send_serial('LED_RGB=100,0,0')
+                            #self.flagged=1
                             
                         
                 break
@@ -410,12 +463,16 @@ class OpencvClass():
             income_serial_command = Arduinos.serial_controllers['waterscope'].income_serial_command
         except AttributeError:
             income_serial_command = ''
-        
+        print(income_serial_command)
         if income_serial_command == "auto_focus":
-            self.start_auto_focus_thread()
+            if self.auto_focus_status =="":
+                self.start_auto_focus_thread()
 
-        elif income_serial_command == "capture":
-            self.capture_image()
+        elif income_serial_command == "cancel":
+            self.flagged=0
+            print('flagged to 0')
+            
+  
         try:
             self.sample_ID = Arduinos.serial_controllers['waterscope'].sample_ID
             self.sample_ID = self.sample_ID.replace("ID=", "").strip()
@@ -436,7 +493,7 @@ class OpencvClass():
         def focus_measure_at_z(new_z):
             self.move_to(new_z)
             # DEBUG: wait for 1 second to stablise the mechanical stage
-            time.sleep(0.5)
+            time.sleep(2)
             # averaging the focus value
             focus_value_collection = []
             for i in range(5):
@@ -453,7 +510,11 @@ class OpencvClass():
         def scan_z_range(central_point = 50, range = 100, nubmer_of_points = 10):
             " using a central point and scan up and down with half of the range"
             z_scan_map = np.linspace(central_point-range/2, central_point+range/2, nubmer_of_points, endpoint=True)
+            z_scan_map = [int(z) if z >= 0 else 0 for z in  z_scan_map]
             print(z_scan_map)
+            self.send_serial("home")
+            time.sleep(2)
+
             for new_z in z_scan_map:
                 focus_value = focus_measure_at_z(new_z)
 
@@ -463,36 +524,47 @@ class OpencvClass():
             self.move_to(0)
             time.sleep(2)
             # first scan is based on the best guess
-            scan_z_range(90, 180, 10)
+            scan_z_range(90, 160, 10)
             # this will refine the best focus within range/points*2 = 400
 
             # Then finer scan  use the best focus value as the index for the z value
-            for z_scan_range in  [25, 10]:
+            for z_scan_range in  [25, 15]:
                 optimal_focus_z = max(self.focus_table, key=self.focus_table.get)
                 scan_z_range(optimal_focus_z, z_scan_range, 5)
             
             print(self.focus_table)
             global_optimal_z = max(self.focus_table, key=self.focus_table.get)
             print('optimal: {}'.format(global_optimal_z))
-            self.move_to(global_optimal_z)
+            self.send_serial("home")
+            time.sleep(2)
+            focus_measure_at_z(global_optimal_z)
             print('find the focus in {0:.2f} seconds at Z: {1}'.format(time.time() - start_time, global_optimal_z))
 
             # disable twiching
-            self.send_serial('results=9999,9999')
+            self.send_serial('motor_off')
 
 
         # NOTE: Autofocus code runs from here
         print('starting to auto focus')
         self.annotating('Autofocusing')
         # home the stage for absolute_z
+        self.send_serial("incubator_off")
+        time.sleep(0.5)
         self.send_serial("home")
+        time.sleep(0.5)
         self.send_serial("LED_RGB=10,10,9")
+        time.sleep(0.5)
         self.send_serial("led_on")
+        time.sleep(0.5)
         self.send_serial("abs_opt=120")
+        time.sleep(0.5)
+        #self.send_serial("custom=Defogging,sample...")
+       # time.sleep(0.5)
         self.send_serial("temp=70")
         time.sleep(150)
         self.send_serial("home")
         time.sleep(2)
+        #self.send_serial("custom=Autofocusing...")
         #  a dictionary to record different z with its corresponding focus value
         self.focus_table = {}
 
