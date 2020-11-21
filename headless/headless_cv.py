@@ -177,7 +177,7 @@ class OpencvClass():
 
             #  NOTE: disable this for autostart
             # show the frame
-            if self.headless == True:
+            if self.headless == False:
                 cv2.imshow("stream", self.image)
             else:
                 cv2.destroyAllWindows()
