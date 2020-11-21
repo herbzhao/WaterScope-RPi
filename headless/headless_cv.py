@@ -20,6 +20,7 @@ from PIL import Image
 class OpencvClass():
     def __init__(self):
         # initialize the camera and grab a reference to the raw camera capture
+        subprocess.call("sudo vcdbg set awb_mode  0", shell=True)
         self.camera = PiCamera()
         self.stream_resolution = (824, 616)
         self.image_resolution = (3280,2464)
@@ -39,6 +40,7 @@ class OpencvClass():
         self.flagged=0
         self.flag_message =""
         self.flag_string=""
+        self.update_camera_setting()
         # wipe the file
         with open('image_to_analyse.txt', 'w+') as file:
             pass
@@ -129,15 +131,24 @@ class OpencvClass():
         with open('config_picamera.yaml') as config_file:
             config = yaml.load(config_file)
             # consistent imaging condition
-            self.camera.awb_mode = config['awb_mode']
-            self.camera.awb_gains = (config['red_gain'], config['blue_gain'])
+            
             # Richard's library to set analog and digital gains
             set_analog_gain(self.camera, config['analog_gain'])
             set_digital_gain(self.camera, config['digital_gain'])
             self.camera.shutter_speed = config['shutter_speed']
             self.camera.saturation = config['saturation']
-            self.camera.led = False
+           # self.camera.exposure_mode = 'off'
+            #self.camera.iso = 500
+
+           # self.camera.led = False
             self.image_resolution = config['image_resolution']
+            self.camera.resolution = self.image_resolution
+            self.camera.awb_mode = config['awb_mode']
+            self.camera.awb_gains = (config['red_gain'], config['blue_gain'])
+            time.sleep(2)
+            
+            self.camera.capture('test2.jpg')
+            print(self.camera.awb_gains)
             
 
     def start_streaming(self):
@@ -152,7 +163,7 @@ class OpencvClass():
       # bluetooth start
        # self.establish_connection()
         self.open_bluetooth()
-
+        
        # cv2.namedWindow("stream")
         # capture frames from the camera
         for frame in self.camera.capture_continuous(self.rawCapture, format="bgr", use_video_port=True):
@@ -166,7 +177,7 @@ class OpencvClass():
 
             #  NOTE: disable this for autostart
             # show the frame
-            if self.headless == False:
+            if self.headless == True:
                 cv2.imshow("stream", self.image)
             else:
                 cv2.destroyAllWindows()
@@ -282,6 +293,7 @@ class OpencvClass():
 
             time.sleep(0.1)
             self.camera.resolution = self.image_resolution
+            print(self.camera.awb_gains)
             # Remove bayer = Ture if dont care about RAW
             self.camera.capture(self.filename, format = 'jpeg', quality=100, bayer = False)
             time.sleep(0.1)
@@ -552,15 +564,15 @@ class OpencvClass():
         time.sleep(0.5)
         self.send_serial("home")
         time.sleep(0.5)
-        self.send_serial("LED_RGB=10,10,9")
+        self.send_serial("LED_RGB=10,10,10")
         time.sleep(0.5)
         self.send_serial("led_on")
         time.sleep(0.5)
-        self.send_serial("abs_opt=120")
+        self.send_serial("abs_opt=140")
         time.sleep(0.5)
         #self.send_serial("custom=Defogging,sample...")
        # time.sleep(0.5)
-        self.send_serial("temp=70")
+        self.send_serial("temp=80")
         time.sleep(150)
         self.send_serial("home")
         time.sleep(2)
