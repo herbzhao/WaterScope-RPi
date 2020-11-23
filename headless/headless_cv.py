@@ -40,6 +40,7 @@ class OpencvClass():
         self.flagged=0
         self.flag_message =""
         self.flag_string=""
+        self.new_sample=0
         self.update_camera_setting()
         # wipe the file
         with open('image_to_analyse.txt', 'w+') as file:
@@ -205,7 +206,7 @@ class OpencvClass():
             self.read_serial()
             # capture one image
             # self.analysis_result()
-            if(self.flagged==1):
+            if(self.flagged==1 and self.new_sample==0):
                     self.timer=self.timer+1
                     time.sleep(4)
                     self.send_serial('results={},{}'.format(self.result['coliforms'], self.result['E.coli']))
@@ -235,6 +236,11 @@ class OpencvClass():
                     self.annotating("E.coli: {}, coliforms: {}".format(self.result['E.coli'], self.result['coliforms']))
                     print('coliform={},ecoli={}'.format(self.result['coliforms'], self.result['E.coli']))
                     self.write_bluetooth('coliform={},ecoli={},flag={}'.format(self.result['coliforms'], self.result['E.coli'],self.flag_string))
+                    if(self.new_sample==1):
+                        self.send_serial('line1=Place sample')
+                        time.sleep(0.5)
+                        self.send_serial('line2=in incubator')
+                        self.new_sample=0
                     #self.send_serial("led_off")  
           # if the `q` key was pressed, break from the loop
             # if key == ord("q"):
@@ -352,7 +358,11 @@ class OpencvClass():
                     self.result['coliforms']=coliform_count
                     self.result['E.coli']=ecoli_count
                     self.flag_string = lines[4].split()[0]
-                                                    
+                    if(self.new_sample==1):
+                        self.flagged=0
+                        self.result['coliforms']=0
+                        self.result['E.coli']=0
+                        self.flag_string = 'new'
                     if(self.flag_string=='anomalous' or self.flag_string=='too_many' or self.flag_string=='Result uncertain'):
                         self.send_serial('LED_RGB=100,0,0')
                         self.flagged=1
@@ -361,6 +371,7 @@ class OpencvClass():
                         self.flag_message='Sample '+self.flag_string
                         if(self.flag_string=='Result uncertain'):
                             self.flag_message='Result uncertain'
+                    
                     #for line in lines:
                    #     bacteria_name = 
                    #     count = line.split(':')[1].replace(' ', '').replace('\t','').replace('\n', '')
@@ -484,6 +495,11 @@ class OpencvClass():
             self.flagged=0
             print('flagged to 0')
             
+            
+        elif income_serial_command == "new_sample":
+            self.new_sample=1
+            print('New sample, dont show results ')    
+            
   
         try:
             self.sample_ID = Arduinos.serial_controllers['waterscope'].sample_ID
@@ -572,8 +588,9 @@ class OpencvClass():
         time.sleep(0.5)
         #self.send_serial("custom=Defogging,sample...")
        # time.sleep(0.5)
-        self.send_serial("temp=80")
-        time.sleep(150)
+        if(self.new_sample==0):
+            self.send_serial("temp=80")
+            time.sleep(150)
         self.send_serial("home")
         time.sleep(2)
         #self.send_serial("custom=Autofocusing...")

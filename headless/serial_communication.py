@@ -204,7 +204,9 @@ class serial_controller_class():
             elif 'capture' in self.serial_output:
                 self.income_serial_command = 'capture'
             elif 'cancel' in self.serial_output:
-                self.income_serial_command = 'cancel'    
+                self.income_serial_command = 'cancel'
+            elif 'new_sample' in self.serial_output:
+                self.income_serial_command = 'new_sample'     
             elif 'ID' in self.serial_output:
                 print(self.serial_output)
                 self.income_serial_command = 'ID'
