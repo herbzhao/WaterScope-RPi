@@ -217,7 +217,7 @@ class OpencvClass():
                     
                    # print(self.timer)
                     
-                    if(self.timer>50):
+                    if(self.timer>3):
                         self.send_serial("led_off")
                         self.flagged=0
                         
