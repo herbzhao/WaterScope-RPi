@@ -178,7 +178,7 @@ class OpencvClass():
 
             #  NOTE: disable this for autostart
             # show the frame
-            if self.headless == True:
+            if self.headless == False:
                 cv2.imshow("stream", self.image)
             else:
                 cv2.destroyAllWindows()
@@ -305,6 +305,14 @@ class OpencvClass():
             time.sleep(0.1)
             image = Image.open(self.filename)
             image.save(self.filename.replace('.jpg', '_compressed.jpg'),quality=80,optimize=True)
+            im = image.resize([2197, 1650], Image.ANTIALIAS)
+           # im = im.resize([2197,1650], Image.ANTIALIAS)
+
+            new_im = Image.new("RGB", [3280,2464])
+            new_im.paste(im,[700,400])
+
+
+            new_im.save(self.filename.replace('.jpg', '_resized.jpg'),quality=100, optimize=False)
             time.sleep(0.1)
 
             # add annotation?
@@ -338,14 +346,14 @@ class OpencvClass():
         print(self.filename)
         time.sleep(1)
         with open('image_to_analyse.txt', 'w+') as file:
-            file.write(self.filename)
+            file.write(self.filename.replace('.jpg', '_resized.jpg'))
 
         # self.headless = True
         print('Wait for ML to work out stuff')
 
         while True:
             # keep checking whether result it out
-            if os.path.exists(self.filename.replace('.jpg', '_result.txt')):
+            if os.path.exists(self.filename.replace('_resized.jpg', '_result.txt')):
                 with open(self.filename.replace('.jpg', '_result.txt')) as file:
                     lines = file.readlines()
                     self.result = {}

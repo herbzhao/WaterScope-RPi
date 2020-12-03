@@ -25,7 +25,7 @@ def raw_to_cropped_old(raw_image, dim, color_check=False, print_log=False):
         if x < 450 or x > 750 or y < 400 or radius<150: # May 6th, 560, 700, 400, 150
             x=640
             y=450
-            radius=200
+            radius=400
             if print_log == True:
                 print('adjust x,y,radius to 640,450,200 due to anomalous value(s) of %d, %d, %d.' %(x,y,radius))
             return x,y,radius
