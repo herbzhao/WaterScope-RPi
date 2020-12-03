@@ -23,7 +23,7 @@ class OpencvClass():
         subprocess.call("sudo vcdbg set awb_mode  0", shell=True)
         self.camera = PiCamera()
         self.stream_resolution = (824, 616)
-        self.image_resolution = (3280,2464)
+        self.image_resolution = (4056,3040)
         self.image_seq = 0
         self.starting_time = datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S')
         self.ROI = []
@@ -178,7 +178,7 @@ class OpencvClass():
 
             #  NOTE: disable this for autostart
             # show the frame
-            if self.headless == False:
+            if self.headless == True:
                 cv2.imshow("stream", self.image)
             else:
                 cv2.destroyAllWindows()
@@ -320,6 +320,10 @@ class OpencvClass():
 
 # reduce the resolution for video streaming
             self.camera.resolution = self.stream_resolution
+            self.send_serial('line1=Imaging')
+            time.sleep(0.5)
+            self.send_serial('line2=done')
+            self.new_sample=0
  
             # resume the video channel
             # Warning: be careful about the self.camera.start_recording. 'bgr' for opencv and 'mjpeg' for picamera
@@ -580,7 +584,7 @@ class OpencvClass():
         time.sleep(0.5)
         self.send_serial("home")
         time.sleep(0.5)
-        self.send_serial("LED_RGB=10,10,10")
+        self.send_serial("LED_RGB=20,20,20")
         time.sleep(0.5)
         self.send_serial("led_on")
         time.sleep(0.5)
