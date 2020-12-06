@@ -328,9 +328,9 @@ class OpencvClass():
 
 # reduce the resolution for video streaming
             self.camera.resolution = self.stream_resolution
-            self.send_serial('line1=Imaging')
-            time.sleep(0.5)
-            self.send_serial('line2=done')
+        #    self.send_serial('line1=Imaging')
+         #   time.sleep(0.5)
+          #  self.send_serial('line2=done')
             self.new_sample=0
  
             # resume the video channel
@@ -353,8 +353,8 @@ class OpencvClass():
 
         while True:
             # keep checking whether result it out
-            if os.path.exists(self.filename.replace('_resized.jpg', '_result.txt')):
-                with open(self.filename.replace('.jpg', '_result.txt')) as file:
+            if os.path.exists(self.filename.replace('.jpg', '_resized_result.txt')):
+                with open(self.filename.replace('.jpg', '_resized_result.txt')) as file:
                     lines = file.readlines()
                     self.result = {}
                   #  if(int(lines[0].split()[-1])>50):

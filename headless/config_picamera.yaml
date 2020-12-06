@@ -16,7 +16,7 @@ digital_gain: 1.5
 shutter_speed: 50000
 
 # Auto white balance: The red and blue values are returned Fraction instances. The values will be between 0.0 and 8.0.
-awb_mode: 'auto'
+awb_mode: 'off'
 
 # if not using auto, then you can change the awb_gains
 red_gain: 2.2
