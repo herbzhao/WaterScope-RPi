@@ -601,7 +601,7 @@ class OpencvClass():
         #self.send_serial("custom=Defogging,sample...")
        # time.sleep(0.5)
         if(self.new_sample==0):
-            self.send_serial("temp=80")
+            self.send_serial("temp=99")
             time.sleep(150)
         self.send_serial("home")
         time.sleep(2)

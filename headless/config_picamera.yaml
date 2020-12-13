@@ -19,8 +19,8 @@ shutter_speed: 50000
 awb_mode: 'off'
 
 # if not using auto, then you can change the awb_gains
-red_gain: 2.2
-blue_gain: 1.10
+red_gain: 5.49
+blue_gain: 0.95
 
 # color saturation of the camera as an integer between -100 and 100. 
 saturation: 0
